@@ -1,16 +1,16 @@
 {
-  "id": "/",
+  "id": "./",
   "name": "OrgonerBox",
   "short_name": "OrgonerBox",
-  "description": "DruckBox, Mesh-Werkzeug und Tongenerator",
+  "description": "DruckBox, Werkzeug, Tongenerator, Inventar, Malwort",
   "start_url": "./index.html",
-  "scope": "/",
+  "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#0e1116",
   "theme_color": "#ff6a00",
   "lang": "de",
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+    { "src": "./icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }
