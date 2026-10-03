@@ -1,0 +1,1 @@
+function n(){return typeof speechSynthesis<"u"&&typeof SpeechSynthesisUtterance<"u"}function t(s){if(!n())return;const e=new SpeechSynthesisUtterance(s);e.lang="en-US",e.rate=.92,speechSynthesis.cancel(),speechSynthesis.speak(e)}function c(){n()&&speechSynthesis.cancel()}export{t as a,c as s};
