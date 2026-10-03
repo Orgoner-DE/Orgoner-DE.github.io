@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Malwort",
+  "short_name": "Malwort",
+  "description": "Englisch hören, tippen und malen",
+  "lang": "de",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FFF6E8",
+  "theme_color": "#1F7A4D",
+  "icons": [
+    {
+      "src": "./icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
