@@ -1,0 +1,3 @@
+Name: GeländeDE
+Version: 1.1.0
+Package: de.spaze.gelaende
