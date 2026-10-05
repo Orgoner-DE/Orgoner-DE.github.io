@@ -1,0 +1,3 @@
+Name: SPAZE MOAS
+Version: 1.1.0
+Package: de.spaze.moas
