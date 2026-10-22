@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Drive quer">
+<meta name="theme-color" content="#0e1116">
+<meta name="color-scheme" content="dark">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Drive quer – RC-Drift im Maßstab 1:10: Einstieg, Setup, Technik und Linien. Mit Mini-Drift-Demo zum Selbersteuern.">
+<title>Drive quer – RC-Drift 1:10</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e1116'/%3E%3Cpath d='M14 40c8-14 22-18 36-14' stroke='%23ff8a2a' stroke-width='6' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#0e1116; --bg2:#161b23; --card:#1b212b; --line:#2c3542;
+  --text:#e9edf2; --muted:#a9b3c1; --accent:#ff8a2a; --accent-ink:#1a0e02; --cyan:#46d4e8; --ok:#5ee08a;
+  --r:16px; --maxw:1080px;
+  --sat:env(safe-area-inset-top,0px); --sar:env(safe-area-inset-right,0px);
+  --sab:env(safe-area-inset-bottom,0px); --sal:env(safe-area-inset-left,0px);
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scroll-behavior:smooth;background:var(--bg)}
+body{margin:0;background:var(--bg);color:var(--text);
+  font:16px/1.55 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  -webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+a{color:var(--cyan)}
+a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--cyan);outline-offset:2px}
+h1,h2,h3{line-height:1.15;margin:0 0 .5em}
+p{margin:0 0 1em}
+.wrap{max-width:var(--maxw);margin:0 auto;padding-left:max(20px,var(--sal));padding-right:max(20px,var(--sar))}
+
+/* Header */
+header.top{position:-webkit-sticky;position:sticky;top:0;z-index:20;
+  padding-top:var(--sat);background:rgba(14,17,22,.78);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid rgba(255,255,255,.06)}
+@supports not ((-webkit-backdrop-filter:blur(1px)) or (backdrop-filter:blur(1px))){header.top{background:rgba(14,17,22,.97)}}
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;letter-spacing:.02em;color:var(--text);text-decoration:none;min-height:44px}
+.brand svg{flex:none}
+nav.links{display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+nav.links::-webkit-scrollbar{display:none}
+nav.links a{display:inline-flex;align-items:center;min-height:44px;padding:0 12px;border-radius:10px;color:var(--muted);text-decoration:none;font-weight:600;font-size:15px;white-space:nowrap}
+nav.links a:active{background:var(--card);color:var(--text)}
+@media (max-width:560px){nav.links{display:none}}
+
+/* Hero */
+.hero{position:relative;min-height:calc(100vh - 56px);display:flex;flex-direction:column;justify-content:center;padding:28px 0 calc(28px + var(--sab))}
+@supports (height:100dvh){.hero{min-height:calc(100dvh - 56px - var(--sat))}}
+.kicker{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.hero h1{font-size:clamp(44px,11vw,96px);font-weight:900;letter-spacing:-.02em;margin-bottom:.15em}
+.hero h1 em{font-style:normal;color:var(--accent);display:inline-block;transform:skewX(-12deg)}
+.claim{font-size:clamp(18px,4.4vw,24px);color:var(--muted);max-width:34em;margin-bottom:22px}
+.claim b{color:var(--text)}
+
+/* Demo */
+.demo{background:var(--bg2);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stage{position:relative;width:100%;aspect-ratio:16/9;max-height:62vh;background:#12161d}
+@supports not (aspect-ratio:16/9){.stage{height:0;padding-top:56.25%}}
+@media (orientation:portrait) and (max-width:700px){.stage{aspect-ratio:4/3}}
+#track{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;
+  -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;cursor:grab}
+.hud{position:absolute;left:10px;top:10px;display:flex;gap:8px;flex-wrap:wrap;pointer-events:none}
+.pill{background:rgba(10,12,16,.82);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text)}
+.pill .v{color:var(--accent)}
+.pill.c .v{color:var(--cyan)}
+.hint{position:absolute;inset:auto 0 10px 0;text-align:center;font-size:13px;color:var(--muted);pointer-events:none;transition:opacity .4s}
+.controls{display:grid;grid-template-columns:64px 1fr 64px;gap:8px;padding:10px;align-items:stretch}
+.controls .mid{display:flex;gap:8px}
+button,.btn{font:inherit;font-weight:700;color:var(--text);background:var(--card);border:1px solid var(--line);border-radius:12px;
+  min-height:48px;min-width:48px;padding:0 14px;cursor:pointer;touch-action:manipulation;
+  -webkit-user-select:none;user-select:none;-webkit-appearance:none;appearance:none}
+button:active,.btn.on{background:#26303d}
+button.gas{flex:1;background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+button.gas.on,button.gas:active{background:#ffa75c}
+button.small{font-size:14px;padding:0 12px}
+button[aria-pressed="true"]{border-color:var(--cyan);color:var(--cyan)}
+.opts{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:0 10px 12px}
+.opts label{display:flex;align-items:center;gap:10px;font-size:15px;color:var(--muted);min-height:44px}
+input[type=range]{width:150px;height:44px;accent-color:var(--accent);font-size:16px;background:transparent}
+.note{font-size:13px;color:var(--muted);padding:0 12px 12px}
+
+
+@media (min-width:900px), (orientation:landscape) and (max-height:540px){
+  .hero .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.4fr);gap:28px;align-items:center}
+  .hero .intro{align-self:center}
+  .stage{max-height:none}
+  .hero h1{font-size:clamp(48px,5.2vw,72px)}
+}
+@media (orientation:landscape) and (max-height:540px){
+  .hero{padding-top:12px;padding-bottom:calc(12px + var(--sab))}
+  .hero h1{font-size:48px}
+  .claim{font-size:17px;margin-bottom:8px}
+  .stage{aspect-ratio:16/8}
+  .opts,.note{display:none}
+  .controls{padding:6px}
+}
+
+/* Sections */
+section.sec{padding:56px 0;border-top:1px solid var(--line)}
+section.sec h2{font-size:clamp(28px,6vw,40px)}
+section.sec h2 span{color:var(--accent)}
+.lead{color:var(--muted);font-size:18px;max-width:40em}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));margin-top:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px}
+.card h3{font-size:18px;display:flex;align-items:center;gap:10px}
+.card p{color:var(--muted);margin:0}
+.ico{width:34px;height:34px;flex:none;border-radius:10px;display:grid;place-items:center;background:rgba(255,138,42,.14);color:var(--accent)}
+
+/* Checklist */
+.check{list-style:none;margin:18px 0 0;padding:0;display:grid;gap:8px}
+.check label{display:flex;gap:14px;align-items:flex-start;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;min-height:52px;cursor:pointer}
+.check input{width:24px;height:24px;margin:2px 0 0;flex:none;accent-color:var(--ok)}
+.check b{display:block}
+.check small{color:var(--muted);font-size:14px}
+.check input:checked + span b{color:var(--ok)}
+.progress{display:flex;align-items:center;gap:12px;margin-top:14px;flex-wrap:wrap}
+.meter{flex:1;min-width:160px;height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:var(--ok);transition:width .3s}
+
+/* Gyro helper */
+.helper{margin-top:22px}
+.helper .row{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+.helper .row button{flex:1 1 200px;text-align:left;font-weight:600}
+.answer{background:#121820;border-left:4px solid var(--cyan);border-radius:8px;padding:12px 14px;color:var(--text);min-height:52px}
+
+footer{border-top:1px solid var(--line);padding:28px 0 calc(28px + var(--sab));color:var(--muted);font-size:14px}
+footer .wrap{display:flex;flex-wrap:wrap;gap:8px 20px;justify-content:space-between}
+.ver{font-variant-numeric:tabular-nums;color:var(--text)}
+
+@media (prefers-reduced-motion:reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{transition:none!important;animation:none!important}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap bar">
+    <a class="brand" href="#top" aria-label="Drive quer – nach oben">
+      <svg width="30" height="30" viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1b212b"/><path d="M14 42c8-14 22-18 36-14" stroke="#ff8a2a" stroke-width="6" fill="none" stroke-linecap="round"/><circle cx="50" cy="28" r="4" fill="#46d4e8"/></svg>
+      Drive quer
+    </a>
+    <nav class="links" aria-label="Abschnitte">
+      <a href="#einstieg">Einstieg</a><a href="#setup">Setup</a><a href="#technik">Technik</a><a href="#strecke">Strecke</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="wrap">
+      <div class="intro">
+      <span class="kicker">RC-Drift · Maßstab 1:10</span>
+      <h1>Drive <em>quer</em></h1>
+      <p class="claim"><b>Gas ist Lenkung.</b> Seitwärts durch die Kurve – mit Gefühl im Daumen statt Grip im Reifen.</p>
+      </div>
+
+      <div class="demo" id="demo">
+        <div class="stage">
+          <canvas id="track" aria-label="Drift-Demo: ziehen zum Lenken, gedrückt halten für Gas" role="img"></canvas>
+          <div class="hud" aria-live="off">
+            <span class="pill">Winkel <span class="v" id="hAng">0°</span></span>
+            <span class="pill c">Punkte <span class="v" id="hPts">0</span></span>
+            <span class="pill">Bester Zug <span class="v" id="hBest">0</span></span>
+          </div>
+          <div class="hint" id="hint">Auf die Fläche tippen &amp; ziehen: links/rechts lenken, halten = Gas</div>
+        </div>
+        <div class="controls">
+          <button id="bL" aria-label="Links lenken">
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="mid">
+            <button class="gas" id="bGas">Gas</button>
+            <button class="small" id="bPause" aria-pressed="false">Pause</button>
+          </div>
+          <button id="bR" aria-label="Rechts lenken">
+            <svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+        <div class="opts">
+          <label for="gyro">Gyro-Gain <input type="range" id="gyro" min="0" max="100" value="55" step="1"> <span id="gyroV" class="ver">55&nbsp;%</span></label>
+          <button class="small" id="bTilt" aria-pressed="false">Neigen zum Lenken</button>
+          <button class="small" id="bReset">Neu starten</button>
+        </div>
+        <p class="note">Vereinfachtes Spielzeug-Modell, keine echte Fahrphysik. Der Gyro-Regler zeigt nur das Prinzip: mehr Gain = mehr automatisches Gegenlenken. Tastatur: Pfeiltasten.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="einstieg">
+    <div class="wrap">
+      <h2><span>01</span> Einstieg</h2>
+      <p class="lead">Ein RTR-Drifter (Ready to Run) reicht für den Anfang. Wichtiger als Tuning ist Fahrzeit auf glattem Boden.</p>
+      <div class="grid">
+        <div class="card"><h3><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="9" width="18" height="7" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="7.5" cy="17.5" r="2" fill="currentColor"/><circle cx="16.5" cy="17.5" r="2" fill="currentColor"/></svg></span>RTR wählen</h3><p>Heckantrieb (RWD) ist heute Standard im Drift. Auf Ersatzteilversorgung und Gyro im Lieferumfang achten.</p></div>
+        <div class="card"><h3><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/><path d="M12 12l4-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Gyro verstehen</h3><p>Der Gyro lenkt automatisch gegen, wenn das Heck ausbricht. Ohne ihn ist RWD-Drift für Einsteiger kaum fahrbar.</p></div>
+        <div class="card"><h3><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg></span>Harte Reifen</h3><p>Drift-Reifen sind harte Kunststoffreifen. Die Mischung passt man an den Untergrund an – Fliese, Beton, P-Tile, Teppich.</p></div>
+        <div class="card"><h3><span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="4" width="12" height="17" rx="2" stroke="currentColor" stroke-width="2" fill="none"/><path d="M10 2h4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></span>Akku &amp; Laden</h3><p>Nur mit passendem Ladegerät laden, nie unbeaufsichtigt, LiPo in einer Ladetasche lagern. Herstellerangaben gehen vor.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="setup">
+    <div class="wrap">
+      <h2><span>02</span> Setup</h2>
+      <p class="lead">Checkliste vor dem ersten Akku. Dein Fortschritt bleibt auf diesem Gerät gespeichert.</p>
+      <ul class="check" id="checklist">
+        <li><label><input type="checkbox" data-k="trim"><span><b>Lenk-Trimmung &amp; Mitte</b><small>Räder stehen bei losgelassenem Lenkrad gerade, Servo-Horn mittig.</small></span></label></li>
+        <li><label><input type="checkbox" data-k="dir"><span><b>Gyro-Richtung prüfen</b><small>Heck von Hand drehen: Die Vorderräder müssen gegenlenken, nicht mitlenken.</small></span></label></li>
+        <li><label><input type="checkbox" data-k="gain"><span><b>Gyro-Gain mittig starten</b><small>Dann in kleinen Schritten anpassen (Hilfe unten).</small></span></label></li>
+        <li><label><input type="checkbox" data-k="tire"><span><b>Reifen zum Boden</b><small>Gleiche Mischung vorne und hinten als Startpunkt, Reifen sauber.</small></span></label></li>
+        <li><label><input type="checkbox" data-k="toe"><span><b>Spur &amp; Sturz notieren</b><small>Ausgangswerte aufschreiben, bevor du etwas veränderst – immer nur eine Sache pro Test.</small></span></label></li>
+        <li><label><input type="checkbox" data-k="ep"><span><b>Lenkausschlag (EPA)</b><small>Voller Einschlag ohne Schleifen oder Blockieren an Querlenker und Karosserie.</small></span></label></li>
+        <li><label><input type="checkbox" data-k="bat"><span><b>Akku geladen &amp; fest</b><small>Sitzt fest im Halter, Kabel nicht im Antriebsstrang.</small></span></label></li>
+      </ul>
+      <div class="progress"><div class="meter" aria-hidden="true"><i id="meter"></i></div><span id="progTxt" aria-live="polite">0 von 7 erledigt</span><button class="small" id="clearCheck">Zurücksetzen</button></div>
+
+      <div class="helper card">
+        <h3>Gyro-Gain-Helfer</h3>
+        <p>Was macht dein Auto gerade?</p>
+        <div class="row" role="group" aria-label="Fahrverhalten wählen">
+          <button data-g="wobble">Vorderräder zittern / Auto pendelt</button>
+          <button data-g="spin">Heck dreht weg, Auto dreht sich ein</button>
+          <button data-g="stiff">Fühlt sich steif an, will nicht quer</button>
+          <button data-g="ok">Läuft ruhig und kontrollierbar</button>
+        </div>
+        <div class="answer" id="gAns" aria-live="polite">Wähle oben ein Verhalten.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="technik">
+    <div class="wrap">
+      <h2><span>03</span> Technik</h2>
+      <p class="lead">Drift ist Gewichtsverlagerung plus Gasdosierung. Langsam lernen, dann schneller werden.</p>
+      <div class="grid">
+        <div class="card"><h3>Einleiten</h3><p>Kurz einlenken, Gas geben – das Heck kommt. Alternativ mit Lastwechsel: Lenkung kurz gegen die Kurve, dann rein.</p></div>
+        <div class="card"><h3>Halten</h3><p>Den Winkel hältst du mit dem Gas, nicht mit der Lenkung. Mehr Gas = mehr Winkel, weniger Gas = Auto richtet sich auf.</p></div>
+        <div class="card"><h3>Übergang</h3><p>Von links nach rechts umsetzen: kurz vom Gas, Gewicht schwingt rüber, dann wieder dosiert ans Gas.</p></div>
+        <div class="card"><h3>Tandem</h3><p>Erst allein sauber fahren. Im Tandem zählt Abstand und gleiche Linie – Rücksicht vor Nähe.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec" id="strecke">
+    <div class="wrap">
+      <h2><span>04</span> Strecke</h2>
+      <p class="lead">Eine gute Linie ist planbar. Bau dir zu Hause mit Markierungen eine eigene.</p>
+      <div class="grid">
+        <div class="card"><h3>Clipping Points</h3><p>Punkte, an denen die Front oder das Heck möglichst nah vorbei soll. Markierung reicht – Kreppband, Hütchen, Klötze.</p></div>
+        <div class="card"><h3>Zonen</h3><p>Flächen, durch die das Heck schwingen soll. Zwingen dich zu Winkel und Weite.</p></div>
+        <div class="card"><h3>Untergrund</h3><p>Glatt und sauber ist besser. Staub verändert den Grip spürbar – vor dem Fahren fegen.</p></div>
+        <div class="card"><h3>Achte auf andere</h3><p>Nur auf Flächen fahren, wo es erlaubt ist und niemand gestört oder gefährdet wird.</p></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>Drive quer · RC-Drift 1:10</span>
+    <span>Version <span class="ver">v0.1.0</span></span>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var $ = function(id){return document.getElementById(id);};
+var store = {
+  get:function(k){try{return localStorage.getItem(k);}catch(e){return null;}},
+  set:function(k,v){try{localStorage.setItem(k,v);}catch(e){}}
+};
+
+/* ---------- Drift-Demo ---------- */
+var cv=$('track'), ctx=cv.getContext('2d'), W=0, H=0, dpr=1;
+var marks=document.createElement('canvas'), mctx=marks.getContext('2d');
+function resize(){
+  var r=cv.getBoundingClientRect();
+  dpr=Math.min(window.devicePixelRatio||1,3);
+  var nw=Math.max(1,Math.round(r.width)), nh=Math.max(1,Math.round(r.height));
+  if(nw===W && nh===H && cv.width===Math.round(nw*dpr)) return;
+  var old=null;
+  if(marks.width){old=document.createElement('canvas');old.width=marks.width;old.height=marks.height;old.getContext('2d').drawImage(marks,0,0);}
+  W=nw;H=nh;
+  cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr);
+  marks.width=cv.width; marks.height=cv.height;
+  if(old) mctx.drawImage(old,0,0,marks.width,marks.height);
+  if(!car.init) resetCar();
+  layoutCones();
+  draw();
+}
+var car={x:0,y:0,h:0,vx:0,vy:0,yaw:0,init:false};
+var cones=[];
+function layoutCones(){
+  cones=[[.3,.5],[.7,.5],[.5,.22],[.5,.78]].map(function(p){return {x:p[0]*W,y:p[1]*H};});
+}
+function resetCar(){
+  car.x=W*.5; car.y=H*.5; car.h=-Math.PI/2; car.vx=0; car.vy=0; car.yaw=0; car.init=true;
+  pts=0; run=0; best=+(store.get('dq_best')||0);
+  if(marks.width) mctx.clearRect(0,0,marks.width,marks.height);
+}
+var input={steer:0,thr:0}, ptr=null, keys={}, btn={L:0,R:0,G:0}, tilt={on:false,g:0};
+var auto=true, paused=false, visible=true, onscreen=true;
+var pts=0, run=0, best=0, gain=0.55, lastT=0, raf=0, acc=0;
+var STEP=1/120;
+
+function readInput(){
+  if(ptr){ input.steer=ptr.steer; input.thr=1; return; }
+  var s=(btn.R||keys.ArrowRight?1:0)-(btn.L||keys.ArrowLeft?1:0);
+  var t=(btn.G||keys.ArrowUp)?1:0;
+  if(tilt.on){ s=Math.max(-1,Math.min(1,tilt.g/25)); if(!t && Math.abs(tilt.g)>4) t=1; }
+  if(s||t||tilt.on){auto=false;}
+  if(auto){ // Autopilot: ruhiger Kreis-Drift
+    s=0.85; t=0.78;
+  }
+  input.steer=s; input.thr=t;
+}
+function step(dt){
+  var c=Math.cos(car.h), s=Math.sin(car.h);
+  var vF=car.vx*c+car.vy*s, vR=-car.vx*s+car.vy*c;
+  var speed=Math.hypot(car.vx,car.vy);
+  var scale=Math.min(W,H)/360;
+  var slip=speed>8*scale?Math.atan2(vR,Math.max(Math.abs(vF),1)):0;
+  // Gyro: automatisches Gegenlenken proportional zum Rutschwinkel
+  var steer=input.steer + gain*1.6*slip;
+  steer=Math.max(-1.2,Math.min(1.2,steer));
+  vF += input.thr*260*scale*dt;
+  vF *= (1-0.9*dt);
+  // Seitenhaftung: Gas reduziert Grip hinten (vereinfacht)
+  var grip = 7 - input.thr*5.2;
+  vR *= Math.exp(-grip*dt);
+  // Gierrate: Lenkung * Tempo + Heckschub bei Gas
+  var targetYaw = steer*vF*0.018/scale + input.thr*input.steer*1.4*(speed/(160*scale));
+  car.yaw += (targetYaw-car.yaw)*Math.min(1,6*dt);
+  car.vx=vF*c - vR*s; car.vy=vF*s + vR*c; // Geschwindigkeit bleibt im alten Rahmen …
+  car.h += car.yaw*dt;                      // … das Auto dreht sich darunter weg = Rutschwinkel
+  car.x+=car.vx*dt; car.y+=car.vy*dt;
+  // Bande: weich zurückfedern
+  var m=14*scale;
+  if(car.x<m){car.x=m;car.vx=Math.abs(car.vx)*.4;} if(car.x>W-m){car.x=W-m;car.vx=-Math.abs(car.vx)*.4;}
+  if(car.y<m){car.y=m;car.vy=Math.abs(car.vy)*.4;} if(car.y>H-m){car.y=H-m;car.vy=-Math.abs(car.vy)*.4;}
+  var ang=Math.abs(slip)*180/Math.PI;
+  car.ang=ang;
+  if(ang>12 && speed>40*scale){
+    run+=ang*dt*(speed/(100*scale));
+    // Reifenspuren
+    mctx.save(); mctx.setTransform(dpr,0,0,dpr,0,0);
+    mctx.fillStyle='rgba(150,160,175,0.10)';
+    var bx=car.x-c*9*scale, by=car.y-s*9*scale;
+    for(var k=-1;k<=1;k+=2){mctx.beginPath();mctx.arc(bx-s*6*scale*k,by+c*6*scale*k,1.6*scale,0,6.283);mctx.fill();}
+    mctx.restore();
+  } else if(run>0){
+    if(!auto){pts+=Math.round(run); if(run>best){best=Math.round(run);store.set('dq_best',best);}}
+    run=0;
+  }
+}
+function draw(){
+  if(!W) return;
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  ctx.fillStyle='#12161d'; ctx.fillRect(0,0,W,H);
+  // Raster
+  ctx.strokeStyle='rgba(255,255,255,0.04)'; ctx.lineWidth=1;
+  var g=40; ctx.beginPath();
+  for(var x=g;x<W;x+=g){ctx.moveTo(x+.5,0);ctx.lineTo(x+.5,H);} for(var y=g;y<H;y+=g){ctx.moveTo(0,y+.5);ctx.lineTo(W,y+.5);}
+  ctx.stroke();
+  ctx.setTransform(1,0,0,1,0,0); ctx.drawImage(marks,0,0); ctx.setTransform(dpr,0,0,dpr,0,0);
+  var scale=Math.min(W,H)/360;
+  // Hütchen (Clipping Points)
+  cones.forEach(function(p){
+    ctx.fillStyle='#ffd23f'; ctx.beginPath(); ctx.arc(p.x,p.y,5*scale+1,0,6.283); ctx.fill();
+    ctx.strokeStyle='rgba(255,210,63,0.25)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(p.x,p.y,22*scale,0,6.283); ctx.stroke();
+  });
+  // Auto
+  ctx.save(); ctx.translate(car.x,car.y); ctx.rotate(car.h); ctx.scale(scale*1.25,scale*1.25);
+  ctx.fillStyle='rgba(0,0,0,0.35)'; roundRect(-15,-8,32,18,5); ctx.fill();
+  ctx.fillStyle='#22272f';
+  var fs=input.steer*0.45;
+  [[-9,-9],[-9,9]].forEach(function(w){ctx.fillRect(w[0]-4,w[1]-2.5,8,5);});
+  [[10,-9],[10,9]].forEach(function(w){ctx.save();ctx.translate(w[0],w[1]);ctx.rotate(fs);ctx.fillRect(-4,-2.5,8,5);ctx.restore();});
+  ctx.fillStyle='#ff8a2a'; roundRect(-16,-8,32,16,5); ctx.fill();
+  ctx.fillStyle='#10141a'; roundRect(-3,-6,9,12,2.5); ctx.fill();
+  ctx.fillStyle='#46d4e8'; ctx.fillRect(14,-6,2,3); ctx.fillRect(14,3,2,3);
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();}
+var hAng=$('hAng'),hPts=$('hPts'),hBest=$('hBest'),hint=$('hint');
+function hud(){
+  hAng.textContent=Math.round(car.ang||0)+'°';
+  hPts.textContent=pts+(run>0&&!auto?' +'+Math.round(run):'');
+  hBest.textContent=best;
+}
+function frame(t){
+  raf=0;
+  if(!running()) {lastT=0;return;}
+  var dt=lastT?Math.min(0.1,(t-lastT)/1000):0; lastT=t; acc+=dt;
+  readInput();
+  while(acc>=STEP){step(STEP);acc-=STEP;}
+  draw(); hud();
+  raf=requestAnimationFrame(frame);
+}
+function running(){return !paused && visible && onscreen;}
+function kick(){ if(!raf && running()){lastT=0;acc=0;raf=requestAnimationFrame(frame);} }
+function stop(){ if(raf){cancelAnimationFrame(raf);raf=0;} }
+function userTook(){ if(auto){auto=false;} hint.style.opacity='0'; if(paused) setPaused(false); kick(); }
+
+// Pointer: ziehen = lenken, halten = Gas
+cv.addEventListener('pointerdown',function(e){
+  e.preventDefault();
+  try{cv.setPointerCapture(e.pointerId);}catch(_){}
+  ptr={id:e.pointerId,x0:e.clientX,steer:0}; userTook();
+});
+cv.addEventListener('pointermove',function(e){
+  if(!ptr||e.pointerId!==ptr.id) return;
+  ptr.steer=Math.max(-1,Math.min(1,(e.clientX-ptr.x0)/70));
+});
+function endPtr(e){ if(ptr && e.pointerId===ptr.id) ptr=null; }
+cv.addEventListener('pointerup',endPtr); cv.addEventListener('pointercancel',endPtr); cv.addEventListener('lostpointercapture',endPtr);
+// iOS: kein Scroll/Zoom auf der Fläche (touch-action:none + Fallback)
+cv.addEventListener('touchstart',function(e){e.preventDefault();},{passive:false});
+cv.addEventListener('gesturestart',function(e){e.preventDefault();},{passive:false});
+
+function holdBtn(el,key){
+  var down=function(e){e.preventDefault();btn[key]=1;el.classList.add('on');try{el.setPointerCapture(e.pointerId);}catch(_){}userTook();};
+  var up=function(){btn[key]=0;el.classList.remove('on');};
+  el.addEventListener('pointerdown',down);
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(n){el.addEventListener(n,up);});
+  el.addEventListener('contextmenu',function(e){e.preventDefault();});
+}
+holdBtn($('bL'),'L'); holdBtn($('bR'),'R'); holdBtn($('bGas'),'G');
+
+window.addEventListener('keydown',function(e){
+  if(['ArrowLeft','ArrowRight','ArrowUp'].indexOf(e.key)<0) return;
+  if(e.target && /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+  var r=$('demo').getBoundingClientRect(); if(r.bottom<0||r.top>innerHeight) return;
+  e.preventDefault(); keys[e.key]=true; userTook();
+});
+window.addEventListener('keyup',function(e){keys[e.key]=false;});
+
+function setPaused(p){paused=p;var b=$('bPause');b.setAttribute('aria-pressed',p?'true':'false');b.textContent=p?'Weiter':'Pause'; if(p) stop(); else kick();}
+$('bPause').addEventListener('click',function(){setPaused(!paused); if(!paused){draw();}});
+$('bReset').addEventListener('click',function(){resetCar();auto=false;hud();draw();kick();});
+var gy=$('gyro'), gyV=$('gyroV');
+function setGain(){gain=gy.value/100; gyV.textContent=gy.value+'\u00a0%';}
+gy.addEventListener('input',setGain); setGain();
+
+// Neigen (DeviceOrientation) – iOS braucht Erlaubnis per Tippen
+var bTilt=$('bTilt');
+function onOri(e){
+  if(e.gamma==null) return;
+  var landscape=(window.innerWidth>window.innerHeight);
+  var ang=(screen.orientation&&typeof screen.orientation.angle==='number')?screen.orientation.angle:(window.orientation||0);
+  var v=landscape?(ang===90?e.beta:-e.beta):e.gamma;
+  tilt.g=v||0;
+}
+function tiltOn(){window.addEventListener('deviceorientation',onOri,{passive:true});tilt.on=true;bTilt.setAttribute('aria-pressed','true');bTilt.textContent='Neigen: an';userTook();}
+function tiltOff(){window.removeEventListener('deviceorientation',onOri);tilt.on=false;tilt.g=0;bTilt.setAttribute('aria-pressed','false');bTilt.textContent='Neigen zum Lenken';}
+if(!('DeviceOrientationEvent' in window)){bTilt.disabled=true;bTilt.textContent='Neigen nicht verfügbar';}
+bTilt.addEventListener('click',function(){
+  if(tilt.on){tiltOff();return;}
+  var D=window.DeviceOrientationEvent;
+  if(D && typeof D.requestPermission==='function'){
+    D.requestPermission().then(function(r){ if(r==='granted') tiltOn(); else {bTilt.textContent='Neigen abgelehnt';} })
+      .catch(function(){bTilt.textContent='Neigen nicht möglich';});
+  } else { tiltOn(); }
+});
+
+// Pausieren bei Tab-Wechsel / außerhalb des Sichtbereichs
+document.addEventListener('visibilitychange',function(){visible=!document.hidden; if(visible) kick(); else stop();});
+window.addEventListener('pagehide',stop);
+window.addEventListener('pageshow',function(){visible=!document.hidden;kick();});
+if('IntersectionObserver' in window){
+  new IntersectionObserver(function(en){onscreen=en[0].isIntersecting; if(onscreen) kick(); else stop();},{threshold:0.05}).observe(cv);
+}
+var rT=0;
+function onResize(){clearTimeout(rT);rT=setTimeout(resize,80);}
+window.addEventListener('resize',onResize);
+window.addEventListener('orientationchange',onResize);
+if('ResizeObserver' in window){new ResizeObserver(onResize).observe(cv);}
+
+resize();
+if(reduce){ // keine Auto-Animation, Start erst auf Eingabe
+  setPaused(true); $('bPause').textContent='Start'; hint.textContent='Bewegung reduziert: tippen oder „Start“ für die Demo';
+} else { kick(); }
+
+/* ---------- Checkliste ---------- */
+var boxes=[].slice.call(document.querySelectorAll('#checklist input'));
+var saved={}; try{saved=JSON.parse(store.get('dq_check')||'{}')||{};}catch(e){}
+function upd(){
+  var n=0,o={}; boxes.forEach(function(b){o[b.dataset.k]=b.checked; if(b.checked)n++;});
+  store.set('dq_check',JSON.stringify(o));
+  $('meter').style.width=(n/boxes.length*100)+'%';
+  $('progTxt').textContent=n+' von '+boxes.length+' erledigt'+(n===boxes.length?' – ab auf die Fläche!':'');
+}
+boxes.forEach(function(b){b.checked=!!saved[b.dataset.k]; b.addEventListener('change',upd);});
+$('clearCheck').addEventListener('click',function(){boxes.forEach(function(b){b.checked=false;});upd();});
+upd();
+
+/* ---------- Gyro-Helfer ---------- */
+var tips={
+  wobble:'Gain ist eher zu hoch. In kleinen Schritten runter, bis das Zittern weg ist. Auch Servo-Spiel und Lenkgestänge prüfen.',
+  spin:'Gain ist eher zu niedrig oder die Gyro-Richtung stimmt nicht. Erst Richtung prüfen (Heck von Hand drehen), dann Gain schrittweise erhöhen.',
+  stiff:'Gyro korrigiert evtl. zu stark. Etwas weniger Gain probieren und mehr mit dem Gas arbeiten. Reifenmischung zum Boden prüfen.',
+  ok:'Gut so. Wert notieren. Ab jetzt immer nur eine Sache gleichzeitig ändern, damit du weißt, was wirkt.'
+};
+[].slice.call(document.querySelectorAll('[data-g]')).forEach(function(b){
+  b.addEventListener('click',function(){
+    [].slice.call(document.querySelectorAll('[data-g]')).forEach(function(x){x.setAttribute('aria-pressed','false');});
+    b.setAttribute('aria-pressed','true'); $('gAns').textContent=tips[b.dataset.g];
+  });
+});
+
+window.__dq={car:car,get pts(){return pts;},get auto(){return auto;},get running(){return !!raf;},input:input};
+})();
+</script>
+</body>
+</html>
