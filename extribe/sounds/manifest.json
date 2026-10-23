@@ -1,0 +1,406 @@
+{
+"version": "3.2",
+"license": "CC0-1.0",
+"sounds": [
+{
+"pad": 160,
+"name": "CCC 01 KICK1",
+"file": "ccc/01-KICK1.wav"
+},
+{
+"pad": 161,
+"name": "CCC 02 KICK2",
+"file": "ccc/02-KICK2.wav"
+},
+{
+"pad": 162,
+"name": "CCC 03 SNARE1",
+"file": "ccc/03-SNARE1.wav"
+},
+{
+"pad": 163,
+"name": "CCC 04 SNARE2",
+"file": "ccc/04-SNARE2.wav"
+},
+{
+"pad": 164,
+"name": "CCC 05 HAT1",
+"file": "ccc/05-HAT1.wav"
+},
+{
+"pad": 165,
+"name": "CCC 06 HAT2",
+"file": "ccc/06-HAT2.wav"
+},
+{
+"pad": 166,
+"name": "CCC 07 HAT3",
+"file": "ccc/07-HAT3.wav"
+},
+{
+"pad": 167,
+"name": "CCC 08 OHAT",
+"file": "ccc/08-OHAT.wav"
+},
+{
+"pad": 168,
+"name": "CCC 09 PERC1",
+"file": "ccc/09-PERC1.wav"
+},
+{
+"pad": 169,
+"name": "CCC 10 PERC2",
+"file": "ccc/10-PERC2.wav"
+},
+{
+"pad": 170,
+"name": "CCC 11 PERC3",
+"file": "ccc/11-PERC3.wav"
+},
+{
+"pad": 171,
+"name": "CCC 12 PERC4",
+"file": "ccc/12-PERC4.wav"
+},
+{
+"pad": 172,
+"name": "CCC 13 PERC5",
+"file": "ccc/13-PERC5.wav"
+},
+{
+"pad": 173,
+"name": "CCC 14 PERC6",
+"file": "ccc/14-PERC6.wav"
+},
+{
+"pad": 174,
+"name": "CCC 15 RIM",
+"file": "ccc/15-RIM.wav"
+},
+{
+"pad": 175,
+"name": "CCC 16 FX",
+"file": "ccc/16-FX.wav"
+},
+{
+"pad": 176,
+"name": "ZYB 01 KICK1",
+"file": "zyb/01-KICK1.wav"
+},
+{
+"pad": 177,
+"name": "ZYB 02 KICK2",
+"file": "zyb/02-KICK2.wav"
+},
+{
+"pad": 178,
+"name": "ZYB 03 KICK3",
+"file": "zyb/03-KICK3.wav"
+},
+{
+"pad": 179,
+"name": "ZYB 04 KICK4",
+"file": "zyb/04-KICK4.wav"
+},
+{
+"pad": 180,
+"name": "ZYB 05 KICK5",
+"file": "zyb/05-KICK5.wav"
+},
+{
+"pad": 181,
+"name": "ZYB 06 RUMBLE",
+"file": "zyb/06-RUMBLE.wav"
+},
+{
+"pad": 182,
+"name": "ZYB 07 PERC1",
+"file": "zyb/07-PERC1.wav"
+},
+{
+"pad": 183,
+"name": "ZYB 08 PERC2",
+"file": "zyb/08-PERC2.wav"
+},
+{
+"pad": 184,
+"name": "ZYB 09 PERC3",
+"file": "zyb/09-PERC3.wav"
+},
+{
+"pad": 185,
+"name": "ZYB 10 PERC4",
+"file": "zyb/10-PERC4.wav"
+},
+{
+"pad": 186,
+"name": "ZYB 11 HAT1",
+"file": "zyb/11-HAT1.wav"
+},
+{
+"pad": 187,
+"name": "ZYB 12 HAT2",
+"file": "zyb/12-HAT2.wav"
+},
+{
+"pad": 188,
+"name": "ZYB 13 CLAP1",
+"file": "zyb/13-CLAP1.wav"
+},
+{
+"pad": 189,
+"name": "ZYB 14 CLAP2",
+"file": "zyb/14-CLAP2.wav"
+},
+{
+"pad": 190,
+"name": "ZYB 15 CRASH",
+"file": "zyb/15-CRASH.wav"
+},
+{
+"pad": 191,
+"name": "ZYB 16 FX",
+"file": "zyb/16-FX.wav"
+},
+{
+"pad": 192,
+"name": "MM 01 KICK1",
+"file": "mm/01-KICK1.wav"
+},
+{
+"pad": 193,
+"name": "MM 02 KICK2",
+"file": "mm/02-KICK2.wav"
+},
+{
+"pad": 194,
+"name": "MM 03 BOOM",
+"file": "mm/03-BOOM.wav"
+},
+{
+"pad": 195,
+"name": "MM 04 HIT1",
+"file": "mm/04-HIT1.wav"
+},
+{
+"pad": 196,
+"name": "MM 05 HIT2",
+"file": "mm/05-HIT2.wav"
+},
+{
+"pad": 197,
+"name": "MM 06 HIT3",
+"file": "mm/06-HIT3.wav"
+},
+{
+"pad": 198,
+"name": "MM 07 CLANK1",
+"file": "mm/07-CLANK1.wav"
+},
+{
+"pad": 199,
+"name": "MM 08 CLANK2",
+"file": "mm/08-CLANK2.wav"
+},
+{
+"pad": 200,
+"name": "MM 09 SNARE",
+"file": "mm/09-SNARE.wav"
+},
+{
+"pad": 201,
+"name": "MM 10 HAT1",
+"file": "mm/10-HAT1.wav"
+},
+{
+"pad": 202,
+"name": "MM 11 HAT2",
+"file": "mm/11-HAT2.wav"
+},
+{
+"pad": 203,
+"name": "MM 12 METAL1",
+"file": "mm/12-METAL1.wav"
+},
+{
+"pad": 204,
+"name": "MM 13 METAL2",
+"file": "mm/13-METAL2.wav"
+},
+{
+"pad": 205,
+"name": "MM 14 METAL3",
+"file": "mm/14-METAL3.wav"
+},
+{
+"pad": 206,
+"name": "MM 15 SCRAPE",
+"file": "mm/15-SCRAPE.wav"
+},
+{
+"pad": 207,
+"name": "MM 16 FX",
+"file": "mm/16-FX.wav"
+},
+{
+"pad": 208,
+"name": "RUSH 01 KICK1",
+"file": "rush/01-KICK1.wav"
+},
+{
+"pad": 209,
+"name": "RUSH 02 KICK2",
+"file": "rush/02-KICK2.wav"
+},
+{
+"pad": 210,
+"name": "RUSH 03 KICK3",
+"file": "rush/03-KICK3.wav"
+},
+{
+"pad": 211,
+"name": "RUSH 04 KICK4",
+"file": "rush/04-KICK4.wav"
+},
+{
+"pad": 212,
+"name": "RUSH 05 CLAP1",
+"file": "rush/05-CLAP1.wav"
+},
+{
+"pad": 213,
+"name": "RUSH 06 CLAP2",
+"file": "rush/06-CLAP2.wav"
+},
+{
+"pad": 214,
+"name": "RUSH 07 SNARE1",
+"file": "rush/07-SNARE1.wav"
+},
+{
+"pad": 215,
+"name": "RUSH 08 SNARE2",
+"file": "rush/08-SNARE2.wav"
+},
+{
+"pad": 216,
+"name": "RUSH 09 HAT1",
+"file": "rush/09-HAT1.wav"
+},
+{
+"pad": 217,
+"name": "RUSH 10 HAT2",
+"file": "rush/10-HAT2.wav"
+},
+{
+"pad": 218,
+"name": "RUSH 11 HAT3",
+"file": "rush/11-HAT3.wav"
+},
+{
+"pad": 219,
+"name": "RUSH 12 OHAT",
+"file": "rush/12-OHAT.wav"
+},
+{
+"pad": 220,
+"name": "RUSH 13 PERC1",
+"file": "rush/13-PERC1.wav"
+},
+{
+"pad": 221,
+"name": "RUSH 14 PERC2",
+"file": "rush/14-PERC2.wav"
+},
+{
+"pad": 222,
+"name": "RUSH 15 CRASH",
+"file": "rush/15-CRASH.wav"
+},
+{
+"pad": 223,
+"name": "RUSH 16 FX",
+"file": "rush/16-FX.wav"
+},
+{
+"pad": 224,
+"name": "MK 01 KICK1",
+"file": "mk/01-KICK1.wav"
+},
+{
+"pad": 225,
+"name": "MK 02 KICK2",
+"file": "mk/02-KICK2.wav"
+},
+{
+"pad": 226,
+"name": "MK 03 KICK3",
+"file": "mk/03-KICK3.wav"
+},
+{
+"pad": 227,
+"name": "MK 04 KICK4",
+"file": "mk/04-KICK4.wav"
+},
+{
+"pad": 228,
+"name": "MK 05 CLAP1",
+"file": "mk/05-CLAP1.wav"
+},
+{
+"pad": 229,
+"name": "MK 06 CLAP2",
+"file": "mk/06-CLAP2.wav"
+},
+{
+"pad": 230,
+"name": "MK 07 SNARE",
+"file": "mk/07-SNARE.wav"
+},
+{
+"pad": 231,
+"name": "MK 08 HAT1",
+"file": "mk/08-HAT1.wav"
+},
+{
+"pad": 232,
+"name": "MK 09 HAT2",
+"file": "mk/09-HAT2.wav"
+},
+{
+"pad": 233,
+"name": "MK 10 HAT3",
+"file": "mk/10-HAT3.wav"
+},
+{
+"pad": 234,
+"name": "MK 11 OHAT",
+"file": "mk/11-OHAT.wav"
+},
+{
+"pad": 235,
+"name": "MK 12 RIDE1",
+"file": "mk/12-RIDE1.wav"
+},
+{
+"pad": 236,
+"name": "MK 13 RIDE2",
+"file": "mk/13-RIDE2.wav"
+},
+{
+"pad": 237,
+"name": "MK 14 PERC1",
+"file": "mk/14-PERC1.wav"
+},
+{
+"pad": 238,
+"name": "MK 15 PERC2",
+"file": "mk/15-PERC2.wav"
+},
+{
+"pad": 239,
+"name": "MK 16 FX",
+"file": "mk/16-FX.wav"
+}
+]
+}

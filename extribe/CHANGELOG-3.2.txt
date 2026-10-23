@@ -1,0 +1,23 @@
+EX-TRIBE 3.2 – Prüfstand 23.10.2026
+Grundlage: EX-TRIBE 3.1 (22), Web-Build aus der vom Nutzer bereitgestellten APK.
+
+Änderungen
+- Die 5 Import-Racks (Cannibal Cooking Club, Zybrixx, Maschinenmafia, DJ Rush, Monika Kruse) sind mit je 16 CC0-Werks-Sounds vorbelegt, 80 Sounds insgesamt (Kicks, Snares, Claps, Hats, Percs, Metall, FX).
+- Vorbelegung beim ersten Start; schreibt nur in leere Plätze. Vom Nutzer importierte Samples werden nie überschrieben.
+- Neuer Knopf „Werks-Sounds laden“ im Menü Sample-Racks: füllt leere Rack-Plätze wieder auf, zum Beispiel nach „Sample entfernen“.
+- Anzeige im Menü Sample-Racks unterscheidet „Werks-Sound (CC0)“ und „Eigenes Sample“.
+- Sounds: WAV, Mono, 44,1 kHz, 16 Bit, getrimmt, Fade-out, Peak −1 dBFS; 4,2 MB für alle 80 Dateien. Dekodierbar in Android WebView und iOS Safari.
+- Herkunft und Lizenz jeder Datei: sounds/LICENSES.md.
+
+Technik
+- Zusatzskript factory-sounds.js nutzt die vorhandene IndexedDB (extribe-samples-v1, Speicher samples, Schlüssel pad 160–239) und schreibt per add statt put, damit vorhandene Einträge unangetastet bleiben.
+- Kleine Änderungen im Bundle (assets/index-ex32.js): Wiederherstellung wartet höchstens 20 s auf die Vorbelegung; Werks-Sound-Kennzeichnung; Knopf „Werks-Sounds laden“. Alle übrigen Funktionen unverändert.
+
+Prüfungen
+Headless Chrome (Desktop-Chrome mit Mobil-Viewport), jeweils frischer Browser-Kontext ab leerer Seite, keine uncaught JavaScript-Fehler:
+Audio-Start; alle 5 Racks zeigen 16 belegte Plätze; je 2 Pads pro Rack spielen mit der erwarteten Sample-Länge; Reload behält alle 80 Samples; UI-Import auf ein Rack-Pad bleibt nach Reload erhalten und wird von „Werks-Sounds laden“ nicht überschrieben; vorhandenes 3.1-Nutzer-Sample bleibt beim Erststart erhalten (79 statt 80 Werks-Sounds geschrieben); „Sample entfernen“ und danach „Werks-Sounds laden“ füllt genau 1 Platz; eingebaute Bank 1 spielt weiter.
+Oberfläche bei 393×852 und 852×393 geprüft.
+Nicht geprüft: echtes iPhone/Safari und echtes Android-Gerät; Klangbeurteilung durch Hören.
+
+Künstler-Samples
+Die Racks enthalten keine Originalaufnahmen der genannten Künstler. Die Namen beschreiben nur den Stil der Ablage.
