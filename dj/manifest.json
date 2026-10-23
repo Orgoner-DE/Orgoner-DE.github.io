@@ -1,0 +1,19 @@
+{
+  "name": "DJ DECK 2026",
+  "short_name": "DJ DECK",
+  "description": "Virtuelles 2-Deck-DJ-Pult: eigene Tracks, EQ, Filter, BPM-Sync, Hot Cues, Loops. 18 Stil-Hommage-Themes mit synthetisierten Sounds.",
+  "lang": "de",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#0b0b10",
+  "theme_color": "#0b0b10",
+  "categories": ["music", "entertainment"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

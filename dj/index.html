@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0b10">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DJ DECK">
+<meta name="format-detection" content="telephone=no">
+<title>DJ DECK 2026</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <script type="module" crossorigin src="./assets/index-C9aLJHEH.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-Rp3a79Ic.css">
+</head>
+<body>
+<div id="app">
+  <header id="top">
+    <div class="brand">DJ DECK <b>2026</b></div>
+    <button id="themeBtn" class="chip" aria-label="Theme und Sound-Pads"><span id="themeName">Theme</span></button>
+    <button id="fxBtn" class="chip small">PADS</button>
+    <button id="proBtn" class="chip small">PRO</button>
+    <div id="moodBar" hidden title="Stimmung"><span>Stimmung</span><b><i></i></b></div>
+    <div class="master"><span>MST</span><div class="fader h" id="masterF" data-def="0.9"><div class="thumb"></div></div></div>
+  </header>
+  <section class="wave" id="waveA" data-deck="0"></section>
+  <section class="ctrl" id="ctrlA" data-deck="0"></section>
+  <section id="mix"></section>
+  <section class="ctrl" id="ctrlB" data-deck="1"></section>
+  <section class="wave" id="waveB" data-deck="1"></section>
+</div>
+<div id="sheet" class="hidden" role="dialog" aria-modal="true">
+  <div class="sheet-in">
+    <div class="sheet-head"><h2>Themes &amp; Sound-Pads</h2><button id="sheetClose" class="chip">Fertig</button></div>
+    <p class="hommage" id="hommageNote"></p>
+    <div id="padArea"></div>
+    <div class="demo"><button id="demoA" class="btn">Demo-Loop → Deck A</button><button id="demoB" class="btn">Demo-Loop → Deck B</button></div>
+    <h3>18 Themes</h3>
+    <div id="themeGrid"></div>
+    <div id="installHint" class="note"></div>
+    <p class="note">Alle Sounds und Demo-Loops werden direkt im Gerät synthetisiert. Künstlernamen dienen nur als Stil-Hommage – keine Originalsamples, keine Aufnahmen, keine Logos, keine Fotos, keine Track-Namen, keine Verbindung zu den genannten Künstlern. Eigene Tracks bleiben auf dem Gerät und werden nirgends hochgeladen.</p>
+  </div>
+</div>
+<div id="toast"></div>
+<input type="file" id="fileA" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.flac,.aif,.aiff" hidden>
+<input type="file" id="fileB" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg,.oga,.opus,.flac,.aif,.aiff" hidden>
+</body>
+</html>

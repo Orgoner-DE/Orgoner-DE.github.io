@@ -1,0 +1,7 @@
+{
+  "_hinweis": "Ohne Neubau änderbar. signalServer leer = Lobby-Server noch nicht eingerichtet (lokal auf localhost: gleicher Host /signal). Beispiel: wss://djdeck-signal.<konto>.workers.dev/signal",
+  "signalServer": "",
+  "iceServers": [
+    { "urls": ["stun:stun.cloudflare.com:3478", "stun:stun.l.google.com:19302"] }
+  ]
+}
