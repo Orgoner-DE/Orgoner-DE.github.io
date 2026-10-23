@@ -1,0 +1,36 @@
+EX-TRIBE 3.1 – Prüfstand 23.10.2026
+Grundlage: vom Nutzer bereitgestellte EX-TRIBE.apk, Version 3.0 (21).
+
+Änderungen
+- Live-Pads: Anschlag bei Berührung; Doppeltrigger durch nachfolgendes Klickereignis behoben.
+- Sequenzer: Pad-Auswahl ohne Ton; Step-Tipp schaltet direkt an/aus. Spezialschritte über Werkzeugauswahl.
+- Größere Touch-Flächen, Spur-AN/AUS, abschaltbares automatisches Mitlaufen.
+- Menüleiste mit Spielen, MIDI und Sample-Racks.
+- MIDI-Lernen und manuelle MIDI-Notenzuweisung 0–127, gespeicherte Zuordnungen löschbar.
+- Android-Dateiauswahl ergänzt, einschließlich Abbruch und Ergebnisübergabe.
+- Sample-Import mit lokaler IndexedDB-Speicherung; 8 MB / 30 s pro Datei, 64 MB gespeicherte Dateien, 128 MB dekodierte eigene Samples. Codec-Verfügbarkeit hängt von Android WebView ab.
+- 5 zusätzliche Import-Racks mit jeweils 16 leeren Plätzen: Cannibal Cooking Club, Zybrixx, Maschinenmafia, DJ Rush, Monika Kruse.
+- Spezialschritte aller vier Sequenzplätze bleiben nach Neustart erhalten.
+- Gestoppte Pad-Quellen und geplante Pad-Leuchten werden aufgeräumt; Audio-Nodes werden nach Wiedergabe getrennt.
+- Scheduler-Nachholflut nach längerer Pause begrenzt. Pad-Leuchten am geplanten Audiostart ausgerichtet.
+- Abgebrochene Regler-Gesten zurückgesetzt; Speicherfehler angezeigt.
+- Tempo 40–240 BPM: langsamere bestehende Presets werden beim Laden nicht mehr auf 120 BPM begrenzt.
+
+Prüfungen
+13 automatisierte Browser-Integrationsprüfungen bestanden, keine uncaught JavaScript-Fehler:
+Audio-Start; stille Pad-Auswahl; binäre Steps; einzelner Touch-Anschlag; MIDI-Zuweisung; simuliertes natives MIDI-Routing; separate Import-Bank; WAV-Import; ungültige Datei ohne Überschreiben vorhandenen Samples; Sample-Neustart; MIDI-Neustart; Stop/Quellenbereinigung; Spezialschritte A/B nach Neustart.
+Oberfläche bei 412×915 und 915×412 geprüft.
+JavaScript-Syntax, DEX-Struktur, ZIP-Integrität, Manifest, APK-Signatur v1/v2/v3 und resources.arsc-Ausrichtung geprüft.
+Kein Android-Gerät oder Emulator verfügbar: Installation, native Dateiauswahl und reale USB-/Bluetooth-MIDI-Verbindungen sind nicht praktisch auf Android getestet. Dies ist keine Malware-Zertifizierung oder Garantie der Fehlerfreiheit.
+
+Installation
+Eigene App-Kennung de.extribe.studio, Version 3.1 (22), neuer lokaler Test-Signaturschlüssel.
+Installiert neben der ursprünglichen App. Alte App und Projekte bleiben erhalten; kein automatischer Datentransfer.
+Bluetooth-/MIDI-Berechtigungen der Vorlage bleiben erhalten. Keine neue Internet-, Mikrofon- oder allgemeine Speicherberechtigung.
+
+Künstler-Samples
+Die zusätzlichen Racks enthalten keine Originalaufnahmen der genannten Künstler. Für die Recherche wurden keine verifizierten Original-Samplepacks aller fünf Künstler gefunden. Die Racks dienen als getrennte Ablagen für vom Nutzer importierte Dateien.
+Beispiele gefundener Drittanbieter-Packs, nicht heruntergeladen oder eingebaut:
+https://www.loopmasters.com/genres/176-Industrial-Techno/products/15402-Riemann-Hard-Techno-5
+https://www.samplesoundmusic.com/products/premium-techno-by-keah
+Diese werden als inspiriert von Künstlern beschrieben; sie sind keine verifizierten Originalpacks von DJ Rush oder Monika Kruse.
