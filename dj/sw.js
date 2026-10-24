@@ -1,6 +1,6 @@
 // DJ DECK 2026 – Offline-Cache (automatisch erzeugt)
-const CACHE = 'djdeck-6c4ab4feec13';
-const URLS = ["./","./assets/index-Bvf8HOp_.css","./assets/index-Cw_VKTG6.js","./config.json","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/maskable-512.png","./index.html","./manifest.json"];
+const CACHE = 'djdeck-0fd68fcff3e3';
+const URLS = ["./","./assets/index-D4ywGHp8.js","./assets/index-DoGb22LA.css","./config.json","./icons/apple-touch-icon.png","./icons/icon-192.png","./icons/icon-512.png","./icons/maskable-512.png","./index.html","./manifest.json"];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(URLS)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k.startsWith('djdeck-') && k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', e => {
