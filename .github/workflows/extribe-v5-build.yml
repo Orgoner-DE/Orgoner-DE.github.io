@@ -1,11 +1,11 @@
-name: Build EX-TRIBE PRO 5.0 (Android + iOS)
+name: Build EX-TRIBE PRO 5.2 (Android + iOS)
 on:
   push:
-    branches: [extribe5-build-20261025, main]
+    branches: [extribe52-build-20261025, main]
     paths: ["extribe5/**", ".github/workflows/extribe-v5-build.yml"]
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -27,14 +27,24 @@ jobs:
       - name: Copy shared Web assets into Android
         run: |
           mkdir -p extribe5/native/Android/app/src/main/assets
-          cp extribe5/{index.html,app.css,app.js,packs.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/Android/app/src/main/assets/
+          cp extribe5/{index.html,app.css,app.js,packs.js,packs_extra.js,midi.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/Android/app/src/main/assets/
       - name: Build Android APK
         run: gradle -p extribe5/native/Android --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: EXTRIBE-PRO-5.0-Android-APK
+          name: EXTRIBE-PRO-5.2-Android-APK
           path: extribe5/native/Android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+      - name: Publish APK in EX-TRIBE site directory
+        run: |
+          cp extribe5/native/Android/app/build/outputs/apk/debug/app-debug.apk extribe5/EXTRIBE-PRO-5.2.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add extribe5/EXTRIBE-PRO-5.2.apk
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish EX-TRIBE PRO 5.2 Android APK [skip ci]"
+            git push origin HEAD:"$GITHUB_REF_NAME"
+          fi
   ios:
     runs-on: macos-15
     steps:
@@ -42,20 +52,20 @@ jobs:
       - name: Copy shared Web assets into Xcode
         run: |
           mkdir -p extribe5/native/iOS/EXTRIBE/www
-          cp extribe5/{index.html,app.css,app.js,packs.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/iOS/EXTRIBE/www/
+          cp extribe5/{index.html,app.css,app.js,packs.js,packs_extra.js,midi.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/iOS/EXTRIBE/www/
       - name: Build iOS Simulator App
         run: >
           xcodebuild -project extribe5/native/iOS/EXTRIBE.xcodeproj
           -scheme EXTRIBE -configuration Debug
           -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
-          -derivedDataPath "$RUNNER_TEMP/EXTRIBE5"
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE52"
           CODE_SIGNING_ALLOWED=NO build
       - name: Package simulator app
         run: |
-          cd "$RUNNER_TEMP/EXTRIBE5/Build/Products/Debug-iphonesimulator"
-          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-5.0-iOS-Simulator.zip" EXTRIBE.app
+          cd "$RUNNER_TEMP/EXTRIBE52/Build/Products/Debug-iphonesimulator"
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-5.2-iOS-Simulator.zip" EXTRIBE.app
       - uses: actions/upload-artifact@v4
         with:
-          name: EXTRIBE-PRO-5.0-iOS-Simulator
-          path: EXTRIBE-5.0-iOS-Simulator.zip
+          name: EXTRIBE-PRO-5.2-iOS-Simulator
+          path: EXTRIBE-5.2-iOS-Simulator.zip
           if-no-files-found: error
