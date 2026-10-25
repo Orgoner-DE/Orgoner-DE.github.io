@@ -1,4 +1,4 @@
-/* EX-TRIBE PRO 5.2: Web MIDI and native CoreMIDI / Android MIDI bridge.
+/* EX-TRIBE PRO 5.3: Web MIDI and native CoreMIDI / Android MIDI bridge.
  * Mapping storage is separate from projects so a new blank session keeps controller assignments.
  */
 (()=>{'use strict';
@@ -90,7 +90,7 @@ window.EXTRIBE_MIDI_receive=ev=>{if(ev&&Array.isArray(ev.bytes))processBytes(ev.
 window.EXTRIBE_MIDI_devices=list=>{updateInputs(list);connected=true;info(list.length?`MIDI bereit · ${list.length} Eingang/Eingänge`:'MIDI bereit · kein Controller gefunden',!!list.length)};
 async function exportPreset(){
  const obj={kind:'EXTRIBE_MIDI_LEARN',version:2,channel,mappings,exportedAt:new Date().toISOString()};
- try{await api.saveBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),'EXTRIBE-MIDI-Preset-5.2.json');feedback('MIDI-Preset exportiert')}
+ try{await api.saveBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),'EXTRIBE-MIDI-Preset-5.3.json');feedback('MIDI-Preset exportiert')}
  catch(e){feedback('MIDI-Preset-Export fehlgeschlagen: '+e.message)}
 }
 $('midiConnect').onclick=connect;
