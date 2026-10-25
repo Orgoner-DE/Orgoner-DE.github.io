@@ -2,6 +2,7 @@ package de.orgoner.extribe;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.ClipData;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
@@ -78,6 +79,7 @@ public final class MainActivity extends Activity {
                 Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
                 intent.setType("*/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 try { startActivityForResult(intent, PICK_FILE); return true; }
                 catch (Exception ex) { chooser.onReceiveValue(null); chooser = null; return false; }
             }
@@ -121,8 +123,15 @@ public final class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == PICK_FILE) {
             if (chooser != null) {
-                Uri uri = resultCode == RESULT_OK && data != null ? data.getData() : null;
-                chooser.onReceiveValue(uri == null ? null : new Uri[]{uri});
+                Uri[] uris = null;
+                if(resultCode == RESULT_OK && data != null){
+                    ClipData clip = data.getClipData();
+                    if(clip != null){
+                        uris = new Uri[clip.getItemCount()];
+                        for(int i=0;i<uris.length;i++)uris[i]=clip.getItemAt(i).getUri();
+                    }else if(data.getData()!=null){uris=new Uri[]{data.getData()};}
+                }
+                chooser.onReceiveValue(uris);
                 chooser = null;
             }
         } else if (requestCode == SAVE_FILE) {
@@ -138,6 +147,22 @@ public final class MainActivity extends Activity {
         }
     }
     private final class ProjectStorage {
+        @JavascriptInterface public boolean saveLibrary(String contents) {
+            if(contents == null || contents.length() > 45 * 1048576) return false;
+            try {
+                java.nio.file.Path dst = new File(getFilesDir(), "extribe-user-packs.json").toPath();
+                java.nio.file.Path tmp = new File(getFilesDir(), "extribe-user-packs.tmp").toPath();
+                Files.write(tmp, contents.getBytes(StandardCharsets.UTF_8));
+                try { Files.move(tmp,dst,java.nio.file.StandardCopyOption.REPLACE_EXISTING,java.nio.file.StandardCopyOption.ATOMIC_MOVE); }
+                catch(java.nio.file.AtomicMoveNotSupportedException ex){Files.move(tmp,dst,java.nio.file.StandardCopyOption.REPLACE_EXISTING);}
+                return true;
+            } catch(Exception ex){return false;}
+        }
+        @JavascriptInterface public String loadLibrary() {
+            try {File f=new File(getFilesDir(),"extribe-user-packs.json");if(!f.isFile()||f.length()>45*1048576)return "";return new String(Files.readAllBytes(f.toPath()),StandardCharsets.UTF_8);}
+            catch(Exception e){return "";}
+        }
+
         @JavascriptInterface public boolean save(String contents) {
             if (contents == null || contents.length() > 100 * 1048576) return false;
             try { Files.write(new File(getFilesDir(), "extribe-pro-project.json").toPath(), contents.getBytes(StandardCharsets.UTF_8));return true; }
