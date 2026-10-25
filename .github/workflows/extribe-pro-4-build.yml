@@ -1,0 +1,56 @@
+name: EXTRIBE PRO 4 Android iOS
+on:
+  push:
+    branches: [extribe-pro-4-20261025]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack EXTRIBE
+        run: unzip -q extribe-pro-4.0.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Android SDK
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+          test -x "$SDKMGR"
+          yes | "$SDKMGR" --licenses > /dev/null || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Assemble debug APK
+        run: gradle -p EXTRIBE-PRO-4.0/Android --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-PRO-4-Android-APK
+          path: EXTRIBE-PRO-4.0/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack EXTRIBE
+        run: unzip -q extribe-pro-4.0.zip
+      - name: Build iPhone simulator application
+        run: >
+          xcodebuild -project EXTRIBE-PRO-4.0/iOS/EXTRIBE.xcodeproj
+          -scheme EXTRIBE -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE"
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Zip iOS Simulator App
+        run: |
+          cd "$RUNNER_TEMP/EXTRIBE/Build/Products/Debug-iphonesimulator"
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-PRO-4.0-iOS-Simulator.zip" EXTRIBE.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-PRO-4-iOS-Simulator
+          path: EXTRIBE-PRO-4.0-iOS-Simulator.zip
+          if-no-files-found: error
