@@ -1,0 +1,61 @@
+name: Build EX-TRIBE PRO 5.0 (Android + iOS)
+on:
+  push:
+    branches: [extribe5-build-20261025, main]
+    paths: ["extribe5/**", ".github/workflows/extribe-v5-build.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare Android SDK
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+          test -x "$SDKMGR"
+          yes | "$SDKMGR" --licenses >/dev/null || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Copy shared Web assets into Android
+        run: |
+          mkdir -p extribe5/native/Android/app/src/main/assets
+          cp extribe5/{index.html,app.css,app.js,packs.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/Android/app/src/main/assets/
+      - name: Build Android APK
+        run: gradle -p extribe5/native/Android --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-PRO-5.0-Android-APK
+          path: extribe5/native/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy shared Web assets into Xcode
+        run: |
+          mkdir -p extribe5/native/iOS/EXTRIBE/www
+          cp extribe5/{index.html,app.css,app.js,packs.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/iOS/EXTRIBE/www/
+      - name: Build iOS Simulator App
+        run: >
+          xcodebuild -project extribe5/native/iOS/EXTRIBE.xcodeproj
+          -scheme EXTRIBE -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE5"
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Package simulator app
+        run: |
+          cd "$RUNNER_TEMP/EXTRIBE5/Build/Products/Debug-iphonesimulator"
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-5.0-iOS-Simulator.zip" EXTRIBE.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-PRO-5.0-iOS-Simulator
+          path: EXTRIBE-5.0-iOS-Simulator.zip
+          if-no-files-found: error
