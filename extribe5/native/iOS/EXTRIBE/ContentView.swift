@@ -30,6 +30,7 @@ struct EXTRIBEWebView: UIViewRepresentable {
     static func dismantleUIView(_ uiView: WKWebView, coordinator: Coordinator) {
         uiView.configuration.userContentController.removeScriptMessageHandler(forName: "studioExport")
         uiView.configuration.userContentController.removeScriptMessageHandler(forName: "projectStorage")
+        uiView.configuration.userContentController.removeScriptMessageHandler(forName: "updateBridge")
     }
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
         private var exported = Data()
@@ -90,12 +91,13 @@ struct EXTRIBEWebView: UIViewRepresentable {
             do {
                 let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
                 try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-                let file = directory.appendingPathComponent("extribe-project.json")
-                if kind == "save" {
+                let isLibrary = kind == "librarySave" || kind == "libraryLoad"
+                let file = directory.appendingPathComponent(isLibrary ? "extribe-user-packs.json" : "extribe-project.json")
+                if kind == "save" || kind == "librarySave" {
                     guard let content = payload["content"] as? String, content.utf8.count <= 100 * 1048576 else { throw NSError(domain: "EXTRIBE", code: 10) }
                     try Data(content.utf8).write(to: file, options: .atomic)
                     response["ok"] = true
-                } else if kind == "load" {
+                } else if kind == "load" || kind == "libraryLoad" {
                     if FileManager.default.fileExists(atPath: file.path) {
                         let data = try Data(contentsOf: file)
                         guard data.count <= 100 * 1048576, let content = String(data: data, encoding: .utf8) else { throw NSError(domain: "EXTRIBE", code: 11) }
