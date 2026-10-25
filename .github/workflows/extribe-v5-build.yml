@@ -1,7 +1,7 @@
-name: Build EX-TRIBE PRO 5.2 (Android + iOS)
+name: Build EX-TRIBE PRO 5.3 (Android + iOS)
 on:
   push:
-    branches: [extribe52-build-20261025, main]
+    branches: [extribe53-build-20261025, main]
     paths: ["extribe5/**", ".github/workflows/extribe-v5-build.yml"]
   workflow_dispatch:
 permissions:
@@ -32,7 +32,7 @@ jobs:
         run: gradle -p extribe5/native/Android --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: EXTRIBE-PRO-5.2-Android-APK
+          name: EXTRIBE-PRO-5.3-Android-APK
           path: extribe5/native/Android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
       - name: Publish APK in EX-TRIBE site directory
@@ -42,7 +42,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add extribe5/EXTRIBE-PRO-5.2.apk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish EX-TRIBE PRO 5.2 Android APK [skip ci]"
+            git commit -m "Publish EX-TRIBE PRO 5.3 Android APK [skip ci]"
             git push origin HEAD:"$GITHUB_REF_NAME"
           fi
   ios:
@@ -63,9 +63,9 @@ jobs:
       - name: Package simulator app
         run: |
           cd "$RUNNER_TEMP/EXTRIBE52/Build/Products/Debug-iphonesimulator"
-          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-5.2-iOS-Simulator.zip" EXTRIBE.app
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-5.3-iOS-Simulator.zip" EXTRIBE.app
       - uses: actions/upload-artifact@v4
         with:
-          name: EXTRIBE-PRO-5.2-iOS-Simulator
-          path: EXTRIBE-5.2-iOS-Simulator.zip
+          name: EXTRIBE-PRO-5.3-iOS-Simulator
+          path: EXTRIBE-5.3-iOS-Simulator.zip
           if-no-files-found: error
