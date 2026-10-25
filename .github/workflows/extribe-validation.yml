@@ -1,0 +1,23 @@
+name: Verify EXTRIBE iOS Xcode Config
+on:
+  push:
+    branches: [extribe-ios-signing-validation-20261025]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile SwiftUI + Xcode signing configuration
+        run: >
+          xcodebuild -project extribe-validation/EXTRIBE.xcodeproj
+          -scheme EXTRIBE -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE"
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Check compiled app
+        run: |
+          test -d "$RUNNER_TEMP/EXTRIBE/Build/Products/Debug-iphonesimulator/EXTRIBE.app"
+          /usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$RUNNER_TEMP/EXTRIBE/Build/Products/Debug-iphonesimulator/EXTRIBE.app/Info.plist"
