@@ -31,6 +31,7 @@ public final class MainActivity extends Activity {
     private static final int PICK_FILE = 1001;
     private static final int SAVE_FILE = 1002;
     private WebView web;
+    private MidiBridge midiBridge;
     private ValueCallback<Uri[]> chooser;
     private OutputStream out;
     private boolean receiving;
@@ -56,6 +57,8 @@ public final class MainActivity extends Activity {
         web.addJavascriptInterface(new ExportBridge(), "AndroidExport");
         web.addJavascriptInterface(new ProjectStorage(), "AndroidProjectStorage");
         web.addJavascriptInterface(new UpdateBridge(), "AndroidUpdate");
+        midiBridge = new MidiBridge(this, web);
+        web.addJavascriptInterface(midiBridge, "AndroidMidi");
         web.setWebViewClient(new WebViewClient() {
             @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 Uri url = request.getUrl();
@@ -212,6 +215,7 @@ public final class MainActivity extends Activity {
     @Override protected void onDestroy() {
         closeOutput();
         if (chooser != null) { chooser.onReceiveValue(null); chooser = null; }
+        if (midiBridge != null) { midiBridge.close(); midiBridge = null; }
         if (web != null) { web.destroy(); web = null; }
         super.onDestroy();
     }

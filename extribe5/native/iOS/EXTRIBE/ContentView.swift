@@ -16,6 +16,7 @@ struct EXTRIBEWebView: UIViewRepresentable {
         configuration.userContentController.add(context.coordinator, name: "studioExport")
         configuration.userContentController.add(context.coordinator, name: "projectStorage")
         configuration.userContentController.add(context.coordinator, name: "updateBridge")
+        configuration.userContentController.add(context.coordinator, name: "midiBridge")
         let webView = WKWebView(frame: .zero, configuration: configuration)
         webView.navigationDelegate = context.coordinator
         webView.uiDelegate = context.coordinator
@@ -24,6 +25,7 @@ struct EXTRIBEWebView: UIViewRepresentable {
         webView.backgroundColor = UIColor(red: 10 / 255, green: 15 / 255, blue: 24 / 255, alpha: 1)
         guard let url = Bundle.main.url(forResource: "index", withExtension: "html", subdirectory: "www") else { return webView }
         webView.loadFileURL(url, allowingReadAccessTo: url.deletingLastPathComponent())
+        context.coordinator.midi.webView = webView
         return webView
     }
     func updateUIView(_ uiView: WKWebView, context: Context) {}
@@ -31,8 +33,10 @@ struct EXTRIBEWebView: UIViewRepresentable {
         uiView.configuration.userContentController.removeScriptMessageHandler(forName: "studioExport")
         uiView.configuration.userContentController.removeScriptMessageHandler(forName: "projectStorage")
         uiView.configuration.userContentController.removeScriptMessageHandler(forName: "updateBridge")
+        uiView.configuration.userContentController.removeScriptMessageHandler(forName: "midiBridge")
     }
     final class Coordinator: NSObject, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
+        let midi = MidiCoreBridge()
         private var exported = Data()
         private var expected = 0
         private var exportName = "EXTRIBE.json"
@@ -41,6 +45,10 @@ struct EXTRIBEWebView: UIViewRepresentable {
             guard message.frameInfo.isMainFrame,
                   let payload = message.body as? [String: Any],
                   let kind = payload["kind"] as? String else { return }
+            if message.name == "midiBridge" {
+                midi.handle(payload)
+                return
+            }
             if message.name == "updateBridge" {
                 updateRequest(payload, webView: message.webView)
                 return
@@ -92,12 +100,13 @@ struct EXTRIBEWebView: UIViewRepresentable {
                 let directory = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
                 try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
                 let isLibrary = kind == "librarySave" || kind == "libraryLoad"
-                let file = directory.appendingPathComponent(isLibrary ? "extribe-user-packs.json" : "extribe-project.json")
-                if kind == "save" || kind == "librarySave" {
+                let isMidi = kind == "midiSave" || kind == "midiLoad"
+                let file = directory.appendingPathComponent(isMidi ? "extribe-midi-mappings.json" : (isLibrary ? "extribe-user-packs.json" : "extribe-project.json"))
+                if kind == "save" || kind == "librarySave" || kind == "midiSave" {
                     guard let content = payload["content"] as? String, content.utf8.count <= 100 * 1048576 else { throw NSError(domain: "EXTRIBE", code: 10) }
                     try Data(content.utf8).write(to: file, options: .atomic)
                     response["ok"] = true
-                } else if kind == "load" || kind == "libraryLoad" {
+                } else if kind == "load" || kind == "libraryLoad" || kind == "midiLoad" {
                     if FileManager.default.fileExists(atPath: file.path) {
                         let data = try Data(contentsOf: file)
                         guard data.count <= 100 * 1048576, let content = String(data: data, encoding: .utf8) else { throw NSError(domain: "EXTRIBE", code: 11) }
