@@ -1,19 +1,130 @@
-/* EX-TRIBE PRO 5.4 | Song Arranger | no bundled samples, no preset patterns, FX disabled by default */
+/* EX-TRIBE PRO 5.3 | no bundled samples, no preset patterns, FX disabled by default */
 (()=>{'use strict';
 const $=id=>document.getElementById(id), BANKS=4, PADS=16, MAX_STEPS=32, ALLOWED_AUDIO=/\.(wav|mp3|m4a|aac|ogg|flac|aiff?)$/i;
 const factoryTrack=i=>({name:`PAD ${String(i+1).padStart(2,'0')}`,sampleName:'',sampleData:null,mute:false,volume:85,steps:Array(MAX_STEPS).fill(false),fxMode:'dry',buffer:null});
-const blankProject=()=>({version:5,song:{patterns:[],clips:[],loop:false},name:'Neues Projekt',bpm:120,swing:0,master:80,length:16,fx:false,filter:18000,delay:0,fxPreset:'dry',masterDrive:0,banks:Array.from({length:BANKS},()=>Array.from({length:PADS},(_,i)=>factoryTrack(i)))});
-let project=blankProject(),bank=0,view='steps',playing=false,ctx=null,mixBus=null,masterGain=null,compressor=null,fxBypass=null,fxMain=null,fxFilter=null,fxSend=null,fxDelay=null,fxFeedback=null,fxReturn=null,masterClipper=null,masterDry=null,masterWet=null,timer=null,playhead=-1,nextStep=0,nextTime=0,sampleTarget=null,dialogConfirm=null,toastTimer=null,openedFromSave=false;
+const blankProject=()=>({version:5,name:'Neues Projekt',bpm:120,swing:0,master:80,length:16,fx:false,filter:18000,delay:0,fxPreset:'dry',masterDrive:0,songPatterns:[],arrangement:[],songLoop:false,banks:Array.from({length:BANKS},()=>Array.from({length:PADS},(_,i)=>factoryTrack(i)))});
+let project=blankProject(),bank=0,view='steps',playing=false,ctx=null,mixBus=null,masterGain=null,compressor=null,fxBypass=null,fxMain=null,fxFilter=null,fxSend=null,fxDelay=null,fxFeedback=null,fxReturn=null,masterClipper=null,masterDry=null,masterWet=null,timer=null,playhead=-1,nextStep=0,nextTime=0,sampleTarget=null,dialogConfirm=null,toastTimer=null,openedFromSave=false,playMode='pattern',songQueue=[],songPointer=0,songFinishPending=false,playRunId=0;
 const pad=(b,i)=>project.banks[b][i];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function showToast(s){const t=$('toast');t.textContent=s;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2700)}
 function setDirty(){openedFromSave=false;$('saveStatus').textContent='Ungespeicherte Änderungen';updateMeta()}
-function updateMeta(){const count=project.banks.reduce((n,b)=>n+b.filter(t=>!!t.sampleData).length,0);$('footerMeta').textContent=`${'ABCD'[bank]} · ${count} SAMPLES · FX ${project.fx?'AN':'AUS'} · 5.4`}
-function setView(v){view=v;for(const a of ['steps','live','mixer','packs','midi'])$(a+'View').classList.toggle('hidden',a!==v);document.querySelectorAll('.view-button').forEach(e=>e.classList.toggle('active',e.dataset.view===v));
- const h={steps:['STEP-SEQUENCER','Alle 16 Pads pro Bank. Tippen = Step an/aus.'],live:['LIVE + SONG-ARRANGER','Banks swipen, Patterns auswählen und zum Track anordnen.'],mixer:['MIXER / FX','Lautstärken und optionale Effekte.'],packs:['SAMPLE-PACKS','19 eigenständige Stil-Packs mit 304 Sounds und eigene Sample-Updates.'],midi:['MIDI LEARN','Controller verbinden, Aktionen zuweisen und Presets speichern.']};$('viewTitle').textContent=h[v][0];$('viewSubtitle').textContent=h[v][1];if(v==='steps')renderSteps();else if(v==='live'){renderLive();window.EXTRIBE_SONG?.render?.()}else if(v==='mixer')renderMixer();else if(v==='packs'){renderPacks();renderCustomPacks()}else if(v==='midi')window.EXTRIBE_MIDI?.render?.()}
-function setBank(b){if(!Number.isInteger(b)||b<0||b>=BANKS)return;bank=b;document.querySelectorAll('.bank').forEach(e=>e.classList.toggle('active',Number(e.dataset.bank)===bank));setView(view);updateMeta();window.EXTRIBE_SONG?.bankChanged?.(b);}
+function updateMeta(){const count=project.banks.reduce((n,b)=>n+b.filter(t=>!!t.sampleData).length,0);$('footerMeta').textContent=`${'ABCD'[bank]} · ${count} SAMPLES · FX ${project.fx?'AN':'AUS'} · 5.5`}
+function setView(v){view=v;for(const a of ['steps','live','song','presets','mixer','packs','midi'])$(a+'View').classList.toggle('hidden',a!==v);document.querySelectorAll('.view-button').forEach(e=>e.classList.toggle('active',e.dataset.view===v));
+ const h={steps:['STEP-SEQUENCER','Alle 16 Pads pro Bank. Tippen = Step an/aus.'],live:['LIVE-PATTERN','Pads spielen · nach links wischen → Song-Arranger.'],song:['SONG-ARRANGER','Patterns und ganze Banken in eine Timeline ziehen oder antippen.'],presets:['PERFORMANCE PRESETS','Komplette Ost-Tekk-Sets: vier Banken, fertige Patterns, FX und Song.'],mixer:['MIXER / FX','Lautstärken und optionale Effekte.'],packs:['SAMPLE-PACKS','19 eigenständige Stil-Packs mit 304 Sounds und eigene Sample-Updates.'],midi:['MIDI LEARN','Controller verbinden, Aktionen zuweisen und Presets speichern.']};$('viewTitle').textContent=h[v][0];$('viewSubtitle').textContent=h[v][1];if(v==='steps')renderSteps();else if(v==='live')renderLive();else if(v==='song')renderSong();else if(v==='presets')renderPerformancePresets();else if(v==='mixer')renderMixer();else if(v==='packs'){renderPacks();renderCustomPacks()}else if(v==='midi')window.EXTRIBE_MIDI?.render?.()}
+function setBank(b){if(!Number.isInteger(b)||b<0||b>=BANKS)return;bank=b;document.querySelectorAll('.bank').forEach(e=>e.classList.toggle('active',Number(e.dataset.bank)===bank));setView(view);updateMeta();}
 function label(i){return `P${String(i+1).padStart(2,'0')}`}
 function sampleShort(t){return t.sampleName||'LEER'}
+// ===== EX-TRIBE PRO 5.4: song arranger =====
+const songId=()=>`pat_${Date.now().toString(36)}_${Math.random().toString(36).slice(2,9)}`;
+function savePattern(b=bank,customName=''){
+ if(!Number.isInteger(b)||b<0||b>=BANKS)return null;
+ if(project.songPatterns.length>=128){showToast('Maximal 128 Pattern-Snapshots');return null}
+ const name=String(customName||`Bank ${'ABCD'[b]} · Pattern ${project.songPatterns.length+1}`).trim().slice(0,55);
+ const p={id:songId(),name:name||'Pattern',bank:b,length:project.length,steps:project.banks[b].map(t=>t.steps.slice())};
+ project.songPatterns.push(p);setDirty();if(view==='song')renderSong();return p.id
+}
+function addSongClip(id,insertAt=project.arrangement.length){if(playing&&playMode==='song')stopPlayback();
+ if(project.arrangement.length>=64)return showToast('Song-Timeline: maximal 64 Blöcke');
+ if(!project.songPatterns.some(p=>p.id===id))return showToast('Pattern fehlt');
+ project.arrangement.splice(Math.max(0,Math.min(project.arrangement.length,Number(insertAt)||0)),0,{patternId:id,repeats:1});
+ setDirty();if(view==='song')renderSong();return true
+}
+function addBankToSong(b){const id=savePattern(b,`Bank ${'ABCD'[b]} · Snapshot`);if(id)addSongClip(id)}
+function moveSongClip(from,to){if(playing&&playMode==='song')stopPlayback();
+ if(!Number.isInteger(from)||!Number.isInteger(to)||from<0||from>=project.arrangement.length||to<0||to>=project.arrangement.length||from===to)return false;
+ const [clip]=project.arrangement.splice(from,1);project.arrangement.splice(to,0,clip);setDirty();if(view==='song')renderSong();return true
+}
+function removeSongClip(i){if(playing&&playMode==='song')stopPlayback();if(i<0||i>=project.arrangement.length)return;project.arrangement.splice(i,1);setDirty();renderSong()}
+function updateSongRepeat(i,delta){if(playing&&playMode==='song')stopPlayback();const clip=project.arrangement[i];if(!clip)return;clip.repeats=Math.max(1,Math.min(8,clip.repeats+delta));setDirty();renderSong()}
+function deleteSongPattern(id){if(playing&&playMode==='song')stopPlayback();if(project.arrangement.some(c=>c.patternId===id)){showToast('Pattern wird noch im Song benutzt. Erst Blöcke entfernen.');return}project.songPatterns=project.songPatterns.filter(p=>p.id!==id);setDirty();renderSong()}
+function buildSongQueue(){
+ const result=[],library=new Map(project.songPatterns.map(p=>[p.id,p]));
+ project.arrangement.forEach((clip,clipIndex)=>{const pat=library.get(clip.patternId);if(!pat)return;
+  for(let r=0;r<Math.max(1,Math.min(8,clip.repeats));r++)for(let step=0;step<pat.length;step++)result.push({clip:clipIndex,bank:pat.bank,steps:pat.steps,step})
+ });return result
+}
+function songSeconds(){const steps=buildSongQueue();return steps.length*60/Math.max(40,project.bpm)/4}
+function markSongClip(i){document.querySelectorAll('.song-clip').forEach((c,n)=>c.classList.toggle('song-playing',i>=0&&n===i));const counter=$('songPosition');if(counter&&i>=0)counter.textContent=`BLOCK ${i+1}/${project.arrangement.length}`;else if(counter)counter.textContent='START'}
+function songClock(total){if(!Number.isFinite(total))return '0:00';const x=Math.ceil(total);return `${Math.floor(x/60)}:${String(x%60).padStart(2,'0')}`}
+function renderSong(){
+ const lib=$('songLibrary'),line=$('songTimeline');if(!lib||!line)return;
+ const frag=document.createDocumentFragment();
+ for(const p of project.songPatterns){const card=document.createElement('div');card.className='song-pattern';card.draggable=true;card.dataset.patternId=p.id;
+  card.innerHTML=`<b>${esc(p.name)}</b><small>BANK ${'ABCD'[p.bank]} · ${p.length} STEPS</small>`;
+  const touchHandle=document.createElement('span');touchHandle.className='song-source-handle';touchHandle.textContent='⠿';touchHandle.title='Pattern per Touch ziehen';touchHandle.setAttribute('aria-label','Pattern ziehen');
+  attachTouchPatternDrag(touchHandle,p.id,card);
+  const add=document.createElement('button');add.className='song-add';add.textContent='+ TIMELINE';add.onclick=()=>addSongClip(p.id);
+  const del=document.createElement('button');del.className='song-delete';del.textContent='✕';del.title='Snapshot löschen';del.onclick=()=>deleteSongPattern(p.id);
+  card.append(touchHandle,add,del);card.addEventListener('dragstart',e=>{e.dataTransfer?.setData('text/plain',p.id);e.dataTransfer?.setData('application/x-extribe-pattern',p.id)});
+  frag.append(card)
+ }lib.replaceChildren(frag);
+ const all=document.createDocumentFragment();project.arrangement.forEach((clip,i)=>{
+  const p=project.songPatterns.find(x=>x.id===clip.patternId);if(!p)return;
+  const box=document.createElement('div');box.className='song-clip';box.dataset.clipIndex=i;box.draggable=true;
+  box.innerHTML=`<div class="song-clip-head"><span class="song-drag" aria-label="Block ziehen" title="Ziehen zum Sortieren">⠿</span><b>${i+1}. ${esc(p.name)}</b><small>BANK ${'ABCD'[p.bank]}</small></div><div class="song-clip-controls"><button class="clip-move-left" aria-label="Nach links">←</button><button class="clip-repeat-minus" aria-label="Wiederholungen reduzieren">−</button><span>${clip.repeats}×</span><button class="clip-repeat-plus" aria-label="Wiederholungen erhöhen">+</button><button class="clip-move-right" aria-label="Nach rechts">→</button><button class="clip-remove" aria-label="Block löschen">✕</button></div>`;
+  box.querySelector('.clip-move-left').onclick=()=>moveSongClip(i,i-1);
+  box.querySelector('.clip-move-right').onclick=()=>moveSongClip(i,i+1);
+  box.querySelector('.clip-repeat-minus').onclick=()=>updateSongRepeat(i,-1);
+  box.querySelector('.clip-repeat-plus').onclick=()=>updateSongRepeat(i,+1);
+  box.querySelector('.clip-remove').onclick=()=>removeSongClip(i);
+  box.addEventListener('dragstart',e=>{e.dataTransfer?.setData('application/x-extribe-clip',String(i));e.dataTransfer?.setData('text/plain',String(i))});
+  box.addEventListener('dragover',e=>{e.preventDefault();box.classList.add('song-drag-over')});
+  box.addEventListener('dragleave',()=>box.classList.remove('song-drag-over'));
+  box.addEventListener('drop',e=>{e.preventDefault();box.classList.remove('song-drag-over');const from=e.dataTransfer?.getData('application/x-extribe-clip');const id=e.dataTransfer?.getData('application/x-extribe-pattern'),bankId=e.dataTransfer?.getData('application/x-extribe-bank');if(from!=='')moveSongClip(Number(from),i);else if(id)addSongClip(id,i);else if(bankId!==''){const b=Number(bankId);if(Number.isInteger(b)&&b>=0&&b<4){const snapshot=savePattern(b,`Bank ${'ABCD'[b]} · Snapshot`);if(snapshot)addSongClip(snapshot,i)}}});
+  attachTouchClipDrag(box,i);all.append(box)
+ });line.replaceChildren(all);
+ $('songEmpty').classList.toggle('hidden',!!project.arrangement.length);
+ $('songStats').textContent=`${project.songPatterns.length} PATTERNS · ${project.arrangement.length} BLÖCKE · ${songClock(songSeconds())}`;
+ $('songLoop').checked=!!project.songLoop;
+ if(playing&&playMode==='song'&&songQueue[songPointer])markSongClip(songQueue[songPointer].clip)
+}
+function attachTouchPatternDrag(handle,id,card){let start=null;
+ handle.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;start={x:e.clientX,y:e.clientY,id:e.pointerId};handle.setPointerCapture(e.pointerId);card.classList.add('song-touch-dragging');e.preventDefault()});
+ handle.addEventListener('pointermove',e=>{if(!start||start.id!==e.pointerId)return;if(e.clientY>innerHeight-95)window.scrollBy(0,15);else if(e.clientY<85)window.scrollBy(0,-15)});
+ handle.addEventListener('pointerup',e=>{if(!start||start.id!==e.pointerId)return;const d=Math.hypot(e.clientX-start.x,e.clientY-start.y);start=null;card.classList.remove('song-touch-dragging');if(d<20){addSongClip(id);return}
+  const target=document.elementFromPoint(e.clientX,e.clientY)?.closest('.song-clip'),inLane=document.elementFromPoint(e.clientX,e.clientY)?.closest('#songTimeline');if(inLane){addSongClip(id,target?Number(target.dataset.clipIndex):project.arrangement.length)}else{showToast('Zum Hinzufügen + TIMELINE antippen oder Pattern zur Timeline ziehen')}});
+ handle.addEventListener('pointercancel',()=>{start=null;card.classList.remove('song-touch-dragging')})
+}
+function attachTouchClipDrag(el,from){const handle=el.querySelector('.song-drag');let start=null;
+ handle.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse')return;start={x:e.clientX,y:e.clientY,id:e.pointerId};handle.setPointerCapture(e.pointerId)});
+ handle.addEventListener('pointerup',e=>{if(!start||start.id!==e.pointerId)return;const dx=e.clientX-start.x,dy=e.clientY-start.y;start=null;if(Math.hypot(dx,dy)<24)return;
+  const hit=document.elementFromPoint(e.clientX,e.clientY)?.closest('.song-clip');if(hit&&hit.dataset.clipIndex!==undefined)moveSongClip(from,Number(hit.dataset.clipIndex));else if(dx>30)moveSongClip(from,Math.min(project.arrangement.length-1,from+1));else if(dx< -30)moveSongClip(from,Math.max(0,from-1))});
+ handle.addEventListener('pointercancel',()=>{start=null})
+}
+// Live area <-> arranger: swipe horizontally; the arranger is never replaced by browser navigation.
+let swipeStart=null,swipeClickBlock=0,swipeClickTarget=null;
+function swipeBegin(e){if(e.touches?.length!==1)return;const root=e.currentTarget;if(e.target.closest('input,select,textarea,.matrix-scroll,.song-clip,.song-pattern,.song-source-handle'))return;const p=e.touches[0];swipeStart={x:p.clientX,y:p.clientY,root:root.id,target:e.target}}
+function swipeEnd(e){if(!swipeStart||!e.changedTouches?.length)return;const p=e.changedTouches[0],dx=p.clientX-swipeStart.x,dy=p.clientY-swipeStart.y,from=swipeStart.root,src=swipeStart.target;swipeStart=null;
+ if(Math.abs(dx)<65||Math.abs(dx)<Math.abs(dy)*1.5)return;
+ if(from==='liveView'&&dx<0){swipeClickBlock=Date.now()+450;swipeClickTarget=src;setView('song')}
+ else if(from==='songView'&&dx>0){swipeClickBlock=Date.now()+450;swipeClickTarget=src;setView('live')}
+}
+document.addEventListener('click',e=>{if(Date.now()<swipeClickBlock&&swipeClickTarget&&(e.target===swipeClickTarget||swipeClickTarget.contains(e.target))){e.stopImmediatePropagation();e.preventDefault()}},true);
+for(const elementId of ['liveView','songView']){$(elementId).addEventListener('touchstart',swipeBegin,{passive:true});$(elementId).addEventListener('touchend',swipeEnd,{passive:true})}
+$('liveToSong').onclick=()=>setView('song');$('songBackToLive').onclick=()=>setView('live');
+$('songSavePattern').onclick=()=>{const name=$('songPatternName').value.trim();if(savePattern(bank,name)){$('songPatternName').value='';showToast('Pattern gespeichert. In Timeline übernehmen.')}};
+$('songAddBank').onclick=()=>addBankToSong(bank);
+$('songAddEmpty').onclick=()=>addBankToSong(bank);document.querySelectorAll('[data-songbank]').forEach(b=>{b.onclick=()=>addBankToSong(Number(b.dataset.songbank));b.draggable=true;b.addEventListener('dragstart',e=>e.dataTransfer?.setData('application/x-extribe-bank',b.dataset.songbank))});
+$('songPlay').onclick=()=>{if(playing)stopPlayback();togglePlay('song')};
+$('songExport').onclick=exportSongWav;
+$('songLoop').onchange=e=>{project.songLoop=e.target.checked;setDirty()};
+$('songTimeline').addEventListener('dragover',e=>e.preventDefault());
+$('songTimeline').addEventListener('drop',e=>{if(e.target.closest('.song-clip'))return;e.preventDefault();const id=e.dataTransfer?.getData('application/x-extribe-pattern');const from=e.dataTransfer?.getData('application/x-extribe-clip');const bankId=e.dataTransfer?.getData('application/x-extribe-bank');if(id)addSongClip(id);else if(from!=='')moveSongClip(Number(from),project.arrangement.length-1);else if(bankId!=='')addBankToSong(Number(bankId))});
+async function exportSongWav(){try{
+ const timeline=buildSongQueue();if(!timeline.length)return showToast('Song ist leer. Pattern in die Timeline ziehen.');
+ const duration=songSeconds();if(duration>240)throw Error('Song zu lang für mobilen WAV-Export (>4 Minuten). Reduziere Blöcke oder Tempo.');
+ const hasSound=timeline.some(f=>project.banks[f.bank].some((t,i)=>f.steps[i]?.[f.step]&&t.buffer&&!t.mute&&t.volume>0));
+ if(!hasSound)return showToast('Song enthält keine hörbaren Samples');
+ const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!Offline)throw Error('Offline-Audio nicht unterstützt');
+ const tail=Math.max(.3,...project.banks.flat().filter(t=>t.buffer).map(t=>Math.min(10,t.buffer.duration)))+(project.fx?1.5:.15);
+ const sr=44100,off=new Offline(2,Math.ceil(sr*(duration+tail)),sr),bus=off.createGain(),comp=off.createDynamicsCompressor(),vol=off.createGain();
+ comp.threshold.value=-8;comp.knee.value=8;comp.ratio.value=10;comp.attack.value=.004;comp.release.value=.16;vol.gain.value=project.master/100;
+ const dry=off.createGain(),wet=off.createGain(),clip=off.createWaveShaper();clip.curve=window.EXTRIBE_FX53.makeCurve(1+(project.masterDrive||0)/16);clip.oversample='2x';const wetOn=project.fx&&project.masterDrive>0;dry.gain.value=wetOn?0:1;wet.gain.value=wetOn?1:0;comp.connect(dry);dry.connect(vol);comp.connect(clip);clip.connect(wet);wet.connect(vol);vol.connect(off.destination);
+ if(project.fx){const filter=off.createBiquadFilter(),main=off.createGain(),send=off.createGain(),delay=off.createDelay(1),feedback=off.createGain(),ret=off.createGain();filter.type='lowpass';filter.frequency.value=project.filter;send.gain.value=project.delay/100;main.gain.value=1;delay.delayTime.value=.235;feedback.gain.value=.22;ret.gain.value=.44;bus.connect(filter);filter.connect(main);main.connect(comp);filter.connect(send);send.connect(delay);delay.connect(ret);ret.connect(comp);delay.connect(feedback);feedback.connect(delay)}else bus.connect(comp);
+ let at=0;for(const frame of timeline){for(let i=0;i<PADS;i++){const t=pad(frame.bank,i);if(!frame.steps[i]?.[frame.step]||!t.buffer||t.mute||t.volume<=0)continue;const s=off.createBufferSource(),g=off.createGain();s.buffer=t.buffer;g.gain.value=t.volume/100;s.connect(g);const chain=project.fx?window.EXTRIBE_FX53.connectTrack(off,g,bus,t.fxMode||'dry',at,t.buffer.duration):null;if(!chain)g.connect(bus);s.start(at)}
+  const swing=project.swing/100;at+=(60/project.bpm/4)*(frame.step%2===0?1+swing:1-swing)}
+ showToast('Rendere ganzen Song als Stereo-WAV …');const rendered=await off.startRendering();await saveBlob(f32ToWav(rendered),`${niceName()}-SONG-5.4.wav`);showToast('Song als Stereo-WAV exportiert')
+ }catch(e){showToast('Song-Export: '+e.message)}}
 function renderSteps(){const root=$('sequencer'),L=project.length,frag=document.createDocumentFragment(),hd=document.createElement('div');hd.className='seq-header';const lab=document.createElement('span');lab.className='row-label';lab.textContent=`BANK ${'ABCD'[bank]} · 16 PAD-SPUREN`;hd.append(lab);
  for(let s=0;s<L;s++){const c=document.createElement('span');c.className='step-col head-step'+(s%4===0?' beat':'');c.textContent=String(s+1).padStart(2,'0');hd.append(c)}frag.append(hd);
  for(let i=0;i<PADS;i++){const t=pad(bank,i),row=document.createElement('div');row.className='seq-row'+(t.mute?' muted-row':'');row.dataset.pad=i;const name=document.createElement('div');name.className='row-label';name.innerHTML=`<span class="padnumber">${label(i)}</span><span class="sample-title"><b title="${esc(t.sampleName||'Leer')}">${esc(sampleShort(t))}</b><small>${t.sampleData?'SAMPLE GELADEN':'KEIN SAMPLE'}</small></span>`;
@@ -33,9 +144,26 @@ async function resumeAudio(){const ac=createAudio();if(ac.state!=='running')awai
 function trigger(t,when){if(!ctx||!t.buffer||t.mute||t.volume<=0)return;const src=ctx.createBufferSource(),gain=ctx.createGain();src.buffer=t.buffer;const dur=t.buffer.duration,start=Math.max(ctx.currentTime,when);gain.gain.setValueAtTime(0,start);gain.gain.linearRampToValueAtTime(Math.max(.001,t.volume/100),start+.003);const fade=Math.min(.008,dur/8);if(dur>.035){gain.gain.setValueAtTime(t.volume/100,start+dur-fade);gain.gain.linearRampToValueAtTime(0,start+dur-.0005)}src.connect(gain);const chain=project.fx&&window.EXTRIBE_FX53?window.EXTRIBE_FX53.connectTrack(ctx,gain,mixBus,t.fxMode||'dry',start,dur):null;if(!chain)gain.connect(mixBus);src.start(start);src.onended=()=>{try{src.disconnect()}catch{}setTimeout(()=>{try{chain?.release();gain.disconnect()}catch{}},Math.ceil(((chain?.tail)||.01)*1000)+80)}}
 async function playPad(i){const t=pad(bank,i);if(!t.sampleData){showToast('Noch leer. Tippe auf + SAMPLE.');return}if(t.mute){showToast(`${label(i)} ist stummgeschaltet`);return}try{await resumeAudio();trigger(t,ctx.currentTime+.003)}catch(e){showToast('Audiofehler: '+e.message)}}
 function markPlayhead(s){playhead=s;$('stepCounter').textContent=`${String(Math.max(0,s)+1).padStart(2,'0')} / ${project.length}`;if(view==='steps'){document.querySelectorAll('.step.playing').forEach(el=>el.classList.remove('playing'));if(s>=0)document.querySelectorAll(`.step[data-step="${s}"]`).forEach(el=>el.classList.add('playing'))}}
-function scheduler(){if(!ctx||!playing)return;while(nextTime<ctx.currentTime+.115){const pos=nextStep,L=project.length;for(const t of project.banks[bank])if(t.steps[pos]&&!t.mute)trigger(t,nextTime);const markerTime=Math.max(0,(nextTime-ctx.currentTime)*1000);setTimeout(()=>{if(playing)markPlayhead(pos)},markerTime);const dur=60/Math.max(40,project.bpm)/4;const swing=Math.max(0,Math.min(.6,project.swing/100));nextTime+=dur*(pos%2===0?1+swing:1-swing);nextStep=(nextStep+1)%L}}
-async function togglePlay(){if(window.EXTRIBE_SONG?.active?.())return window.EXTRIBE_SONG.togglePlay();if(playing){stopPlayback();return}try{await resumeAudio();playing=true;nextStep=0;nextTime=ctx.currentTime+.055;timer=setInterval(scheduler,25);$('playButton').innerHTML='Ⅱ <span>PAUSE</span>';$('playButton').classList.add('playing');scheduler()}catch(e){showToast('Audio kann nicht gestartet werden: '+e.message)}}
-function stopPlayback(){window.EXTRIBE_SONG?.stop?.();playing=false;if(timer)clearInterval(timer);timer=null;nextStep=0;markPlayhead(-1);$('playButton').innerHTML='▶ <span>PLAY</span>';$('playButton').classList.remove('playing')}
+function scheduler(){if(!ctx||!playing)return;while(nextTime<ctx.currentTime+.115){
+ if(playMode==='song'){
+  if(!songQueue.length)return stopPlayback();
+  if(songPointer>=songQueue.length){if(project.songLoop){songPointer=0}else{if(!songFinishPending){songFinishPending=true;const delay=Math.max(0,(nextTime-ctx.currentTime)*1000),id=playRunId;setTimeout(()=>{if(playing&&playMode==='song'&&id===playRunId)stopPlayback()},delay+20)}return}}
+  const frame=songQueue[songPointer];const pos=frame.step;
+  for(let i=0;i<PADS;i++){const t=pad(frame.bank,i);if(frame.steps[i]?.[pos]&&!t.mute)trigger(t,nextTime)}
+  const markerTime=Math.max(0,(nextTime-ctx.currentTime)*1000);
+  setTimeout(()=>{if(playing&&playMode==='song'){markPlayhead(pos);markSongClip(frame.clip)}},markerTime);
+  const dur=60/Math.max(40,project.bpm)/4,swing=Math.max(0,Math.min(.6,project.swing/100));
+  nextTime+=dur*(pos%2===0?1+swing:1-swing);songPointer++;
+ }else{
+  const pos=nextStep,L=project.length;for(const t of project.banks[bank])if(t.steps[pos]&&!t.mute)trigger(t,nextTime);const markerTime=Math.max(0,(nextTime-ctx.currentTime)*1000);setTimeout(()=>{if(playing&&playMode==='pattern')markPlayhead(pos)},markerTime);const dur=60/Math.max(40,project.bpm)/4;const swing=Math.max(0,Math.min(.6,project.swing/100));nextTime+=dur*(pos%2===0?1+swing:1-swing);nextStep=(nextStep+1)%L;
+ }
+}}
+async function togglePlay(mode){if(playing){stopPlayback();return}try{
+ const desired=mode==='song'||mode==='pattern'?mode:(view==='song'?'song':'pattern');
+ if(desired==='song'){songQueue=buildSongQueue();if(!songQueue.length){showToast('Song noch leer. Erst Pattern hinzufügen.');return}}
+ await resumeAudio();playRunId++;playMode=desired;playing=true;songPointer=0;songFinishPending=false;nextStep=0;nextTime=ctx.currentTime+.055;timer=setInterval(scheduler,25);$('playButton').innerHTML='Ⅱ <span>PAUSE</span>';$('playButton').classList.add('playing');if(desired==='song')renderSong();scheduler()
+}catch(e){showToast('Audio kann nicht gestartet werden: '+e.message)}}
+function stopPlayback(){playing=false;playRunId++;if(timer)clearInterval(timer);timer=null;nextStep=0;songPointer=0;songFinishPending=false;markPlayhead(-1);markSongClip(-1);$('playButton').innerHTML='▶ <span>PLAY</span>';$('playButton').classList.remove('playing')}
 async function decodeSample(t){if(!t.sampleData)return;t.buffer=null;const a=t.sampleData.split(',');if(a.length!==2)throw Error('Sample-Daten fehlerhaft');const bin=atob(a[1]),bytes=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);const audio=createAudio();t.buffer=await audio.decodeAudioData(bytes.buffer.slice(0));if(t.buffer.duration>120)throw Error('Sample ist länger als 2 Minuten')}
 function readDataUrl(file){return new Promise((resolve,reject)=>{const rd=new FileReader();rd.onload=()=>resolve(String(rd.result));rd.onerror=()=>reject(new Error('Datei konnte nicht gelesen werden'));rd.readAsDataURL(file)})}
 $('samplePicker').addEventListener('change',async e=>{const file=e.target.files?.[0],target=sampleTarget;if(!file||!target)return;if(file.size>12*1024*1024){showToast('Maximal 12 MB pro Sample');return}if(!file.type.startsWith('audio/')&&!ALLOWED_AUDIO.test(file.name)){showToast('Bitte WAV, MP3, M4A oder eine Audiodatei wählen');return}
@@ -44,9 +172,16 @@ function openMenu(force){const el=$('menu'),isOpen=force??el.classList.contains(
 function showDialog(title,body,buttons=[]){$('dialogTitle').textContent=title;$('dialogContent').innerHTML=body;$('dialogFoot').replaceChildren();for(const b of buttons){const btn=document.createElement('button');btn.textContent=b.label;btn.className=b.affirm?'affirm':'';btn.onclick=()=>{if(b.fn)b.fn();if(!b.stay)hideDialog()};$('dialogFoot').append(btn)}$('overlay').classList.remove('hidden')}
 function hideDialog(){$('overlay').classList.add('hidden');dialogConfirm=null}
 function question(title,text,yes){showDialog(title,`<p>${esc(text)}</p>`,[{label:'Abbrechen'},{label:'Bestätigen',affirm:true,fn:yes}])}
-function tutorial(){showDialog('EX-TRIBE · KURZ-TUTORIAL',`<ol><li><strong>Start:</strong> Alle 64 Pads sind leer. Es gibt keine geladenen Samples, aktivierten Steps oder Effekte.</li><li><strong>Sample-Packs:</strong> 19 eigenständige Packs mit je 16 Original-One-Shots (304 Sounds); unter 'SAMPLE-PACKS' bewusst in Bank A–D laden. Keine Aufnahme eines Künstlers wird kopiert.</li><li><strong>Eigene Sample-Updates:</strong> SAMPLE-PACKS → Namen eingeben → ＋ SAMPLES HOCHLADEN. Mehrere Audiodateien werden automatisch zu eigenen Packs (je max. 16 Samples). Packs können ergänzt und in Bank A–D geladen werden. Unter SAMPLE-UPDATE Bibliothek neu einlesen, per BACKUP exportieren oder wieder importieren. Dein Pattern startet trotzdem leer.</li><li><strong>Updates:</strong> Neongrün = prüfen, rot blinkend = neues Update erkannt. Android lädt die APK erst nach deinem Tippen herunter; die Installation bestätigt Android. iPhone verwendet den aktuellen Safari-Link.</li><li><strong>Sample laden:</strong> Bank A–D auswählen und bei einem Pad auf <b>+ SAMPLE</b> tippen. WAV, MP3 und M4A werden unterstützt, sofern iOS sie dekodieren kann.</li><li><strong>Step-Sequenzer:</strong> Alle 16 Pad-Spuren liegen untereinander. Gelb = Step an, dunkel = Step aus. Für 32 Steps seitlich wischen.</li><li><strong>MUTE:</strong> Hellgrün = Spur spielt. Rot = Spur stumm. Die Steps bleiben erhalten.</li><li><strong>Live-Pads:</strong> Tippe auf ein Pad zum Abspielen; die MUTE-Tasten funktionieren genauso.</li><li><strong>FX 5.3:</strong> Unter MIXER/FX ein Preset wählen und mit ANWENDEN übernehmen. Pro Pad gibt es eine eigene Effektkette (Punch, Rumble, Grit, Space, Trap oder Gabba). Master-Drive bewusst dosieren, Effekte starten AUS. Der WAV-Export berücksichtigt die Effektketten.</li><li><strong>Sound:</strong> Tippe einmal auf PLAY oder ein Pad, um iOS-Audio freizugeben. Master und Spuren bleiben regelbar, FX sind zunächst AUS.</li><li><strong>Speichern:</strong> ☰ MENÜ → lokal speichern oder als JSON exportieren. Beim Neustart beginnt EX-TRIBE bewusst mit einem leeren Projekt. Gespeichertes über das Menü laden.</li><li><strong>MIDI LEARN:</strong> Reiter MIDI LEARN öffnen, Verbinden, am gewünschten Pad oder Regler auf LERNEN tippen und eine Note oder einen CC senden. Mappings werden separat gespeichert und stehen beim Neustart wieder bereit. iPhone: Native App für CoreMIDI nutzen; Safari kann Web MIDI sperren.</li><li><strong>SONG-ARRANGER 5.4:</strong> LIVE-PADS öffnen. Links/rechts über die Bank-Leiste wischen, eine Bank oder ein gespeichertes Pattern auswählen, per Tippen auf einen freien Takt setzen oder den Pattern-Chip dorthin ziehen. Vier Banks sind gleichzeitig kombinierbar. Pattern sichern, Clip-Länge wählen, Clips verschieben, muten und entfernen. SONG-MODUS einschalten, PLAY drücken und den ganzen Song als WAV exportieren. Song-Arrangement wird zusammen mit dem Projekt gespeichert.</li><li><strong>WAV:</strong> Über das Menü kannst du den aktuellen Bank-Loop als Stereo-WAV ausgeben.</li></ol><p style="color:#9cf3c3">Tipp: Auf dem iPhone kannst du die Web-App über Safari zum Home-Bildschirm hinzufügen, wenn sie per HTTPS geladen wird.</p>`,[{label:'Verstanden',affirm:true}])}
-function serial(){return {version:5,name:project.name,bpm:project.bpm,swing:project.swing,master:project.master,length:project.length,fx:project.fx,filter:project.filter,delay:project.delay,fxPreset:project.fxPreset,masterDrive:project.masterDrive,song:window.EXTRIBE_SONG?.snapshot?.()||project.song,banks:project.banks.map(b=>b.map(t=>({name:t.name,sampleName:t.sampleName,sampleData:t.sampleData,mute:t.mute,volume:t.volume,fxMode:t.fxMode||'dry',steps:t.steps.slice()})))}}
-function sanitizeLoaded(json){if(!json||![4,5].includes(json.version)||!Array.isArray(json.banks)||json.banks.length!==BANKS)throw Error('Keine kompatible EX-TRIBE 4/5 Projektdatei');const p=blankProject();p.name=String(json.name||'Projekt').slice(0,90);p.bpm=Math.max(40,Math.min(240,Number(json.bpm)||120));p.swing=Math.max(0,Math.min(60,Number(json.swing)||0));p.master=Math.max(0,Math.min(100,Number(json.master)||80));p.length=json.length===32?32:16;p.fx=!!json.fx;p.filter=Math.max(500,Math.min(18000,Number(json.filter)||18000));p.delay=Math.max(0,Math.min(35,Number(json.delay)||0));p.fxPreset=(window.EXTRIBE_FX53?.PRESETS||[]).some(x=>x[0]===json.fxPreset)?json.fxPreset:'dry';p.masterDrive=Math.max(0,Math.min(65,Number(json.masterDrive)||0));for(let b=0;b<BANKS;b++){if(!Array.isArray(json.banks[b])||json.banks[b].length!==PADS)throw Error('Projekt hat falsche Pad-Anzahl');for(let i=0;i<PADS;i++){const t=json.banks[b][i];if(typeof t!=='object'||!Array.isArray(t.steps))throw Error(`Pad ${i+1} beschädigt`);const dest=p.banks[b][i];dest.name=String(t.name||dest.name).slice(0,40);dest.sampleName=String(t.sampleName||'').slice(0,200);if(t.sampleData!==null&&t.sampleData!==undefined){if(typeof t.sampleData!=='string'||t.sampleData.length>17e6||!/^data:(?:audio\/[^,]+|application\/octet-stream)?;base64,/i.test(t.sampleData))throw Error('Audio-Format unzulässig');dest.sampleData=t.sampleData}dest.mute=!!t.mute;dest.volume=Math.max(0,Math.min(100,Number(t.volume)||0));dest.fxMode=(window.EXTRIBE_FX53?.MODES||[]).some(x=>x[0]===t.fxMode)?t.fxMode:'dry';dest.steps=Array.from({length:MAX_STEPS},(_,j)=>!!t.steps[j])}}p.song=window.EXTRIBE_SONG?.sanitize?.(json.song)||{patterns:[],clips:[],loop:false};return p}
+function tutorial(){showDialog('EX-TRIBE · KURZ-TUTORIAL',`<ol><li><strong>Start:</strong> Alle 64 Pads sind leer. Es gibt keine geladenen Samples, aktivierten Steps oder Effekte.</li><li><strong>Performance-Presets:</strong> Im Preset-Tab ein vollständiges Ost-Tekk-, Schranz-, Club-, Gabba- oder Trap-Set laden. Es befüllt alle 4 Banken inklusive Steps, Effekten und Song-Vorlage. Das neue Projekt startet weiterhin leer.</li><li><strong>Sample-Packs:</strong> 19 eigenständige Packs mit je 16 Original-One-Shots (304 Sounds); unter 'SAMPLE-PACKS' bewusst in Bank A–D laden. Keine Aufnahme eines Künstlers wird kopiert.</li><li><strong>Eigene Sample-Updates:</strong> SAMPLE-PACKS → Namen eingeben → ＋ SAMPLES HOCHLADEN. Mehrere Audiodateien werden automatisch zu eigenen Packs (je max. 16 Samples). Packs können ergänzt und in Bank A–D geladen werden. Unter SAMPLE-UPDATE Bibliothek neu einlesen, per BACKUP exportieren oder wieder importieren. Dein Pattern startet trotzdem leer.</li><li><strong>Updates:</strong> Neongrün = prüfen, rot blinkend = neues Update erkannt. Android lädt die APK erst nach deinem Tippen herunter; die Installation bestätigt Android. iPhone verwendet den aktuellen Safari-Link.</li><li><strong>Sample laden:</strong> Bank A–D auswählen und bei einem Pad auf <b>+ SAMPLE</b> tippen. WAV, MP3 und M4A werden unterstützt, sofern iOS sie dekodieren kann.</li><li><strong>Step-Sequenzer:</strong> Alle 16 Pad-Spuren liegen untereinander. Gelb = Step an, dunkel = Step aus. Für 32 Steps seitlich wischen.</li><li><strong>MUTE:</strong> Hellgrün = Spur spielt. Rot = Spur stumm. Die Steps bleiben erhalten.</li><li><strong>Live-Pads und Song-Arranger:</strong> Im Live-Modus nach links wischen oder SONG-ARRANGER drücken. Pattern aus Bank A–D sichern oder Bank direkt zur Timeline hinzufügen. Patterns antippen oder ziehen, verschieben, 1–8× wiederholen. SONG ABSPIELEN startet alle Blöcke nacheinander, SONG-WAV exportiert den ganzen Track. Nach rechts wischen bringt dich wieder zu den Live-Pads.</li><li><strong>FX 5.3:</strong> Unter MIXER/FX ein Preset wählen und mit ANWENDEN übernehmen. Pro Pad gibt es eine eigene Effektkette (Punch, Rumble, Grit, Space, Trap oder Gabba). Master-Drive bewusst dosieren, Effekte starten AUS. Der WAV-Export berücksichtigt die Effektketten.</li><li><strong>Sound:</strong> Tippe einmal auf PLAY oder ein Pad, um iOS-Audio freizugeben. Master und Spuren bleiben regelbar, FX sind zunächst AUS.</li><li><strong>Speichern:</strong> ☰ MENÜ → lokal speichern oder als JSON exportieren. Beim Neustart beginnt EX-TRIBE bewusst mit einem leeren Projekt. Gespeichertes über das Menü laden.</li><li><strong>MIDI LEARN:</strong> Reiter MIDI LEARN öffnen, Verbinden, am gewünschten Pad oder Regler auf LERNEN tippen und eine Note oder einen CC senden. Mappings werden separat gespeichert und stehen beim Neustart wieder bereit. iPhone: Native App für CoreMIDI nutzen; Safari kann Web MIDI sperren.</li><li><strong>WAV:</strong> Über das Menü kannst du den aktuellen Bank-Loop als Stereo-WAV ausgeben.</li></ol><p style="color:#9cf3c3">Tipp: Auf dem iPhone kannst du die Web-App über Safari zum Home-Bildschirm hinzufügen, wenn sie per HTTPS geladen wird.</p>`,[{label:'Verstanden',affirm:true}])}
+function serial(){return {version:5,name:project.name,bpm:project.bpm,swing:project.swing,master:project.master,length:project.length,fx:project.fx,filter:project.filter,delay:project.delay,fxPreset:project.fxPreset,masterDrive:project.masterDrive,songPatterns:project.songPatterns.map(p=>({id:p.id,name:p.name,bank:p.bank,length:p.length,steps:p.steps.map(s=>s.slice())})),arrangement:project.arrangement.map(c=>({patternId:c.patternId,repeats:c.repeats})),songLoop:project.songLoop,banks:project.banks.map(b=>b.map(t=>({name:t.name,sampleName:t.sampleName,sampleData:t.sampleData,mute:t.mute,volume:t.volume,fxMode:t.fxMode||'dry',steps:t.steps.slice()})))}}
+function sanitizeLoaded(json){if(!json||![4,5].includes(json.version)||!Array.isArray(json.banks)||json.banks.length!==BANKS)throw Error('Keine kompatible EX-TRIBE 4/5 Projektdatei');const p=blankProject();p.name=String(json.name||'Projekt').slice(0,90);p.bpm=Math.max(40,Math.min(240,Number(json.bpm)||120));p.swing=Math.max(0,Math.min(60,Number(json.swing)||0));p.master=Math.max(0,Math.min(100,Number(json.master)||80));p.length=json.length===32?32:16;p.fx=!!json.fx;p.filter=Math.max(500,Math.min(18000,Number(json.filter)||18000));p.delay=Math.max(0,Math.min(35,Number(json.delay)||0));p.fxPreset=(window.EXTRIBE_FX53?.PRESETS||[]).some(x=>x[0]===json.fxPreset)?json.fxPreset:'dry';p.masterDrive=Math.max(0,Math.min(65,Number(json.masterDrive)||0));for(let b=0;b<BANKS;b++){if(!Array.isArray(json.banks[b])||json.banks[b].length!==PADS)throw Error('Projekt hat falsche Pad-Anzahl');for(let i=0;i<PADS;i++){const t=json.banks[b][i];if(typeof t!=='object'||!Array.isArray(t.steps))throw Error(`Pad ${i+1} beschädigt`);const dest=p.banks[b][i];dest.name=String(t.name||dest.name).slice(0,40);dest.sampleName=String(t.sampleName||'').slice(0,200);if(t.sampleData!==null&&t.sampleData!==undefined){if(typeof t.sampleData!=='string'||t.sampleData.length>17e6||!/^data:(?:audio\/[^,]+|application\/octet-stream)?;base64,/i.test(t.sampleData))throw Error('Audio-Format unzulässig');dest.sampleData=t.sampleData}dest.mute=!!t.mute;dest.volume=Math.max(0,Math.min(100,Number(t.volume)||0));dest.fxMode=(window.EXTRIBE_FX53?.MODES||[]).some(x=>x[0]===t.fxMode)?t.fxMode:'dry';dest.steps=Array.from({length:MAX_STEPS},(_,j)=>!!t.steps[j])}}// v5.4: pattern snapshots, compatible with legacy project JSON
+ const incoming=Array.isArray(json.songPatterns)?json.songPatterns.slice(0,128):[];
+ const ids=new Set();for(const snap of incoming){
+  if(!snap||typeof snap!=='object'||typeof snap.id!=='string'||!/^[a-zA-Z0-9_-]{1,64}$/.test(snap.id)||ids.has(snap.id)||!Number.isInteger(snap.bank)||snap.bank<0||snap.bank>=BANKS||![16,32].includes(snap.length)||!Array.isArray(snap.steps)||snap.steps.length!==PADS||snap.steps.some(row=>!Array.isArray(row)||row.length<16))continue;
+  ids.add(snap.id);p.songPatterns.push({id:snap.id,name:String(snap.name||'Pattern').slice(0,55),bank:snap.bank,length:snap.length,steps:snap.steps.map(row=>Array.from({length:MAX_STEPS},(_,k)=>!!row[k]))});
+ }
+ if(Array.isArray(json.arrangement))p.arrangement=json.arrangement.slice(0,64).filter(c=>c&&ids.has(c.patternId)).map(c=>({patternId:c.patternId,repeats:Math.min(8,Math.max(1,Math.floor(Number(c.repeats)||1)))}));
+ p.songLoop=!!json.songLoop;return p}
 function openDB(){return new Promise((resolve,reject)=>{if(!('indexedDB' in window))return reject(new Error('Speicher nicht verfügbar'));const req=indexedDB.open('extribe-pro-5',2);req.onupgradeneeded=()=>{if(!req.result.objectStoreNames.contains('projects'))req.result.createObjectStore('projects',{keyPath:'id'});if(!req.result.objectStoreNames.contains('libraries'))req.result.createObjectStore('libraries',{keyPath:'id'})};req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||new Error('Speicherfehler'))})}
 const storagePending=new Map();let storageIndex=0;
 window.__nativeProjectResponse=result=>{const waiter=storagePending.get(result.id);if(waiter){storagePending.delete(result.id);result.ok?waiter.resolve(result.value):waiter.reject(new Error(result.error||'Speicherfehler'))}};
@@ -67,7 +202,7 @@ async function readLocal(){
 /* original fallback removed below */
 async function saveProject(){try{await storeLocal();openedFromSave=true;$('saveStatus').textContent='Projekt lokal gespeichert';showToast('Projekt gespeichert. Zum Laden: ☰ Menü.') }catch(e){try{await exportProject();showToast('Lokaler Speicher gesperrt: Projektdatei zum Speichern angeboten')}catch(err){showToast('Speichern fehlgeschlagen: '+err.message)}}}
 async function loadSaved(){try{const result=await readLocal();if(!result)return showToast('Noch kein Projekt gespeichert');question('Projekt öffnen',`Gespeichertes Projekt vom ${new Date(result.savedAt).toLocaleString('de-DE')} laden? Nicht gespeicherte Änderungen gehen verloren.`,async()=>{await loadProject(JSON.parse(result.data));showToast('Gespeichertes Projekt geöffnet')})}catch(e){showToast('Laden fehlgeschlagen: '+e.message)}}
-async function loadProject(obj){stopPlayback();const p=sanitizeLoaded(obj);project=p;bank=0;const issues=[];for(let b=0;b<BANKS;b++)for(let i=0;i<PADS;i++){const t=pad(b,i);if(t.sampleData){try{await decodeSample(t)}catch(e){issues.push(`Bank ${'ABCD'[b]} ${label(i)}`);t.buffer=null}}}updateControls();setBank(0);openedFromSave=true;$('saveStatus').textContent='Projekt geöffnet';window.EXTRIBE_SONG?.loaded?.();if(issues.length)showToast('Einige Samples wurden nicht unterstützt: '+issues.slice(0,3).join(', '))}
+async function loadProject(obj){stopPlayback();const p=sanitizeLoaded(obj);project=p;bank=0;const issues=[];for(let b=0;b<BANKS;b++)for(let i=0;i<PADS;i++){const t=pad(b,i);if(t.sampleData){try{await decodeSample(t)}catch(e){issues.push(`Bank ${'ABCD'[b]} ${label(i)}`);t.buffer=null}}}updateControls();setBank(0);openedFromSave=true;$('saveStatus').textContent='Projekt geöffnet';if(issues.length)showToast('Einige Samples wurden nicht unterstützt: '+issues.slice(0,3).join(', '))}
 function updateControls(){$('tempo').value=project.bpm;$('swing').value=project.swing;$('swingOut').textContent=project.swing+'%';$('master').value=project.master;$('masterOut').textContent=project.master+'%';$('stepLength').value=project.length;$('fxEnable').checked=project.fx;$('filterCutoff').value=project.filter;$('delayAmount').value=project.delay;$('filterOut').textContent=project.filter.toLocaleString('de-DE')+' Hz';$('delayOut').textContent=project.delay+'%';$('filterCutoff').disabled=!project.fx;$('delayAmount').disabled=!project.fx;if($('fx53Preset'))$('fx53Preset').value=project.fxPreset||'dry';if($('fx53Drive')){$('fx53Drive').value=project.masterDrive||0;$('fx53DriveOut').textContent=(project.masterDrive||0)+'%';$('fx53Drive').disabled=!project.fx}updateFx();updateMeta()}
 let nativeResolve=null;
 window.__nativeExportReady=ready=>{if(nativeResolve){nativeResolve(!!ready);nativeResolve=null}};
@@ -79,7 +214,7 @@ function niceName(){return String(project.name||'EXTRIBE').replace(/[^a-z0-9-_]/
 async function exportProject(){try{await saveBlob(new Blob([JSON.stringify(serial())],{type:'application/json'}),`${niceName()}-EXTRIBE-5.json`);showToast('Projekt-Export gestartet')}catch(e){showToast('Exportfehler: '+e.message)}}
 $('projectPicker').addEventListener('change',async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>80*1024*1024){showToast('Projektdatei ist zu groß');return}try{const json=JSON.parse(await f.text());await loadProject(json);showToast('Projektdatei importiert')}catch(err){showToast('Projekt-Import fehlgeschlagen: '+err.message)}e.target.value=''});
 function clearBank(alsoSample){for(const t of project.banks[bank]){t.steps.fill(false);if(alsoSample){t.sampleData=null;t.sampleName='';t.buffer=null;t.mute=false;t.volume=85}}setDirty();setView(view);showToast(alsoSample?'Bank geleert':'Steps geleert')}
-function resetAll(){stopPlayback();project=blankProject();bank=0;updateControls();setBank(0);setView('steps');$('saveStatus').textContent='Leeres Projekt';showToast('Alles leer: Samples, Steps, Song und Effekte.')}
+function resetAll(){stopPlayback();project=blankProject();bank=0;updateControls();setBank(0);setView('steps');$('saveStatus').textContent='Leeres Projekt';showToast('Alles leer. Keine Samples, Steps oder Effekte.')}
 function duplicateBank(){showDialog('Pattern kopieren',`<p>Steps der Bank ${'ABCD'[bank]} in eine andere Bank kopieren. Bereits gesetzte Steps dort werden überschrieben, Samples bleiben erhalten.</p><select id="targetBank">${'ABCD'.split('').map((x,i)=>i===bank?'':`<option value="${i}">Bank ${x}</option>`).join('')}</select>`,[{label:'Abbrechen'},{label:'Kopieren',affirm:true,fn:()=>{const target=Number($('targetBank').value);if(Number.isInteger(target)&&target!==bank){for(let i=0;i<PADS;i++)project.banks[target][i].steps=pad(bank,i).steps.slice();setDirty();showToast(`Steps nach Bank ${'ABCD'[target]} kopiert`)}}}])}
 function f32ToWav(buffer){const channels=2,len=buffer.length,bytes=new ArrayBuffer(44+len*channels*2),dv=new DataView(bytes);let offset=0;const ascii=s=>{for(const x of s)dv.setUint8(offset++,x.charCodeAt(0))};const u16=v=>{dv.setUint16(offset,v,true);offset+=2};const u32=v=>{dv.setUint32(offset,v,true);offset+=4};ascii('RIFF');u32(36+len*channels*2);ascii('WAVE');ascii('fmt ');u32(16);u16(1);u16(channels);u32(buffer.sampleRate);u32(buffer.sampleRate*channels*2);u16(channels*2);u16(16);ascii('data');u32(len*channels*2);const l=buffer.getChannelData(0),r=buffer.numberOfChannels>1?buffer.getChannelData(1):l;for(let i=0;i<len;i++){for(const f of [l[i],r[i]]){const s=Math.max(-1,Math.min(1,f));dv.setInt16(offset,s<0?s*32768:s*32767,true);offset+=2}}return new Blob([bytes],{type:'audio/wav'})}
 async function exportWav(){try{
@@ -92,10 +227,105 @@ async function exportWav(){try{
  const dry=off.createGain(),wet=off.createGain(),clip=off.createWaveShaper();clip.curve=window.EXTRIBE_FX53.makeCurve(1+(project.masterDrive||0)/16);clip.oversample='2x';const clipOn=project.fx&&project.masterDrive>0;dry.gain.value=clipOn?0:1;wet.gain.value=clipOn?1:0;comp.connect(dry);dry.connect(vol);comp.connect(clip);clip.connect(wet);wet.connect(vol);vol.connect(off.destination);
  if(project.fx){const filter=off.createBiquadFilter(),main=off.createGain(),send=off.createGain(),delay=off.createDelay(1),feedback=off.createGain(),ret=off.createGain();filter.type='lowpass';filter.frequency.value=project.filter;send.gain.value=project.delay/100;main.gain.value=1;delay.delayTime.value=.235;feedback.gain.value=.22;ret.gain.value=.44;bus.connect(filter);filter.connect(main);main.connect(comp);filter.connect(send);send.connect(delay);delay.connect(ret);ret.connect(comp);delay.connect(feedback);feedback.connect(delay)}else bus.connect(comp);
  let at=0;for(let s=0;s<L;s++){for(const t of project.banks[bank])if(t.steps[s]&&t.buffer&&!t.mute&&t.volume>0){const source=off.createBufferSource(),gain=off.createGain();source.buffer=t.buffer;gain.gain.value=t.volume/100;source.connect(gain);const fx=project.fx?window.EXTRIBE_FX53.connectTrack(off,gain,bus,t.fxMode||'dry',at,t.buffer.duration):null;if(!fx)gain.connect(bus);source.start(at)}at+=stepTime*(s%2===0?1+project.swing/100:1-project.swing/100)}
- const rendered=await off.startRendering();await saveBlob(f32ToWav(rendered),`${niceName()}-Bank-${'ABCD'[bank]}-5.3-FX.wav`);showToast('Stereo-WAV mit FX 5.3 erstellt')
+ const rendered=await off.startRendering();await saveBlob(f32ToWav(rendered),`${niceName()}-Bank-${'ABCD'[bank]}-5.3-FX.wav`);showToast('Stereo-WAV mit FX erstellt')
  }catch(e){showToast('WAV-Export fehlgeschlagen: '+e.message)}}
 // v5: generated pack loader with opt-in; no sample loads on app startup
 const PACKS=window.EXTRIBE_PACKS||[];
+
+// ===== 5.5 : PERFORMANCE PRESETS / fully loaded banks + FX + song =====
+const PERFORMANCE_PRESETS=Array.isArray(window.EXTRIBE_PRESETS55)?window.EXTRIBE_PRESETS55:[];
+let presetLoading=false;
+const hasProjectContent=()=>project.banks.some(b=>b.some(t=>t.sampleData||t.steps.some(Boolean)))||project.songPatterns.length>0||project.arrangement.length>0;
+function presetPattern(index,scene,length,style){
+ const array=Array(MAX_STEPS).fill(false);
+ const trip=(style==='trap'),gabba=(style==='gabba'),intro=scene===0,breakdown=scene===1,drop=scene===2,outro=scene===3;
+ let positions=[];
+ if(index===0)positions=trip?[0,7,10,14]:[0,4,8,12];
+ if(index===1)positions=drop?[3,11,15]:[11];
+ if(index===2)positions=drop?[7,15]:[15];
+ if(index===3)positions=intro?[]:(drop?[2,6,10,14]:[6,14]);
+ if(index===4)positions=trip?[0,8]:(drop?[0,8,12]:[0,8]);
+ if(index===5)positions=drop?[2,6,10,14]:[6,14];
+ if(index===6)positions=drop?[3,7,11,15]:[7,15];
+ if(index===7)positions=trip?[0,8,12]:drop?[0,8]:[];
+ if(index===8)positions=trip?[8]:(intro?[12]:[4,12]);
+ if(index===9)positions=trip?[8]:(intro?[]:[4,12]);
+ if(index===10)positions=intro?[2,6,10,14]:(drop?[0,2,4,6,8,10,12,14]:[2,6,10,14]);
+ if(index===11)positions=intro?[]:(drop?[6,14]:[14]);
+ if(index===12)positions=drop?[2,6,10,14]:breakdown?[6,14]:[];
+ if(index===13)positions=drop?[3,7,11,15]:[7,15];
+ if(index===14)positions=drop?[7,15]:[15];
+ if(index===15)positions=drop?[0,15]:[0];
+ if(intro&&[1,2,3,6,7,9,11,12,13,14].includes(index))positions=[];
+ if(outro&&[1,2,3,6,7,11,12,14].includes(index))positions=[];
+ if(breakdown&&[1,2,3,6,7,12,13,14].includes(index))positions=[];
+ if(gabba&&drop&&index===0)positions=[0,2,4,6,8,10,12,14];
+ for(const n of positions){array[n]=true;if(length===32)array[n+16]=true;}
+ if(length===32&&drop&&[9,13,14,15].includes(index))array[31]=true;
+ return array;
+}
+function presetVolume(i,scene,style){
+ const base=[73,38,35,24,37,37,28,38,33,40,23,21,18,24,29,26][i];
+ const stage=scene===2?1:scene===0?.72:scene===1?.65:.7;
+ return Math.max(10,Math.min(85,Math.round(base*stage*(style==='gabba'?.85:1))))
+}
+function renderPerformancePresets(){
+ const root=$('presetCards');if(!root)return;
+ const frag=document.createDocumentFragment();
+ PERFORMANCE_PRESETS.forEach(p=>{
+  const card=document.createElement('article');card.className='performance-preset-card';
+  const top=document.createElement('div');top.className='performance-preset-top';
+  top.innerHTML=`<span>${esc(p.genre)}</span><small>${p.bpm} BPM · ${esc(p.intensity)}</small>`;
+  const title=document.createElement('h3');title.textContent=p.name;
+  const descr=document.createElement('p');descr.textContent=p.description;
+  const banklist=document.createElement('div');banklist.className='preset-banklist';p.packs.forEach((id,i)=>{const item=document.createElement('span');const lib=PACKS.find(x=>x.id===id);item.textContent=`${'ABCD'[i]} · ${lib?lib.name.split(' · ')[0]:id}`;banklist.append(item)});
+  const foot=document.createElement('div');foot.className='preset-foot';
+  const fx=document.createElement('span');fx.textContent=`FX: ${p.fx.toUpperCase()} · 4 BÄNKE · SONG-VORLAGE`;
+  const btn=document.createElement('button');btn.type='button';btn.className='preset-load';btn.textContent=presetLoading?'BITTE WARTEN': '▶ KOMPLETT LADEN';btn.disabled=presetLoading;
+  btn.onclick=()=>requestPerformancePreset(p.id);
+  foot.append(fx,btn);card.append(top,title,descr,banklist,foot);frag.append(card)
+ });root.replaceChildren(frag);
+ const status=$('presetLoadStatus');if(status&&!presetLoading&&!project.name.startsWith('Neues Projekt')&&PERFORMANCE_PRESETS.some(p=>p.name===project.name))status.textContent=project.name+' · 64 SAMPLES · FX AN · SONG BEREIT';
+}
+function requestPerformancePreset(id){
+ if(presetLoading)return;
+ const def=PERFORMANCE_PRESETS.find(p=>p.id===id);if(!def)return;
+ if(hasProjectContent())question('Preset laden und Projekt ersetzen?',`Das Set „${def.name}“ ersetzt die aktuellen vier Banken, Steps, FX und Song-Blöcke. Sichere dein Projekt vorher im Menü.`,()=>{void applyPerformancePreset(id)});
+ else void applyPerformancePreset(id);
+}
+async function applyPerformancePreset(id){
+ if(presetLoading)return false;
+ const def=PERFORMANCE_PRESETS.find(p=>p.id===id);if(!def)throw Error('Preset fehlt');
+ const fx=window.EXTRIBE_FX53;if(!fx)throw Error('FX-Modul nicht verfügbar');
+ presetLoading=true;renderPerformancePresets();const status=$('presetLoadStatus');
+ stopPlayback();
+ try{
+  const next=blankProject();next.name=def.name;next.bpm=def.bpm;next.swing=def.swing;next.master=def.master;next.length=32;next.fx=true;next.fxPreset=def.fx;
+  Object.assign(next,fx.defaults[def.fx]||{});next.masterDrive=def.drive;
+  const style=def.id==='trap55'?'trap':def.id==='gabba55'||def.id==='hacketech55'?'gabba':'techno';
+  const decoded=new Map();
+  for(let b=0;b<BANKS;b++){
+   const pack=PACKS.find(x=>x.id===def.packs[b]);if(!pack)throw Error('Soundbank nicht gefunden: '+def.packs[b]);
+   for(let i=0;i<PADS;i++){
+    const key=pack.id+':'+i;let info=decoded.get(key);
+    if(!info){const wav=window.EXTRIBE_makeWav(pack.id,i);const data='data:audio/wav;base64,'+btoa(wav);const trial=factoryTrack(i);trial.sampleData=data;await decodeSample(trial);info={data,buffer:trial.buffer};decoded.set(key,info)}
+    const track=factoryTrack(i);track.name=pack.samples[i].name;track.sampleName=`${pack.samples[i].name} · ${pack.id.toUpperCase()}`;track.sampleData=info.data;track.buffer=info.buffer;
+    track.steps=presetPattern(i,b,next.length,style);track.fxMode=fx.presetMap(def.fx,i);track.volume=presetVolume(i,b,style);next.banks[b][i]=track;
+   }
+   if(status)status.textContent=`${def.name}: Bank ${'ABCD'[b]} von D wird bestückt …`;
+   await new Promise(resolve=>setTimeout(resolve,0));
+  }
+  const arrangement=[0,1,2,1,2,3];
+  next.songPatterns=Array.from({length:4},(_,b)=>({id:`preset55_${b}_${Date.now()}`,name:["INTRO", "AUFBAU", "DROP", "OUTRO"][b]+' · '+def.name,bank:b,length:32,steps:next.banks[b].map(t=>t.steps.slice())}));
+  next.arrangement=arrangement.map((b,i)=>({patternId:next.songPatterns[b].id,repeats:i===2||i===4?2:1}));
+  project=next;bank=0;updateControls();setBank(0);setDirty();setView('live');
+  if(status)status.textContent=`${def.name} GELADEN · 64 Samples · FX AN · 6 Song-Blöcke`;
+  showToast(`${def.name}: 4 Bänke + FX + Song geladen`);
+  return true;
+ }catch(err){if(status)status.textContent='Fehler beim Laden: '+err.message;showToast('Preset nicht geladen: '+err.message);return false}
+ finally{presetLoading=false;renderPerformancePresets()}
+}
+
 function renderPacks(){const root=$('packCards');if(!root)return;const frag=document.createDocumentFragment();for(const p of PACKS){const card=document.createElement('div');card.className='pack-card';const title=document.createElement('strong');title.textContent=p.name;const info=document.createElement('span');info.className='info';info.textContent=`16 WAV-ONESHOTS · ${p.bpm} BPM`;const sub=document.createElement('p');sub.textContent=p.subtitle;const artists=document.createElement('small');artists.textContent='Szene-Bezug: '+p.ref.join(' · ');const btn=document.createElement('button');btn.textContent=`+ IN BANK ${'ABCD'[bank]} LADEN`;btn.onclick=()=>question('Pack in Bank laden',`Alle 16 Samples der Bank ${'ABCD'[bank]} durch '${p.name}' ersetzen? Vorhandene Steps bleiben erhalten, nichts wird automatisch gestartet.`,()=>installPack(p.id,bank));card.append(title,info,sub,artists,btn);frag.append(card)}root.replaceChildren(frag)}
 async function installPack(id,targetBank){const p=PACKS.find(x=>x.id===id);if(!p)throw Error('Pack fehlt');const list=[];try{showToast('Pack wird erzeugt: '+p.name);const a=createAudio();for(let i=0;i<16;i++){const wav=window.EXTRIBE_makeWav(p.id,i);const t=factoryTrack(i);t.name=p.samples[i].name;t.sampleName=`${p.samples[i].name} · ${p.id.toUpperCase()}`;t.sampleData='data:audio/wav;base64,'+btoa(wav);await decodeSample(t);list.push(t)}const dst=project.banks[targetBank];for(let i=0;i<16;i++){list[i].steps=dst[i].steps.slice();list[i].mute=dst[i].mute;list[i].volume=dst[i].volume;list[i].fxMode=dst[i].fxMode;dst[i]=list[i]}setDirty();setBank(targetBank);showToast(`${p.name} geladen: 16 Samples`)}catch(e){showToast('Pack fehlgeschlagen: '+e.message)}}
 
@@ -165,10 +395,10 @@ $('updateButton').onclick=async()=>{await checkUpdates(true)};
 // Trigger an unobtrusive version check only when the browser becomes online.
 if(navigator.onLine)setTimeout(()=>checkUpdates(false),1250);
 window.addEventListener('online',()=>checkUpdates(false));
-const actions={song:()=>{setView('live');window.EXTRIBE_SONG?.enable?.()},songwav:()=>window.EXTRIBE_SONG?.exportWav?.(),midi:()=>setView('midi'),newpack:()=>{setView('packs');$('libraryPicker').click()},librarybackup:()=>exportSampleLibrary(),updates:()=>checkUpdates(true),packs:()=>setView("packs"),save:saveProject,load:loadSaved,export:exportProject,import:()=>$('projectPicker').click(),wav:exportWav,duplicate:duplicateBank,tutorial,clearbank:()=>question('Bank leeren',`Alle Samples und Steps der Bank ${'ABCD'[bank]} löschen?`,()=>clearBank(true)),reset:()=>question('Alles zurücksetzen','Wirklich ALLE vier Bänke, Samples, Steps, Mutes und Effekte leeren?',resetAll)};
+const actions={song:()=>setView('song'),songwav:exportSongWav,midi:()=>setView('midi'),newpack:()=>{setView('packs');$('libraryPicker').click()},librarybackup:()=>exportSampleLibrary(),updates:()=>checkUpdates(true),packs:()=>setView("packs"),save:saveProject,load:loadSaved,export:exportProject,import:()=>$('projectPicker').click(),wav:exportWav,duplicate:duplicateBank,tutorial,clearbank:()=>question('Bank leeren',`Alle Samples und Steps der Bank ${'ABCD'[bank]} löschen?`,()=>clearBank(true)),reset:()=>question('Alles zurücksetzen','Wirklich ALLE vier Bänke, Samples, Steps, Mutes und Effekte leeren?',resetAll)};
 $('menuButton').onclick=()=>openMenu();document.querySelectorAll('#menu [data-action]').forEach(btn=>btn.onclick=()=>{openMenu(false);actions[btn.dataset.action]?.()});document.addEventListener('click',e=>{if(!e.target.closest('#menu,#menuButton'))openMenu(false)});
 $('closeDialog').onclick=hideDialog;$('overlay').onclick=e=>{if(e.target===$('overlay'))hideDialog()};document.addEventListener('keydown',e=>{if(e.key==='Escape'){hideDialog();openMenu(false)}});
-$('playButton').onclick=togglePlay;$('stopButton').onclick=stopPlayback;
+$('playButton').onclick=()=>togglePlay();$('stopButton').onclick=stopPlayback;
 $('tempo').onchange=e=>{project.bpm=Math.max(40,Math.min(240,Number(e.target.value)||120));updateControls();setDirty()};$('bpmMinus').onclick=()=>{project.bpm=Math.max(40,project.bpm-1);updateControls();setDirty()};$('bpmPlus').onclick=()=>{project.bpm=Math.min(240,project.bpm+1);updateControls();setDirty()};
 $('swing').oninput=e=>{project.swing=Number(e.target.value);$('swingOut').textContent=project.swing+'%';setDirty()};$('master').oninput=e=>{project.master=Number(e.target.value);$('masterOut').textContent=project.master+'%';updateFx();setDirty()};$('stepLength').onchange=e=>{project.length=Number(e.target.value)===32?32:16;stopPlayback();setView(view);setDirty()};
 $('fxEnable').onchange=e=>{project.fx=!!e.target.checked;updateControls();setDirty()};$('filterCutoff').oninput=e=>{project.filter=+e.target.value;$('filterOut').textContent=project.filter.toLocaleString('de-DE')+' Hz';updateFx();setDirty()};$('delayAmount').oninput=e=>{project.delay=+e.target.value;$('delayOut').textContent=project.delay+'%';updateFx();setDirty()};
@@ -177,8 +407,9 @@ $('fx53Apply').onclick=applyFX53;
 $('fx53Drive').oninput=e=>{project.masterDrive=+e.target.value;$('fx53DriveOut').textContent=project.masterDrive+'%';updateFx();setDirty()};
 $('clearSteps').onclick=()=>question('Steps leeren',`Alle Steps in Bank ${'ABCD'[bank]} ausschalten? Samples bleiben erhalten.`,()=>clearBank(false));document.querySelectorAll('.bank').forEach(btn=>btn.onclick=()=>setBank(+btn.dataset.bank));document.querySelectorAll('.view-button').forEach(btn=>btn.onclick=()=>setView(btn.dataset.view));
 window.addEventListener('pagehide',()=>{if(playing)stopPlayback()});window.addEventListener('visibilitychange',()=>{if(document.hidden&&playing)stopPlayback()});
-window.EXTRIBE_SONG_AUDIO={resumeAudio,trigger,getCtx:()=>ctx,getProject:()=>project,stopBank:stopPlayback,wavFromBuffer:f32ToWav,saveBlob,niceName};
 window.EXTRIBE_MIDI_API={setBank,setView,playPad,toggleMute,togglePlay,stopPlayback,getProject:()=>project,getBank:()=>bank,updateControls,updateFx,setDirty,saveBlob};
-window.EXTRIBETest={customPacks:()=>customPacks.map(p=>({id:p.id,name:p.name,count:p.samples.length})),refreshLibrary:refreshSampleLibrary,addFiles:addSampleFiles,installCustomPack,libraryBackup:()=>libraryEnvelope(customPacks),importLibraryBackup,packStatus:()=>libraryMessage,packs:()=>PACKS.length,installPack,applyUpdateInfo,updateVersion:()=>updateInfo?.version,updateAvailable:()=>$("updateButton").classList.contains("available"),fxPreset:()=>project.fxPreset,applyFX53,FXModes:()=>project.banks[bank].map(t=>t.fxMode),getState:()=>({bank,view,playing,samples:project.banks.flat().filter(t=>t.sampleData).length,activeSteps:project.banks.flat().reduce((a,t)=>a+t.steps.filter(Boolean).length,0),fx:project.fx,mutes:project.banks.flat().filter(t=>t.mute).length,tempo:project.bpm}),reset:resetAll,serialize:serial,load:loadProject};
+window.EXTRIBE55={list:()=>PERFORMANCE_PRESETS.map(p=>({id:p.id,name:p.name,bpm:p.bpm})),load:applyPerformancePreset,request:requestPerformancePreset,preview:()=>({name:project.name,bpm:project.bpm,fx:project.fx,fxPreset:project.fxPreset,banks:project.banks.map(b=>({samples:b.filter(t=>!!t.sampleData).length,steps:b.reduce((n,t)=>n+t.steps.filter(Boolean).length,0)})),songPatterns:project.songPatterns.length,songClips:project.arrangement.length})};
+window.EXTRIBETest={song:()=>({patterns:project.songPatterns.length,clips:project.arrangement.length,queue:buildSongQueue().length}),makeSongPattern:savePattern,addSongClip:addSongClip,moveSongClip:moveSongClip,exportSongWav, customPacks:()=>customPacks.map(p=>({id:p.id,name:p.name,count:p.samples.length})),refreshLibrary:refreshSampleLibrary,addFiles:addSampleFiles,installCustomPack,libraryBackup:()=>libraryEnvelope(customPacks),importLibraryBackup,packStatus:()=>libraryMessage,packs:()=>PACKS.length,installPack,applyUpdateInfo,updateVersion:()=>updateInfo?.version,updateAvailable:()=>$("updateButton").classList.contains("available"),fxPreset:()=>project.fxPreset,applyFX53,FXModes:()=>project.banks[bank].map(t=>t.fxMode),getState:()=>({bank,view,playing,samples:project.banks.flat().filter(t=>t.sampleData).length,activeSteps:project.banks.flat().reduce((a,t)=>a+t.steps.filter(Boolean).length,0),fx:project.fx,mutes:project.banks.flat().filter(t=>t.mute).length,tempo:project.bpm}),reset:resetAll,serialize:serial,load:loadProject};
+$('liveToPresets').onclick=()=>setView('presets');$('presetBackLive').onclick=()=>setView('live');
 updateControls();setBank(0);setView('steps');markPlayhead(-1);
 })();

@@ -6,20 +6,21 @@ const MODES=[
  ['trap','TRAP · SUB / ECHO'],['gabba','GABBA · HARD CLIP']
 ];
 const PRESETS=[
- ['dry','BYPASS · OHNE EFFEKTE'],['club','CLUB · KICK + RUMBLE'],
+ ['dry','BYPASS · OHNE EFFEKTE'],['osttekk','OST-TEKK · RUMBLE / GRIT'],['club','CLUB · KICK + RUMBLE'],
  ['schranz','SCHRANZ · IRON DRIVE'],['trap','TRAP · 808 / SPACE'],
  ['gabba','HARD GABBA · CRUSH'],['industrial','WAREHOUSE · METALL']
 ];
 const maps={
  dry:()=> 'dry',
+ osttekk:i=>i<2?'punch':i<8?'rumble':i<12?'grit':i<14?'space':'grit',
  club:i=>i<3?'punch':i<8?'rumble':i<13?'space':'grit',
  schranz:i=>i<4?'grit':i<8?'punch':i<13?'grit':'space',
  trap:i=>i<4?'punch':i<8?'trap':i<13?'space':'grit',
  gabba:i=>i<8?'gabba':i<14?'grit':'gabba',
  industrial:i=>i<4?'punch':i<8?'grit':i<14?'space':'gabba'
 };
-const masterDrives={dry:0,club:17,schranz:39,trap:11,gabba:52,industrial:33};
-const defaults={dry:{filter:18000,delay:0},club:{filter:15400,delay:8},schranz:{filter:12800,delay:6},trap:{filter:17500,delay:13},gabba:{filter:15000,delay:4},industrial:{filter:10800,delay:12}};
+const masterDrives={dry:0,osttekk:35,club:17,schranz:39,trap:11,gabba:52,industrial:33};
+const defaults={dry:{filter:18000,delay:0},osttekk:{filter:13500,delay:7},club:{filter:15400,delay:8},schranz:{filter:12800,delay:6},trap:{filter:17500,delay:13},gabba:{filter:15000,delay:4},industrial:{filter:10800,delay:12}};
 function makeCurve(drive=1,hard=false){const curve=new Float32Array(1024);const gain=Math.max(1,Math.min(8,Number(drive)||1));const norm=Math.tanh(gain)||1;for(let i=0;i<curve.length;i++){const x=i*2/(curve.length-1)-1;curve[i]=hard?Math.max(-.82,Math.min(.82,x*gain))/.82:Math.tanh(x*gain)/norm}return curve;}
 const reverbBuffers=new WeakMap();
 function impulse(ctx){let b=reverbBuffers.get(ctx);if(b)return b;const rate=ctx.sampleRate,length=Math.round(rate*.23);b=ctx.createBuffer(2,length,rate);let s=0xafe093;for(let ch=0;ch<2;ch++){const d=b.getChannelData(ch);for(let i=0;i<length;i++){s^=s<<13;s^=s>>>17;s^=s<<5;d[i]=((s>>>0)/2147483648-1)*Math.exp(-i/length*8)}}reverbBuffers.set(ctx,b);return b;}

@@ -20,14 +20,14 @@ jobs:
           SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
           test -x "$SDKMGR"
           yes | "$SDKMGR" --licenses >/dev/null || true
-          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+          "$SDKMGR" "platforms;android-35" "build-tools;35.5.0"
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
       - name: Copy shared Web assets into Android
         run: |
           mkdir -p extribe5/native/Android/app/src/main/assets
-          cp extribe5/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,fx53.js,midi.js,song54.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/Android/app/src/main/assets/
+          cp extribe5/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,fx53.js,presets55.js,midi.js,song54.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/Android/app/src/main/assets/
       - name: Build Android APK
         run: gradle -p extribe5/native/Android --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
@@ -52,7 +52,7 @@ jobs:
       - name: Copy shared Web assets into Xcode
         run: |
           mkdir -p extribe5/native/iOS/EXTRIBE/www
-          cp extribe5/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,fx53.js,midi.js,song54.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/iOS/EXTRIBE/www/
+          cp extribe5/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,fx53.js,presets55.js,midi.js,song54.js,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe5/native/iOS/EXTRIBE/www/
       - name: Build iOS Simulator App
         run: >
           xcodebuild -project extribe5/native/iOS/EXTRIBE.xcodeproj
