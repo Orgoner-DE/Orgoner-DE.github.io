@@ -1,0 +1,60 @@
+name: Build EX-TRIBE Studio 6.1 Piano Synth (Android + iOS)
+on:
+  push:
+    branches: [extribe61-piano-20261028]
+    paths: ['extribe6/**', '.github/workflows/extribe61-piano-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare Android SDK
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+          yes | "$SDKMGR" --licenses >/dev/null || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Copy Web Studio into Android
+        run: |
+          mkdir -p extribe6/native/Android/app/src/main/assets
+          cp extribe6/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,midi.js,fx53.js,hud55.js,hud55.css,presets55.js,song54.js,studio60.js,studio60.css,piano61.js,piano61.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/Android/app/src/main/assets/
+      - name: Build Android APK
+        run: gradle -p extribe6/native/Android --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-STUDIO-6.1-Android-APK
+          path: extribe6/native/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Copy Web Studio into Xcode
+        run: |
+          mkdir -p extribe6/native/iOS/EXTRIBE/www
+          cp extribe6/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,midi.js,fx53.js,hud55.js,hud55.css,presets55.js,song54.js,studio60.js,studio60.css,piano61.js,piano61.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/iOS/EXTRIBE/www/
+      - name: Build iOS Simulator App
+        run: >
+          xcodebuild -project extribe6/native/iOS/EXTRIBE.xcodeproj
+          -scheme EXTRIBE -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE61"
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Package iOS simulator app
+        run: |
+          cd "$RUNNER_TEMP/EXTRIBE61/Build/Products/Debug-iphonesimulator"
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-6.1-iOS-Simulator.zip" EXTRIBE.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-STUDIO-6.1-iOS-Simulator
+          path: EXTRIBE-6.1-iOS-Simulator.zip
+          if-no-files-found: error

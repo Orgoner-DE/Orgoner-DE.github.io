@@ -1,6 +1,6 @@
 {
-  "version": "6.0.0",
+  "version": "6.1.0",
   "webUrl": "https://orgoner-de.github.io/extribe6/",
-  "apkUrl": "https://orgoner-de.github.io/extribe6/EXTRIBE-PRO-6.0.apk",
-  "notes": "EX-TRIBE Studio: multitrack arranger, samples, synth, piano roll, EQ/FX, automation, WAV export, MIDI Learn."
+  "apkUrl": "https://orgoner-de.github.io/extribe6/EXTRIBE-STUDIO-6.1.apk",
+  "notes": "Piano Synth 6.1: touch keyboard, 8 original synth presets, MIDI notes and piano-roll recording, Web Audio export."
 }

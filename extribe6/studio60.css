@@ -67,3 +67,5 @@
 .s6-popup button{width:100%;text-align:left}.s6-off{display:none!important}
 @media(max-width:970px){.s6-browser{width:198px;flex-basis:198px}.s6-tracklabel{width:156px;min-width:156px}.s6-lower{height:224px}.s6-top{gap:5px}.s6-brand{font-size:14px}.s6-panel-head{padding:8px}}
 @media(max-width:670px){.s6-browser{position:absolute;z-index:12;top:57px;bottom:29px;box-shadow:6px 4px 20px #0008;width:240px}.s6-browser.s6-closed{display:none}.s6-rulerbar .s6-hint{display:none}.s6-lower{height:210px}.s6-tracklabel{width:142px;min-width:142px}.s6-top .s6-timing{margin-left:0}.s6-tag{display:none}.s6-top button{padding:5px}.s6-top{min-height:50px}.s6-device{flex-basis:146px}}
+
+#studio60 .s6-pianobtn{background:#205747!important;border-color:#78cdaa!important;color:#ddffee!important;font-weight:850}
