@@ -5,7 +5,7 @@ on:
     paths: ['extribe6/**', '.github/workflows/extribe61-piano-build.yml']
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -29,6 +29,14 @@ jobs:
           cp extribe6/{index.html,app.css,app.js,packs.js,packs_extra.js,packs_53.js,midi.js,fx53.js,hud55.js,hud55.css,presets55.js,song54.js,studio60.js,studio60.css,piano61.js,piano61.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/Android/app/src/main/assets/
       - name: Build Android APK
         run: gradle -p extribe6/native/Android --no-daemon :app:assembleDebug
+      - name: Publish APK to GitHub Pages assets
+        run: |
+          cp extribe6/native/Android/app/build/outputs/apk/debug/app-debug.apk extribe6/EXTRIBE-STUDIO-6.1.apk
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add extribe6/EXTRIBE-STUDIO-6.1.apk
+          git commit -m 'Build EX-TRIBE 6.1 Piano APK [skip ci]'
+          git push origin HEAD:${{ github.ref_name }}
       - uses: actions/upload-artifact@v4
         with:
           name: EXTRIBE-STUDIO-6.1-Android-APK
