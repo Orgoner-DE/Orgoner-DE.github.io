@@ -13,7 +13,7 @@ export function stepVehicle(car, input, cfg, dt=PHYSICS_DT) {
   const hand=Boolean(input.handbrake);
   const steeringTarget=(input.left?1:0)-(input.right?1:0);
   car.steer+= (steeringTarget-car.steer)*(1-Math.exp(-dt*11));
-  const sx=Math.sin(car.yaw),sz=Math.cos(car.yaw),rx=Math.cos(car.y),rz=-Math.sin(car.yaw);
+  const sx=Math.sin(car.yaw),sz=Math.cos(car.yaw),rx=Math.cos(car.yaw),rz=-Math.sin(car.yaw);
   let forward=car.vx*sx+car.vz*sz;
   let lateral=car.vx*rx+car.vz*rz;
   const throttle=Boolean(input.throttle),brake=Boolean(input.brake);
