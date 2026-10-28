@@ -1,4 +1,5 @@
 import * as THREE from '../vendor/three.module.js';
+import {PHYSICS_DT,stepVehicle} from './physics.mjs';
 
 const $ = id => document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -42,7 +43,7 @@ const TRACKS=[
  {id:'city',name:'NIGHT DOCK',caption:'Beleuchtete Stadtkulisse und Betonwände, frei gestaltete D1-Stadtkurs-Atmosphäre.',theme:'city',pts:[[-9,-3],[-4,-4],[3,-3],[8,-1],[9,3],[5,4],[1,3],[-1,0],[-5,2],[-8,3],[-11,0]]}
 ];
 const PAINTS=[0xdf272f,0x3c67d6,0xeeeeeb,0x171d27,0x22a293,0x9e59c4,0xee9d27,0x8794a0];
-const state={car:6,track:0,mode:'free',camera:0,paint:0,quality:'medium',time:0,round:0,score:0,best:0,combo:1,scoreHold:0,lap:0,steering:48,grip:56,gyro:54,
+const state={car:6,track:0,mode:'free',camera:0,paint:0,quality:'auto',time:0,round:0,score:0,best:0,combo:1,scoreHold:0,lap:0,steering:48,grip:56,gyro:54,
     carState:{x:0,z:0,yaw:0,vx:0,vz:0,yawRate:0,steer:0}, controls:{left:false,right:false,throttle:false,brake:false,handbrake:false}};
 const scene=new THREE.Scene();scene.background=new THREE.Color(0x889eb0);scene.fog=new THREE.Fog(0x889eb0,12,39);
 const camera=new THREE.PerspectiveCamera(58,window.innerWidth/window.innerHeight,.014,130);
@@ -303,9 +304,22 @@ function loadPrefs(){try{const p=JSON.parse(localStorage.getItem('dq.d1.78')||'n
  for(let k of ['car','track','mode','paint','steering','grip','gyro','quality','best'])if(p[k]!==undefined)state[k]=p[k];
  state.car=clamp(state.car,0,CARS.length-1);state.track=clamp(state.track,0,TRACKS.length-1);state.paint=clamp(state.paint,0,PAINTS.length-1);
  }catch(e){}}
+let renderPixelRatio=1.4;
 function setQuality(q){
- state.quality=q;renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,q==='high'?2:q==='medium'?1.5:1));
- renderer.shadowMap.enabled=q!=='low';renderer.setSize(innerWidth,innerHeight);savePrefs();
+ state.quality=q;
+ renderPixelRatio=q==='high'?2:q==='medium'?1.5:q==='low'?1:1.35;
+ renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,renderPixelRatio));
+ renderer.shadowMap.enabled=q!=='low';
+ renderer.setSize(innerWidth,innerHeight);
+ savePrefs();
+}
+function adaptGraphics(fps){
+ if(state.quality!=='auto')return;
+ const target= fps<46 ? Math.max(.75,renderPixelRatio-.12) : fps>58 ? Math.min(1.55,renderPixelRatio+.04) : renderPixelRatio;
+ if(Math.abs(target-renderPixelRatio)>.005){
+   renderPixelRatio=target;
+   renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,renderPixelRatio));
+ }
 }
 function updateControls(){
  $('vehicle').value=String(state.car);
@@ -350,56 +364,50 @@ function closestRoad(x,z){
  let min=999;
  for(let i=0;i<line.length;i+=2){const p=line[i];let d=(p.x-x)**2+(p.z-z)**2;if(d<min)min=d;}return Math.sqrt(min);
 }
+let telemetry={forward:0,lateral:0,speed:0,driftAngle:0,yawRate:0,off:false};
 function updateSim(dt){
- const c=state.carState,k=state.controls,def=CARS[state.car],input=(k.left?1:0)-(k.right?1:0);
- const turn=clamp(input,-1,1);c.steer+=(turn-c.steer)*Math.min(1,dt*10);
- const hd=c.yaw,fx=Math.sin(hd),fz=Math.cos(hd),rx=Math.cos(hd),rz=-Math.sin(hd);
- let vlong=c.vx*fx+c.vz*fz,vlat=c.vx*rx+c.vz*rz;
- const grip=state.grip/100,hand=k.handbrake;
- const power=(3.7+def.power*.57)*(k.throttle?1:0);
- let accel=power-((k.brake?9:0)*Math.sign(vlong||1))-Math.sign(vlong)*(.36+.105*vlong*vlong);
- vlong+=accel*dt;
- vlong=clamp(vlong,-2.2,8.4);
- const steerAngle=c.steer*(state.steering*rad);
- const desiredYaw=clamp((vlong/Math.max(def.wb,.2))*Math.tan(steerAngle)*.18,-3.35,3.35);
- const gFactor=hand?.2:(.5+grip*.7);
- c.yawRate+=(desiredYaw-c.yawRate)*Math.min(1,dt*(2.3+state.gyro*.02)*gFactor);
- c.yaw+=c.yawRate*dt;
- // Front-wheel steering and rear-wheel slip create an observable yaw/velocity separation.
- const induced=c.steer*Math.abs(vlong)*(hand?.37:(.08+(1-grip)*.28));
- vlat+=(induced-vlat)*Math.min(1,dt*(hand?1.8:(2.6+grip*2.5)));
- const yawFx=Math.sin(c.yaw),yawFz=Math.cos(c.yaw),yawRx=Math.cos(c.y),yawRz=-Math.sin(c.yaw);
- c.vx=yawFx*vlong+yawRx*vlat;c.vz=yawFz*vlong+yawRz*vlat;
- c.x+=c.vx*dt;c.z+=c.vz*dt;
- if(!Number.isFinite(c.x)||!Number.isFinite(c.z)||Math.abs(c.x)>250||Math.abs(c.z)>250){resetCar();return;}
+ const c=state.carState,k=state.controls,def=CARS[state.car];
+ telemetry=stepVehicle(c,k,{
+   wheelbase:def.wb,power:def.power,
+   steering:state.steering,grip:state.grip,gyro:state.gyro
+ },dt);
+ if(Math.abs(c.x)>220||Math.abs(c.z)>220){resetCar();return;}
  const off=closestRoad(c.x,c.z)>roadWidth*.67;
- if(off){c.vx*=1-dt*.95;c.vz*=1-dt*.95;}
- const slip=Math.atan2(vlat,Math.max(Math.abs(vlong),.2))/rad;
- const absSlip=Math.abs(slip),speed=Math.hypot(c.vx,c.vz);
+ telemetry.off=off;
+ if(off){const drag=Math.exp(-dt*.95);c.vx*=drag;c.vz*=drag;}
+ const absSlip=Math.abs(telemetry.driftAngle),speed=telemetry.speed;
  state.time+=dt;
- if(speed>1.4&&absSlip>10&&absSlip<73&&!off){
-   const pts=dt*(absSlip-8)*speed*1.6*state.combo;
-   state.score+=pts;state.scoreHold=0;state.combo=clamp(state.combo+dt*.18,1,4);
- }else{state.scoreHold+=dt;if(state.scoreHold>1.8)state.combo=1;}
+ if(speed>1.3&&absSlip>10&&absSlip<73&&!off){
+   state.score+=dt*(absSlip-8)*speed*1.6*state.combo;
+   state.scoreHold=0;
+   state.combo=clamp(state.combo+dt*.18,1,4);
+ }else{
+   state.scoreHold+=dt;
+   if(state.scoreHold>1.8)state.combo=1;
+ }
  if(state.mode==='qual'&&state.time>90){
    state.best=Math.max(state.best,Math.round(state.score));
    $('status').textContent='D1 SOLO · 90 s vorbei · '+Math.round(state.score)+' Punkte · Bestwert '+state.best+' · RESET für neuen Lauf';
    state.mode='free';savePrefs();updateControls();
  }
+}
+function updateHud(fps){
+ const c=state.carState,k=state.controls;
  if(car){
    car.position.set(c.x,.015,c.z);car.rotation.y=c.yaw;
-   for(let wheel of car.userData.wheels){if(wheel.front)wheel.pivot.rotation.y=-c.steer*state.steering*rad*.53;}
+   for(const wheel of car.userData.wheels)if(wheel.front)wheel.pivot.rotation.y=-c.steer*state.steering*rad*.53;
  }
  if(state.mode==='tandem'&&aiCar){
    const u=(state.time*.032+.015)%1,p=curve.getPointAt(u),t=curve.getTangentAt(u);
-   aiCar.position.set(p.x,.015,p.z);aiCar.rotation.y=Math.atan2(t.x,t.z);
+   aiCar.position.set(p.x,.015,p.z);
+   aiCar.rotation.y=Math.atan2(t.x,t.z);
  }
- if(absSlip>11&&speed>2&&k.throttle){smokeClock+=dt;if(smokeClock>.075){smokeClock=0;emitSmoke(c,fx,fz);}}else smokeClock=0;
- if(audioCtx&&osc){osc.frequency.setTargetAtTime(74+Math.abs(vlong)*34+(k.throttle?40:0),audioCtx.currentTime,.06);}
- $('speed').innerHTML=Math.round(speed*3.6)+' <small>km/h</small>';
- $('angle').textContent='DRIFT '+Math.round(absSlip)+'°'+(off?' · OFFROAD':'');
+ $('speed').innerHTML=Math.round(telemetry.speed*3.6)+' <small>km/h</small>';
+ $('angle').textContent='DRIFT '+Math.round(Math.abs(telemetry.driftAngle))+'°'+(telemetry.off?' · OFFROAD':'');
  $('score').textContent=Math.round(state.score).toLocaleString('de-DE')+' PTS';
  $('combo').textContent='COMBO ×'+state.combo.toFixed(1)+(state.mode==='qual'?' · '+Math.max(0,Math.ceil(90-state.time))+' s':'');
+ $('fps').textContent=fps>0?Math.round(fps)+' FPS · '+(state.quality==='auto'?'AUTO':'MANUELL'):'FPS ...';
+ if(audioCtx&&osc)osc.frequency.setTargetAtTime(74+Math.abs(telemetry.forward)*34+(k.throttle?40:0),audioCtx.currentTime,.06);
 }
 function emitSmoke(c,fx,fz){
  const smokeGeo=new THREE.SphereGeometry(.04,6,5);
@@ -425,6 +433,14 @@ function updateVisual(dt){
   camera.position.copy(follower);
   if(state.camera===2){camera.lookAt(c.x,0,c.z);}else camera.lookAt(c.x+dx*.36,.09,c.z+dz*.36);
  }
+ const c=state.carState;
+ if(Math.abs(telemetry.driftAngle)>11&&telemetry.speed>2&&state.controls.throttle){
+   smokeClock+=dt;
+   if(smokeClock>.075){
+     smokeClock=0;
+     emitSmoke(c,Math.sin(c.yaw),Math.cos(c.yaw));
+   }
+ }else smokeClock=0;
  for(let i=smoke.length-1;i>=0;i--){
    const s=smoke[i];s.age+=dt;s.obj.position.y+=dt*.18;s.obj.scale.setScalar(1+s.age*2.1);
    s.obj.material.opacity=Math.max(0,.29*(1-s.age/1.15));
@@ -432,10 +448,27 @@ function updateVisual(dt){
  }
 }
 const clock=new THREE.Clock();
+let accumulator=0,fpsSeconds=0,fpsFrames=0,lastFps=0;
 function animate(){
  requestAnimationFrame(animate);
- const dt=Math.min(clock.getDelta(),.040);
- updateSim(dt);updateVisual(dt);renderer.render(scene,camera);
+ const realDt=clock.getDelta();
+ accumulator+=Math.min(realDt,.08);
+ let iterations=0;
+ while(accumulator>=PHYSICS_DT && iterations<10){
+   updateSim(PHYSICS_DT);
+   accumulator-=PHYSICS_DT;iterations++;
+ }
+ if(iterations===10 && accumulator>PHYSICS_DT)accumulator=0; // avoid catch-up spiral
+ const renderDt=Math.min(realDt,.05);
+ updateVisual(renderDt);
+ updateHud(lastFps);
+ renderer.render(scene,camera);
+ fpsSeconds+=realDt;fpsFrames++;
+ if(fpsSeconds>=1.0){
+   lastFps=fpsFrames/fpsSeconds;
+   adaptGraphics(lastFps);
+   fpsFrames=0;fpsSeconds=0;
+ }
  frameCount++;
 }
 try{
