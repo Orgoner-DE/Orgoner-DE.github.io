@@ -16,7 +16,7 @@
 .topright{display:flex;gap:6px;align-items:flex-start;pointer-events:auto}.mini,.btn{border:1px solid #5a7080;border-radius:9px;background:#101c2cdd;color:white;padding:10px 12px;font-weight:800;font-size:12px}
 #hud{position:absolute;top:78px;right:12px;text-align:right;pointer-events:none;text-shadow:0 2px 8px #000}
 #speed{font-size:clamp(35px,8vw,68px);font-weight:900;line-height:1}#speed small{font-size:13px;color:var(--muted)}#angle{color:#ffcb66;font-size:13px;font-weight:800}
-#score{font-size:20px;font-weight:800;color:#fff}#combo{font-size:12px;color:#ffcc6a}
+#score{font-size:20px;font-weight:800;color:#fff}#fps{color:#a7d9c1;font-size:12px;font-weight:800;margin-top:5px}#combo{font-size:12px;color:#ffcc6a}
 #panel{position:absolute;top:82px;left:12px;width:min(310px,calc(100vw - 24px));max-height:calc(100vh - 176px);overflow-y:auto;background:var(--panel);border:1px solid var(--edge);border-radius:13px;box-shadow:0 12px 40px #0009;padding:13px;scrollbar-width:thin}
 #panel.hidden{display:none}h2{font-size:14px;margin:0 0 11px;letter-spacing:.13em;color:#ff7373}h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#adc4d8;margin:12px 0 6px}
 #vehicle{width:100%;background:#111e2f;border:1px solid #486071;color:white;border-radius:7px;padding:11px;font-weight:700}
@@ -35,11 +35,11 @@ footer{font-size:10px;color:#91a7b9;margin-top:10px}
 </head>
 <body>
 <canvas id="render" aria-label="Dreidimensionale RC-Driftstrecke"></canvas><div id="shade"></div>
-<header id="top"><div><div class="brand">DRIVE <b>QUER</b></div><div class="sub">RC DRIFT · D1-INSPIRED LAB · 7.8</div></div><div class="topright">
+<header id="top"><div><div class="brand">DRIVE <b>QUER</b></div><div class="sub">RC DRIFT · REAL RC · PHYSICS LAB · 7.9</div></div><div class="topright">
 <button id="togglePanel" class="mini" aria-label="Garage einblenden oder schließen">GARAGE</button>
 <button id="camera" class="mini" aria-label="Kamera wechseln">KAMERA</button>
 <button id="reset" class="mini" aria-label="Auto zurücksetzen">RESET</button></div></header>
-<aside id="hud"><div id="speed">0 <small>km/h</small></div><div id="angle">WINKEL 0°</div><div id="score">0 PTS</div><div id="combo">COMBO ×1.0</div></aside>
+<aside id="hud"><div id="speed">0 <small>km/h</small></div><div id="angle">WINKEL 0°</div><div id="score">0 PTS</div><div id="combo">COMBO ×1.0</div><div id="fps" aria-label="Aktuelle Bilder pro Sekunde">FPS ...</div></aside>
 <section id="panel">
 <h2>GARAGE · 28 RC-MODELLE</h2>
 <select id="vehicle" aria-label="Fahrzeug auswählen"></select><div id="carstats"></div>
@@ -50,11 +50,11 @@ footer{font-size:10px;color:#91a7b9;margin-top:10px}
 <label class="range">Lenkwinkel <input id="steering" type="range" min="25" max="65" value="48" step="1"><output id="steeringVal">48°</output></label>
 <label class="range">Reifengrip <input id="grip" type="range" min="25" max="100" value="56" step="1"><output id="gripVal">56%</output></label>
 <label class="range">Gyro <input id="gyro" type="range" min="0" max="100" value="54" step="1"><output id="gyroVal">54%</output></label>
-<label class="range">Grafik <select id="quality"><option value="medium">Mittel</option><option value="low">Sparsam</option><option value="high">Hoch</option></select></label>
+<label class="range">Grafik <select id="quality"><option value="auto">Automatisch</option><option value="medium">Mittel</option><option value="low">Sparsam</option><option value="high">Hoch</option></select></label>
 <div id="caption">Modellmaßstab 1:10. Eigenständige 3D-Rekonstruktionen und frei gestaltete RC-Strecken, keine 1:1-Scans.</div>
 <footer>WASD/Pfeiltasten · Leertaste = Handbremse · R = Reset. Touch-Steuerung unten. Keine offizielle D1GP-App.</footer>
 </section>
-<div id="status">Wähle ein Fahrzeug und gib Gas · RC-Fahrphysik mit Driftwertung</div>
+<div id="status">Wähle ein Fahrzeug und gib Gas · 120-Hz-RC-Physik mit Driftwertung</div>
 <div id="bottom"><div class="btns"><button data-control="left" class="ctrl" aria-label="Links lenken">◀</button><button data-control="right" class="ctrl" aria-label="Rechts lenken">▶</button></div><div class="btns"><button data-control="handbrake" class="ctrl" aria-label="Handbremse">HB</button><button data-control="brake" class="ctrl brake" aria-label="Bremsen">BREMS</button><button data-control="throttle" class="ctrl go" aria-label="Beschleunigen">GAS</button></div></div>
 <div id="err" role="alert"></div>
 <script type="module" src="./game.js"></script>
