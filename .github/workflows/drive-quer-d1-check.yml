@@ -1,0 +1,22 @@
+name: DRIVE QUER D1 Lab checks
+on:
+  pull_request:
+    paths:
+      - 'drive-quer-d1/**'
+      - '.github/workflows/drive-quer-d1-check.yml'
+  push:
+    paths:
+      - 'drive-quer-d1/**'
+      - '.github/workflows/drive-quer-d1-check.yml'
+  workflow_dispatch:
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node drive-quer-d1/tests/check.mjs
