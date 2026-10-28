@@ -1,0 +1,60 @@
+name: Build EX-TRIBE PRO 5.7 DAW (Android + iOS)
+on:
+  push:
+    branches: [extribe57-daw-studio-20261028]
+    paths: ["extribe5/studio57.html", ".github/workflows/extribe-v57-daw.yml"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Prepare Android SDK
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+          test -x "$SDKMGR"
+          yes | "$SDKMGR" --licenses >/dev/null || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Install DAW studio HTML into Android
+        run: |
+          cp extribe5/studio57.html extribe5/native/Android/app/src/main/assets/index.html
+          sed -i "s/versionCode [0-9]*/versionCode 57/; s/versionName '[^']*'/versionName '5.7'/" extribe5/native/Android/app/build.gradle
+      - name: Build Android debug APK
+        run: gradle -p extribe5/native/Android --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-PRO-5.7-DAW-Android-APK
+          path: extribe5/native/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install DAW studio HTML into iOS project
+        run: |
+          cp extribe5/studio57.html extribe5/native/iOS/EXTRIBE/www/index.html
+      - name: Build iOS simulator app
+        run: >
+          xcodebuild -project extribe5/native/iOS/EXTRIBE.xcodeproj
+          -scheme EXTRIBE -configuration Debug
+          -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE57"
+          CODE_SIGNING_ALLOWED=NO build
+      - name: Package simulator app
+        run: |
+          cd "$RUNNER_TEMP/EXTRIBE57/Build/Products/Debug-iphonesimulator"
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-5.7-iOS-Simulator.zip" EXTRIBE.app
+      - uses: actions/upload-artifact@v4
+        with:
+          name: EXTRIBE-PRO-5.7-DAW-iOS-Simulator
+          path: EXTRIBE-5.7-iOS-Simulator.zip
+          if-no-files-found: error
