@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+android {
+    namespace 'de.orgoner.extribe'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'de.orgoner.extribe'
+        minSdk 26
+        targetSdk 35
+        versionCode 60
+        versionName '6.0'
+    }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+}

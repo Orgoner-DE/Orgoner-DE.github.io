@@ -1,0 +1,30 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1; classes = {}; objectVersion = 56;
+ objects = {
+  A00000000000000000000001 = {isa = PBXProject; attributes = {BuildIndependentTargetsInParallel = YES;}; buildConfigurationList = A00000000000000000000002; compatibilityVersion = "Xcode 14.0"; developmentRegion = de; hasScannedForEncodings = 0; knownRegions = (de, en, Base); mainGroup = A00000000000000000000003; productRefGroup = A00000000000000000000004; projectDirPath = ""; projectRoot = ""; targets = (A00000000000000000000005,); };
+  A00000000000000000000002 = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000006,A00000000000000000000007); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+  A00000000000000000000003 = {isa = PBXGroup; children = (A00000000000000000000008,A00000000000000000000004,); sourceTree = "<group>";};
+  A00000000000000000000004 = {isa = PBXGroup; children = (A00000000000000000000009,); name = Products; sourceTree = "<group>";};
+  A00000000000000000000009 = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EXTRIBE.app; sourceTree = BUILT_PRODUCTS_DIR;};
+  A00000000000000000000008 = {isa = PBXGroup; children = (A0000000000000000000000A,A0000000000000000000000B,A00000000000000000000014,A00000000000000000000016,); path = EXTRIBE; sourceTree = "<group>";};
+  A0000000000000000000000A = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>";};
+  A0000000000000000000000B = {isa = PBXFileReference; lastKnownFileType = folder; path = www; sourceTree = "<group>";};
+  A00000000000000000000005 = {isa = PBXNativeTarget; buildConfigurationList = A0000000000000000000000C; buildPhases = (A0000000000000000000000D,A0000000000000000000000E,A0000000000000000000000F); buildRules = (); dependencies = (); name = EXTRIBE; productName = EXTRIBE; productReference = A00000000000000000000009; productType = "com.apple.product-type.application";};
+  A0000000000000000000000C = {isa = XCConfigurationList; buildConfigurations = (A00000000000000000000010,A00000000000000000000011); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release;};
+  A0000000000000000000000D = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (A00000000000000000000012,A00000000000000000000015,A00000000000000000000017,); runOnlyForDeploymentPostprocessing = 0;};
+  A0000000000000000000000E = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0;};
+  A0000000000000000000000F = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (A00000000000000000000013,); runOnlyForDeploymentPostprocessing = 0;};
+  A00000000000000000000012 = {isa = PBXBuildFile; fileRef = A0000000000000000000000A;};
+  A00000000000000000000013 = {isa = PBXBuildFile; fileRef = A0000000000000000000000B;};
+  A00000000000000000000014 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EXTRIBEApp.swift; sourceTree = "<group>";};
+  A00000000000000000000015 = {isa = PBXBuildFile; fileRef = A00000000000000000000014;};
+  A00000000000000000000016 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MidiCoreBridge.swift; sourceTree = "<group>";};
+  A00000000000000000000017 = {isa = PBXBuildFile; fileRef = A00000000000000000000016;};
+  A00000000000000000000006 = {isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SWIFT_VERSION = 5.0; }; name = Debug;};
+  A00000000000000000000007 = {isa = XCBuildConfiguration; buildSettings = { CLANG_ENABLE_MODULES = YES; IPHONEOS_DEPLOYMENT_TARGET = 16.0; SWIFT_VERSION = 5.0; }; name = Release;};
+  A00000000000000000000010 = {isa = XCBuildConfiguration; buildSettings = { ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; CODE_SIGN_STYLE = Automatic; MARKETING_VERSION = 6.0; CURRENT_PROJECT_VERSION = 60; DEVELOPMENT_TEAM = ""; PRODUCT_BUNDLE_IDENTIFIER = de.orgoner.extribe; INFOPLIST_KEY_CFBundleDisplayName = "EX-TRIBE"; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; IPHONEOS_DEPLOYMENT_TARGET = 16.0; }; name = Debug;};
+  A00000000000000000000011 = {isa = XCBuildConfiguration; buildSettings = { GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES; CODE_SIGN_STYLE = Automatic; MARKETING_VERSION = 6.0; CURRENT_PROJECT_VERSION = 60; DEVELOPMENT_TEAM = ""; PRODUCT_BUNDLE_IDENTIFIER = de.orgoner.extribe; INFOPLIST_KEY_CFBundleDisplayName = "EX-TRIBE"; PRODUCT_NAME = "$(TARGET_NAME)"; SDKROOT = iphoneos; SWIFT_EMIT_LOC_STRINGS = YES; SWIFT_VERSION = 5.0; TARGETED_DEVICE_FAMILY = "1,2"; IPHONEOS_DEPLOYMENT_TARGET = 16.0; INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"; }; name = Release;};
+ };
+ rootObject = A00000000000000000000001;
+}
