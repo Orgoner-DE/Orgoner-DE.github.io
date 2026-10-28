@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d14">
+<meta name="description" content="DRIVE QUER D1-inspirierter RC-Drift-Prototyp mit 28 Fahrzeugen, 3 Miniaturstrecken und echter WebGL-3D-Szene.">
+<title>DRIVE QUER | RC DRIFT D1 LAB</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#f4f5f7;background:#080d14;--panel:#0e1520ef;--edge:#2b394a;--muted:#a2b2c7;--red:#ee3c3c;--white:#f4f5f7}
+*{box-sizing:border-box}body{margin:0;overflow:hidden;touch-action:none}button,select,input{font:inherit}button{cursor:pointer}
+#render{position:fixed;inset:0;width:100%;height:100%;display:block}
+#shade{position:fixed;inset:0;pointer-events:none;background:linear-gradient(180deg,#03070b75,transparent 28%,transparent 70%,#03070b78)}
+#top{position:absolute;top:0;left:0;right:0;display:flex;justify-content:space-between;gap:10px;padding:max(12px,env(safe-area-inset-top)) 12px 8px;pointer-events:none}
+.brand{font-weight:900;font-style:italic;letter-spacing:.05em;font-size:clamp(18px,4vw,27px);line-height:1}.brand b{color:var(--red)}.sub{font-size:10px;letter-spacing:.23em;color:#d3dfeb;margin-top:5px;font-style:normal}
+.topright{display:flex;gap:6px;align-items:flex-start;pointer-events:auto}.mini,.btn{border:1px solid #5a7080;border-radius:9px;background:#101c2cdd;color:white;padding:10px 12px;font-weight:800;font-size:12px}
+#hud{position:absolute;top:78px;right:12px;text-align:right;pointer-events:none;text-shadow:0 2px 8px #000}
+#speed{font-size:clamp(35px,8vw,68px);font-weight:900;line-height:1}#speed small{font-size:13px;color:var(--muted)}#angle{color:#ffcb66;font-size:13px;font-weight:800}
+#score{font-size:20px;font-weight:800;color:#fff}#combo{font-size:12px;color:#ffcc6a}
+#panel{position:absolute;top:82px;left:12px;width:min(310px,calc(100vw - 24px));max-height:calc(100vh - 176px);overflow-y:auto;background:var(--panel);border:1px solid var(--edge);border-radius:13px;box-shadow:0 12px 40px #0009;padding:13px;scrollbar-width:thin}
+#panel.hidden{display:none}h2{font-size:14px;margin:0 0 11px;letter-spacing:.13em;color:#ff7373}h3{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#adc4d8;margin:12px 0 6px}
+#vehicle{width:100%;background:#111e2f;border:1px solid #486071;color:white;border-radius:7px;padding:11px;font-weight:700}
+.pillrow{display:flex;flex-wrap:wrap;gap:6px}.chip{border:1px solid #4a5a6f;border-radius:7px;padding:8px;color:#dae5ed;background:#182435;font-size:11px;font-weight:700}.chip.active{background:#8e2428;border-color:#e45d5f;color:white}
+#carstats{font-size:12px;color:#b8c5d5;line-height:1.6;padding:7px 0}#caption{font-size:12px;color:#bad0dd;line-height:1.5;padding:9px;border-left:3px solid var(--red);background:#14203180}
+.range{display:flex;align-items:center;gap:9px;justify-content:space-between;color:#bbc9d8;font-size:12px;margin:6px 0}.range input{accent-color:#e24d4d;width:55%}
+#bottom{position:fixed;left:0;right:0;bottom:0;padding:6px max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));display:flex;align-items:end;justify-content:space-between;gap:10px;pointer-events:none}
+.ctrl{touch-action:none;user-select:none;border-radius:14px;background:#15283bc7;color:#fff;border:1px solid #67849d7d;font-size:18px;font-weight:900;min-height:59px;min-width:60px;box-shadow:0 6px 12px #0008;pointer-events:auto}
+.ctrl.active{background:#e34042da;border-color:#ffc1c1}.btns{display:flex;gap:7px}.go{background:#a82b35d9;min-width:76px}.brake{min-width:71px}
+#status{position:fixed;bottom:97px;left:50%;transform:translateX(-50%);background:#0a111bda;padding:8px 10px;border:1px solid #3b5267;border-radius:8px;font-size:12px;color:#b6cadf;max-width:75vw;text-align:center;pointer-events:none}
+#err{display:none;position:fixed;inset:auto 12px 150px;background:#450d13;color:#fff;border:1px solid #ff6971;padding:13px;border-radius:9px;z-index:20;line-height:1.5}
+footer{font-size:10px;color:#91a7b9;margin-top:10px}
+@media(max-width:660px){#top{padding-top:max(8px,env(safe-area-inset-top))}#hud{top:65px}#panel{top:68px;max-height:calc(100dvh - 190px);width:min(285px,calc(100vw - 22px))}#bottom{gap:6px}.ctrl{min-width:54px;min-height:53px}.go{min-width:62px}}
+@media(max-width:660px) and (orientation:portrait){#panel:not(.hidden){background:#0a121cf4}#status{bottom:80px;font-size:10px}}
+</style>
+</head>
+<body>
+<canvas id="render" aria-label="Dreidimensionale RC-Driftstrecke"></canvas><div id="shade"></div>
+<header id="top"><div><div class="brand">DRIVE <b>QUER</b></div><div class="sub">RC DRIFT · D1-INSPIRED LAB · 7.8</div></div><div class="topright">
+<button id="togglePanel" class="mini" aria-label="Garage einblenden oder schließen">GARAGE</button>
+<button id="camera" class="mini" aria-label="Kamera wechseln">KAMERA</button>
+<button id="reset" class="mini" aria-label="Auto zurücksetzen">RESET</button></div></header>
+<aside id="hud"><div id="speed">0 <small>km/h</small></div><div id="angle">WINKEL 0°</div><div id="score">0 PTS</div><div id="combo">COMBO ×1.0</div></aside>
+<section id="panel">
+<h2>GARAGE · 28 RC-MODELLE</h2>
+<select id="vehicle" aria-label="Fahrzeug auswählen"></select><div id="carstats"></div>
+<div class="pillrow" id="paints" aria-label="Lackfarben"></div>
+<h3>Strecke</h3><div class="pillrow" id="tracks"></div>
+<h3>Modus</h3><div class="pillrow" id="modes"></div>
+<h3>Setup</h3>
+<label class="range">Lenkwinkel <input id="steering" type="range" min="25" max="65" value="48" step="1"><output id="steeringVal">48°</output></label>
+<label class="range">Reifengrip <input id="grip" type="range" min="25" max="100" value="56" step="1"><output id="gripVal">56%</output></label>
+<label class="range">Gyro <input id="gyro" type="range" min="0" max="100" value="54" step="1"><output id="gyroVal">54%</output></label>
+<label class="range">Grafik <select id="quality"><option value="medium">Mittel</option><option value="low">Sparsam</option><option value="high">Hoch</option></select></label>
+<div id="caption">Modellmaßstab 1:10. Eigenständige 3D-Rekonstruktionen und frei gestaltete RC-Strecken, keine 1:1-Scans.</div>
+<footer>WASD/Pfeiltasten · Leertaste = Handbremse · R = Reset. Touch-Steuerung unten. Keine offizielle D1GP-App.</footer>
+</section>
+<div id="status">Wähle ein Fahrzeug und gib Gas · RC-Fahrphysik mit Driftwertung</div>
+<div id="bottom"><div class="btns"><button data-control="left" class="ctrl" aria-label="Links lenken">◀</button><button data-control="right" class="ctrl" aria-label="Rechts lenken">▶</button></div><div class="btns"><button data-control="handbrake" class="ctrl" aria-label="Handbremse">HB</button><button data-control="brake" class="ctrl brake" aria-label="Bremsen">BREMS</button><button data-control="throttle" class="ctrl go" aria-label="Beschleunigen">GAS</button></div></div>
+<div id="err" role="alert"></div>
+<script type="module" src="./game.js"></script>
+</body></html>
