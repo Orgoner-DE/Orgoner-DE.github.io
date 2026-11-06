@@ -46,7 +46,7 @@ function renderGrid(){const box=$('r62-grid');if(!box)return;const p=current(),t
  $('r62-clip').textContent=clipFor(selected)?.name||'LEER · SAMPLE LADEN';}
 function toggleMute(i){const t=tracks()[i];if(!t)return;t.mute=!t.mute;S()?.updateTrack?.(i,{});renderGrid();renderMixer();status(t.name+(t.mute?' stumm':' aktiv'))}
 function toggleSolo(i){const t=tracks()[i];if(!t)return;t.solo=!t.solo;S()?.updateTrack?.(i,{});renderMixer();status(t.name+(t.solo?' SOLO':' SOLO AUS'))}
-function renderMixer(){const e=$('r62-mixer');if(!e)return;e.innerHTML=tracks().slice(0,8).map((t,i)=>`<div class="r62-channel ${i===selected?'selected':''}"><button class="r62-channelname" data-mixsel="${i}">${esc(t.name).slice(0,8)}</button><div class="r62-meter"><i style="height:${S()?.playing?.()?Math.round(28+Math.random()*38):0}%"></i></div><input type="range" class="r62-fader" orient="vertical" min="0" max="1.25" step="0.01" value="${t.volume}" data-vol="${i}" aria-label="${esc(t.name)} Lautstärke"><div class="r62-channelcontrols"><button data-mixmute="${i}" class="${t.mute?'is-red':''}" title="Mute">M</button><button data-solo="${i}" class="${t.solo?'is-gold':''}" title="Solo">S</button></div></div>`).join('');
+function renderMixer(){const e=$('r62-mixer');if(!e)return;e.innerHTML=tracks().slice(0,8).map((t,i)=>`<div class="r62-channel ${i===selected?'selected':''}"><button class="r62-channelname" data-mixsel="${i}">${esc(t.name).slice(0,8)}</button><div class="r62-meter"><i style="height:${Math.round(S()?.meters?.()?.[i]||0)}%"></i></div><input type="range" class="r62-fader" orient="vertical" min="0" max="1.25" step="0.01" value="${t.volume}" data-vol="${i}" aria-label="${esc(t.name)} Lautstärke"><div class="r62-channelcontrols"><button data-mixmute="${i}" class="${t.mute?'is-red':''}" title="Mute">M</button><button data-solo="${i}" class="${t.solo?'is-gold':''}" title="Solo">S</button></div></div>`).join('');
  e.querySelectorAll('[data-mixsel]').forEach(x=>x.onclick=()=>setTrack(+x.dataset.mixsel));
  e.querySelectorAll('[data-vol]').forEach(x=>x.oninput=()=>{S()?.updateTrack?.(+x.dataset.vol,{volume:+x.value});$('r62-track-volume').value=x.value});
  e.querySelectorAll('[data-mixmute]').forEach(x=>x.onclick=()=>toggleMute(+x.dataset.mixmute));
@@ -107,13 +107,13 @@ function fillUI(){if(rack)return;const root=document.createElement('section');ro
  <nav class="r62-mobile-nav" aria-label="Mobile Modulsteuerung"><button data-r62-nav="fx">FX</button><button data-r62-nav="sequencer">STEP</button><button data-r62-nav="sampler">SAMPLE</button><button data-r62-nav="piano">PIANO</button><button data-r62-nav="studio">DAW</button><button data-r62-nav="play">▶</button></nav>`;
  document.body.append(root);rack=root;
  const on=(id,fn)=>$(id).addEventListener('click',fn);
- root.querySelectorAll('[data-r62-nav]').forEach(btn=>btn.onclick=()=>{const section=btn.dataset.r62Nav;if(section==='studio')return close();if(section==='play')return play();const target=section==='piano'?root.querySelector('.r62-piano'):root.querySelector('.r62-'+section);if(target){const rr=root.getBoundingClientRect(),tr=target.getBoundingClientRect();root.scrollBy({left:tr.left-rr.left-9,top:section==='piano'?tr.top-rr.top-8:0,behavior:'smooth'})}});
+ root.querySelectorAll('[data-r62-nav]').forEach(btn=>btn.onclick=()=>{const section=btn.dataset.r62Nav;if(section==='studio')return close();if(section==='play')return play();const target=section==='piano'?root.querySelector('.r62-piano'):root.querySelector('.r62-'+section);if(target){const rr=root.getBoundingClientRect(),tr=target.getBoundingClientRect();root.scrollBy({left:tr.left-rr.left-9,top:section==='piano'?tr.top-rr.top-8:-root.scrollTop,behavior:'smooth'})}});
  on('r62-studio',close);on('r62-arr-open',close);
  on('r62-demo',async()=>{await S()?.demo?.();selectBar(0);syncProject();status('OST-BUNKER PRESET · 8 Spuren geladen')});
  on('r62-new',()=>{if(confirm('Neues, komplett leeres Projekt anlegen? Nicht gespeicherte Änderungen gehen verloren.')){S()?.newProject?.();selected=0;bar=0;syncProject();status('Leeres Projekt gestartet')}});
- on('r62-save',async()=>{await S()?.saveLocal?.();status('Studio-Projekt lokal gespeichert · Backup über Studio-Menü')});
+ on('r62-save',async()=>{await S()?.saveLocal?.();status('Speichern ausgelöst · Backup über Studio-Menü empfohlen')});
  on('r62-load',async()=>{await S()?.loadLocal?.();syncProject();status('Gespeichertes Projekt geladen')});
- on('r62-wav',async()=>{status('Offline-WAV-Export startet …');await S()?.exportWav?.();status('WAV-Export beendet · Download prüfen')});
+ on('r62-wav',async()=>{status('Offline-WAV-Export startet …');await S()?.exportWav?.();status('WAV-Export abgeschlossen oder im Statusfenster prüfen')});
  on('r62-updates',()=>{close();$('updateButton')?.click()});
  on('r62-play',play);on('r62-stop',()=>{S()?.stop?.();renderTransport()});
  $('r62-bpm').onchange=e=>{S()?.setTempo?.(+e.target.value);renderTransport()};
