@@ -1,7 +1,7 @@
-name: Build EX-TRIBE STUDIO 6.2 (Android + iOS)
+name: Build EX-TRIBE STUDIO 6.3 (Android + iOS)
 on:
   push:
-    branches: [main, extribe62-hardware-rack-20261106]
+    branches: [main, extribe63-heavy-chain-20261108]
     paths: ["extribe6/**", ".github/workflows/extribe-v6-build.yml"]
   workflow_dispatch:
 permissions:
@@ -26,12 +26,12 @@ jobs:
       - name: Copy shared Web assets into Android app
         run: |
           mkdir -p extribe6/native/Android/app/src/main/assets
-          cp extribe6/{index.html,app.css,app.js,fx53.js,hud55.js,hud55.css,packs.js,packs_extra.js,packs_53.js,presets55.js,song54.js,midi.js,studio60.js,studio60.css,piano61.js,piano61.css,rack62.js,rack62.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/Android/app/src/main/assets/
+          cp extribe6/{index.html,app.css,app.js,fx53.js,hud55.js,hud55.css,packs.js,packs_extra.js,packs_53.js,presets55.js,song54.js,midi.js,studio60.js,studio60.css,piano61.js,piano61.css,rack62.js,rack62.css,heavy63.js,heavy63.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/Android/app/src/main/assets/
       - name: Build Android Debug APK
         run: gradle -p extribe6/native/Android --no-daemon :app:assembleDebug
       - uses: actions/upload-artifact@v4
         with:
-          name: EXTRIBE-STUDIO-6.2-Android-APK
+          name: EXTRIBE-STUDIO-6.3-Android-APK
           path: extribe6/native/Android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
   ios:
@@ -41,20 +41,40 @@ jobs:
       - name: Copy shared Web assets into iOS app
         run: |
           mkdir -p extribe6/native/iOS/EXTRIBE/www
-          cp extribe6/{index.html,app.css,app.js,fx53.js,hud55.js,hud55.css,packs.js,packs_extra.js,packs_53.js,presets55.js,song54.js,midi.js,studio60.js,studio60.css,piano61.js,piano61.css,rack62.js,rack62.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/iOS/EXTRIBE/www/
+          cp extribe6/{index.html,app.css,app.js,fx53.js,hud55.js,hud55.css,packs.js,packs_extra.js,packs_53.js,presets55.js,song54.js,midi.js,studio60.js,studio60.css,piano61.js,piano61.css,rack62.js,rack62.css,heavy63.js,heavy63.css,sw.js,manifest.webmanifest,icon.svg,latest.json} extribe6/native/iOS/EXTRIBE/www/
       - name: Build iOS Simulator
         run: >
           xcodebuild -project extribe6/native/iOS/EXTRIBE.xcodeproj
           -scheme EXTRIBE -configuration Debug
           -sdk iphonesimulator -destination 'generic/platform=iOS Simulator'
-          -derivedDataPath "$RUNNER_TEMP/EXTRIBE62"
+          -derivedDataPath "$RUNNER_TEMP/EXTRIBE63"
           CODE_SIGNING_ALLOWED=NO build
       - name: Package simulator
         run: |
-          cd "$RUNNER_TEMP/EXTRIBE62/Build/Products/Debug-iphonesimulator"
-          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-STUDIO-6.2-iOS-Simulator.zip" EXTRIBE.app
+          cd "$RUNNER_TEMP/EXTRIBE63/Build/Products/Debug-iphonesimulator"
+          zip -qr "$GITHUB_WORKSPACE/EXTRIBE-STUDIO-6.3-iOS-Simulator.zip" EXTRIBE.app
       - uses: actions/upload-artifact@v4
         with:
-          name: EXTRIBE-STUDIO-6.2-iOS-Simulator
-          path: EXTRIBE-STUDIO-6.2-iOS-Simulator.zip
+          name: EXTRIBE-STUDIO-6.3-iOS-Simulator
+          path: EXTRIBE-STUDIO-6.3-iOS-Simulator.zip
           if-no-files-found: error
+
+  publish-apk:
+    if: github.ref == 'refs/heads/main'
+    needs: [android, ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: EXTRIBE-STUDIO-6.3-Android-APK
+          path: release
+      - name: Publish versioned APK release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test -f release/app-debug.apk
+          mv release/app-debug.apk release/EXTRIBE-STUDIO-6.3.apk
+          gh release view extribe-studio-6.3 --repo "${GITHUB_REPOSITORY}" >/dev/null 2>&1 || gh release create extribe-studio-6.3 --repo "${GITHUB_REPOSITORY}" --title "EX-TRIBE Studio 6.3" --notes "Heavy Chain: mobile HUD, APC mini MK2 MIDI Learn, audio limiter. Debug APK, device testing pending."
+          gh release upload extribe-studio-6.3 release/EXTRIBE-STUDIO-6.3.apk --repo "${GITHUB_REPOSITORY}" --clobber

@@ -1,0 +1,44 @@
+/* EX-TRIBE 6.3 adaptive hardware layout and chain analyzer. */
+#rack62 .ex63-strip{display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding:7px 9px;background:#151e20;border:1px solid #41635d;border-radius:6px;font-size:11px;position:relative;z-index:5}
+#rack62 .ex63-strip strong{color:#b8f9b4;letter-spacing:.12em}#rack62 .ex63-strip button{background:#233a32!important;border-color:#507b62!important;color:#d5ffe3!important;padding:6px 10px!important;font-size:11px!important}
+#rack62 .ex63-strip .ex63-warn{color:#ff8276}#rack62 .ex63-strip .ex63-ok{color:#b0ffb6}
+#rack62 #ex63-device{margin-left:auto;color:#a8d7c3}#rack62 #ex63-audio{font-variant-numeric:tabular-nums}
+#ex63-overlay{position:fixed;inset:0;display:none;z-index:18000;align-items:center;justify-content:center;background:#020609df;padding:12px;color:#e7ecdf;font:14px system-ui}
+#ex63-overlay.open{display:flex}#ex63-overlay .ex63-dialog{width:min(650px,100%);max-height:86dvh;overflow-y:auto;background:#111c21;border:1px solid #9a8b62;border-radius:12px;padding:16px;box-shadow:0 16px 70px #0009}
+#ex63-overlay h2{font-size:19px;color:#dcd4a8;margin:0 0 10px}#ex63-overlay p{color:#a7bcb4;font-size:12px}
+#ex63-overlay button,#ex63-overlay select{min-height:36px;background:#24312c;color:#eff9df;border:1px solid #8a9a6a;border-radius:6px;padding:7px;margin:4px}
+#ex63-overlay .ex63-actions{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0}#ex63-overlay .ex63-actions button:first-child{background:#22513b;border-color:#9be19c}
+#ex63-overlay select{max-width:100%;min-width:200px}#ex63-overlay pre{font:11px/1.55 monospace;white-space:pre-wrap;background:#0a1118;padding:10px;border:1px solid #2c4544;max-height:175px;overflow:auto;border-radius:6px}
+#ex63-overlay .ex63-chain{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:10px 0}
+#ex63-overlay .ex63-chain span{padding:6px;background:#22352c;border-radius:5px;color:#c7f2cc;font-size:11px}#ex63-overlay .ex63-chain i{color:#e3c17c}
+#ex63-overlay .ex63-diagnostic{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:10px 0;font-size:12px}#ex63-overlay .ex63-diagnostic span{background:#18282a;border:1px solid #345052;padding:8px;border-radius:4px}
+#ex63-dock{display:none}
+@media(max-width:900px){
+ #rack62{overflow-x:hidden!important;overflow-y:auto!important;padding-bottom:72px;overscroll-behavior-y:contain}
+ #rack62 .r62-surface{min-width:0!important;width:100%!important;margin:0!important;padding:6px!important;box-shadow:none!important;min-height:100dvh!important;gap:5px!important}
+ #rack62 .r62-title{min-height:0!important;flex-wrap:wrap;padding:7px!important;gap:5px!important}
+ #rack62 .r62-logo{font-size:18px!important}#rack62 .r62-logo small{font-size:7px!important}
+ #rack62 .r62-title-actions{justify-content:flex-start}#rack62 .r62-title-actions button{padding:7px!important;font-size:9px!important}
+ #rack62 .r62-top{display:block!important;min-height:0!important}#rack62 .r62-screen-art{display:none!important}#rack62 .r62-arranger{display:none!important}#rack62 .r62-topmix{padding:2px!important}
+ #rack62 .r62-controls{padding:4px!important;gap:5px!important}#rack62 .r62-controls button{min-height:36px}
+ #rack62 .r62-main{display:block!important;min-height:0!important;flex:0 0 auto!important}
+ #rack62 .r62-main>.r62-pane{display:none!important;min-height:420px;overflow-x:auto!important}
+ #rack62[data-ex63-panel="fx"] .r62-main>.r62-fx{display:flex!important}
+ #rack62[data-ex63-panel="step"] .r62-main>.r62-sequencer{display:flex!important}
+ #rack62[data-ex63-panel="sample"] .r62-main>.r62-sampler{display:flex!important}
+ #rack62 .r62-piano{display:none!important;min-height:380px}
+ #rack62[data-ex63-panel="piano"] .r62-piano{display:flex!important}
+ #rack62[data-ex63-panel="piano"] .r62-main{display:none!important}
+ #rack62 .r62-keys{min-height:170px!important}#rack62 .r62-piano-body{display:flex!important;flex-direction:column-reverse!important}
+ #rack62 .r62-piano-top{flex-wrap:wrap!important}#rack62 .r62-synthknobs{grid-template-columns:repeat(3,minmax(0,1fr));padding:5px!important}
+ #rack62 .r62-grid{min-width:620px}#rack62 .r62-sequencer>.r62-label{position:sticky;left:0;z-index:2}
+ #rack62 .r62-pad .r62-xy{min-height:300px}#rack62 .r62-pad{min-height:350px}
+ #rack62 .r62-footer{font-size:9px!important}#rack62 .r62-footer>span:last-child{display:none}
+ #rack62 .r62-mobile-nav{display:none!important}
+ #ex63-dock{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;position:fixed;z-index:16010;bottom:0;left:0;right:0;padding:7px 5px calc(7px + env(safe-area-inset-bottom));background:#101a1df4;border-top:1px solid #c6a369;box-shadow:0 -4px 20px #0009}
+ #ex63-dock button{border:1px solid #635f51;background:#242d2d;color:#eae2cb;border-radius:5px;min-height:46px;font-size:10px;font-weight:750}
+ #ex63-dock button[aria-pressed="true"]{background:#d5bb83;color:#111b19}#ex63-dock button:last-child{background:#245a40;color:#edffec}
+ #rack62 .ex63-strip{font-size:9px;padding:5px!important;gap:3px}#rack62 .ex63-strip button{padding:5px!important;font-size:10px!important}#rack62 #ex63-device{margin-left:0;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media(max-width:360px){#ex63-dock button{font-size:9px!important;padding:2px!important}#rack62 .r62-logo{font-size:16px!important}}
+@media(prefers-reduced-motion:reduce){#rack62 *,#ex63-overlay *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

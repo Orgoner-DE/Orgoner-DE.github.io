@@ -380,7 +380,7 @@ $('libraryBackupPicker').addEventListener('change',async e=>{const f=e.target.fi
 refreshSampleLibrary();
 
 const UPDATE_JSON='https://orgoner-de.github.io/extribe5/latest.json';
-const VERSION='5.6.0';let updateInfo=null;let updateInFlight=false;
+const VERSION='6.3.0';let updateInfo=null;let updateInFlight=false;
 function versionNumber(s){const m=String(s).match(/^\d+(?:\.\d+){0,2}$/);if(!m)return 0;const [a,b=0,c=0]=s.split('.').map(Number);return a*1e6+b*1e3+c}
 function secureUpdateURL(s){try{const u=new URL(s);return u.protocol==='https:'&&(u.hostname==='orgoner-de.github.io'&&u.pathname.startsWith('/extribe5/')||u.hostname==='github.com'&&u.pathname.startsWith('/Orgoner-DE/'))?u.href:null}catch{return null}}
 function applyUpdateInfo(json){if(!json||typeof json!=='object'||!/^\d+\.\d+\.\d+$/.test(String(json.version||'')))throw Error('Ungültiges Versionsmanifest');const web=secureUpdateURL(json.webUrl),apk=secureUpdateURL(json.apkUrl);if(!web||!apk)throw Error('Update-Adressen nicht vertrauenswürdig');updateInfo={version:String(json.version),webUrl:web,apkUrl:apk,notes:String(json.notes||'').slice(0,500)};$('updateButton').classList.toggle('available',versionNumber(updateInfo.version)>versionNumber(VERSION));$('updateButton').title=`Aktuell ${VERSION}; online ${updateInfo.version}`;return updateInfo}

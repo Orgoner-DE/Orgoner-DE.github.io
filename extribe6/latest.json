@@ -1,6 +1,6 @@
 {
-  "version": "6.2.0",
+  "version": "6.3.0",
   "webUrl": "https://orgoner-de.github.io/extribe6/",
-  "apkUrl": "https://orgoner-de.github.io/extribe6/EXTRIBE-STUDIO-6.2.apk",
-  "notes": "Hybrid-Hardware-Rack: Kaoss XY FX, 8x16 sequencer, Sample Step module, 8-track mixer and piano synth."
+  "apkUrl": "https://github.com/Orgoner-DE/Orgoner-DE.github.io/releases/download/extribe-studio-6.3/EXTRIBE-STUDIO-6.3.apk",
+  "notes": "Heavy HUD Mobile, APC mini MK2 MIDI learn, verified signal chain, master limiter and diagnostics."
 }

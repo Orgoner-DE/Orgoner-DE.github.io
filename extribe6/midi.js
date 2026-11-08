@@ -60,7 +60,7 @@ function processBytes(bytes,device=''){if(!bytes||!bytes.length)return;const dev
  if(!status)continue;
  const kind=status&0xf0,size=(kind===0xc0||kind===0xd0)?1:2;
  buffer.push(b);if(buffer.length<size)continue;
- if((kind===0x90||kind===0x80)&&buffer.length>=2){window.dispatchEvent(new CustomEvent('extribe-studio-midi',{detail:{type:'note',pitch:buffer[0],velocity:kind===0x80?0:buffer[1],channel:(status&15)+1,device:dev}}));}
+ if((kind===0x90||kind===0x80)&&buffer.length>=2){if(!window.EXTRIBE_CHAIN63?.suppressStudioNote?.({type:'note',pitch:buffer[0],velocity:kind===0x80?0:buffer[1],channel:(status&15)+1,device:dev}))window.dispatchEvent(new CustomEvent('extribe-studio-midi',{detail:{type:'note',pitch:buffer[0],velocity:kind===0x80?0:buffer[1],channel:(status&15)+1,device:dev}}));}
  if((kind===0x90&&buffer[1]>0)||(kind===0xb0)||(kind===0xe0)){
    const ev={device:dev,channel:(status&15)+1,type:kind===0x90?'note':kind===0xb0?'cc':'pitch',number:kind===0xe0?0:buffer[0],value:kind===0xe0?Math.round(((buffer[1]<<7)+buffer[0])/16383*127):buffer[1]};
    dispatch(ev);
@@ -71,6 +71,7 @@ function processBytes(bytes,device=''){if(!bytes||!bytes.length)return;const dev
 function dispatch(m){if(!Number.isInteger(m.value))return;lastInput=performance.now();$('midiLast').textContent=`IN: ${m.device||'Controller'} · ${m.type==='note'?'NOTE '+noteName(m.number):m.type==='cc'?'CC '+m.number:'PITCH'} · CH ${m.channel} · ${m.value}`;
  if(channel!==0 && channel!==m.channel)return;
  if(deviceId && m.device && deviceId!==m.device)return;
+ if(window.EXTRIBE_CHAIN63?.receiveMIDI?.(m)===true)return;
  if(learnTarget){assign(learnTarget,m);return;}
  for(const assignment of mappings)if(assignment.type===m.type&&assignment.number===m.number&&assignment.channel===m.channel&&(!assignment.device||assignment.device===m.device)){run(assignment.target,m.value,m.type);break;}
 }
