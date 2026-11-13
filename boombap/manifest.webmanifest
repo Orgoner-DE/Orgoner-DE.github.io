@@ -1,0 +1,17 @@
+{
+  "name": "BAP-50 Boom Bap Sampler",
+  "short_name": "BAP-50",
+  "description": "Boom-Bap-Sampler mit 64 Pads, Step-Sequencer, Mixer, 12-Bit-Vintage und 50 echten CC0-Samples.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0e0d10",
+  "theme_color": "#141317",
+  "lang": "de",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

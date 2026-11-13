@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#141317">
+  <meta name="application-version" content="1.0.0">
+  <meta name="description" content="BAP-50: Boom-Bap-Sampler im Browser mit 50 echten CC0-Drum- und Instrument-Samples, 64 Pads, Step-Sequencer mit Swing, Mixer, 12-Bit-Vintage-Modus, Chop und WAV-Export.">
+  <title>BAP-50 Boom Bap Sampler</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div id="boot" class="boot">
+    <div class="boot-card">
+      <div class="boot-logo">BAP<span>-50</span></div>
+      <p class="boot-sub">Boom-Bap-Sampler · 64 Pads · 50 echte Samples · 12-Bit</p>
+      <button id="bootBtn" class="boot-btn" type="button">Einschalten</button>
+      <div class="boot-bar" aria-hidden="true"><i id="bootFill"></i></div>
+      <p id="bootMsg" class="boot-msg">Audio startet nach einem Tipp.</p>
+    </div>
+  </div>
+
+  <div id="app" class="device" hidden>
+    <header class="topbar">
+      <div class="brand"><b>BAP<span>-50</span></b><small>BOOM BAP SAMPLER</small></div>
+      <div class="lcd" id="lcd" aria-live="polite">
+        <div class="lcd-row" id="lcd1"></div>
+        <div class="lcd-row" id="lcd2"></div>
+      </div>
+      <div class="transport" id="transport"></div>
+    </header>
+
+    <main class="deck">
+      <section class="padzone" aria-label="Pads">
+        <div class="padbar" id="padbar"></div>
+        <div class="pads" id="pads"></div>
+        <p class="hint">Tasten: <kbd>Z X C V</kbd> <kbd>A S D F</kbd> <kbd>Q W E R</kbd> <kbd>1 2 3 4</kbd> · <kbd>Leertaste</kbd> Play/Stop · <kbd>,</kbd> <kbd>.</kbd> Bank</p>
+      </section>
+
+      <section class="work">
+        <nav class="tabs" id="tabs" role="tablist"></nav>
+        <div class="views" id="views"></div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <span>Samples: CC0 – Virtuosity Drums &amp; VCSL (Versilian Studios). Eigene Optik, keine Herstellerlogos.</span>
+      <span id="footState"></span>
+    </footer>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

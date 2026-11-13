@@ -1,0 +1,876 @@
+{
+ "version": 1,
+ "sampleRate": 44100,
+ "license": "CC0-1.0",
+ "libraries": {
+  "vd": {
+   "name": "Virtuosity Drums (Versilian Studios / sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/virtuosity_drums",
+   "license": "CC0-1.0"
+  },
+  "vcsl": {
+   "name": "VCSL - Versilian Community Sample Library",
+   "url": "https://github.com/sgossner/VCSL",
+   "license": "CC0-1.0"
+  }
+ },
+ "categories": {
+  "kick": "Kick",
+  "snare": "Snare",
+  "clap": "Clap",
+  "hat": "HiHat",
+  "cymbal": "Becken",
+  "tom": "Tom",
+  "perc": "Perc",
+  "keys": "Keys/Horn"
+ },
+ "samples": [
+  {
+   "id": "k01",
+   "name": "Kick Dusty",
+   "cat": "kick",
+   "file": "samples/k01-kick-dusty.wav",
+   "dur": 0.9,
+   "tags": "lofi vintage-mic",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/kick/lofi_kick_snon_vl4_rr1.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "k02",
+   "name": "Kick Thump",
+   "cat": "kick",
+   "file": "samples/k02-kick-thump.wav",
+   "dur": 0.9,
+   "tags": "close room knock",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr1.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snoff_vl4_rr1.flac",
+     "gain": 0.5
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snoff_vl4_rr1.flac",
+     "gain": 0.4
+    }
+   ]
+  },
+  {
+   "id": "k03",
+   "name": "Kick Tight",
+   "cat": "kick",
+   "file": "samples/k03-kick-tight.wav",
+   "dur": 0.45,
+   "tags": "close short",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr2.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snoff_vl3_rr2.flac",
+     "gain": 0.25
+    }
+   ]
+  },
+  {
+   "id": "k04",
+   "name": "Kick Soft",
+   "cat": "kick",
+   "file": "samples/k04-kick-soft.wav",
+   "dur": 0.8,
+   "tags": "soft jazz",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snon_vl2_rr1.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/mid/kick/mid_kick_snon_vl2_rr1.flac",
+     "gain": 0.4
+    }
+   ]
+  },
+  {
+   "id": "k05",
+   "name": "Kick Live Room",
+   "cat": "kick",
+   "file": "samples/k05-kick-live-room.wav",
+   "dur": 1.1,
+   "tags": "room live",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snon_vl4_rr2.flac",
+     "gain": 0.5
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snon_vl4_rr2.flac",
+     "gain": 0.7
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snon_vl4_rr2.flac",
+     "gain": 0.7
+    }
+   ]
+  },
+  {
+   "id": "k06",
+   "name": "Kick Lofi Low",
+   "cat": "kick",
+   "file": "samples/k06-kick-lofi-low.wav",
+   "dur": 0.8,
+   "tags": "lofi vintage-mic",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/kick/lofi_kick_snoff_vl3_rr2.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "k07",
+   "name": "Cajon Bass",
+   "cat": "kick",
+   "file": "samples/k07-cajon-bass.wav",
+   "dur": 0.615,
+   "tags": "cajon hand",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Cajon/Cajon_hit1_fff_rr1.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "k08",
+   "name": "Concert Boom",
+   "cat": "kick",
+   "file": "samples/k08-concert-boom.wav",
+   "dur": 1.2,
+   "tags": "orchestral boom",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Bass Drum 2/bassdrum_hit_f.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "k09",
+   "name": "Frame Drum Low",
+   "cat": "kick",
+   "file": "samples/k09-frame-drum-low.wav",
+   "dur": 0.8,
+   "tags": "hand frame",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Frame Drum/HDrumL_Hit_v3_rr1_Sum.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "s01",
+   "name": "Snare Crack",
+   "cat": "snare",
+   "file": "samples/s01-snare-crack.wav",
+   "dur": 0.785,
+   "tags": "close room",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_center_vl34.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_center_vl34.flac",
+     "gain": 0.5
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_center_vl34.flac",
+     "gain": 0.3
+    }
+   ]
+  },
+  {
+   "id": "s02",
+   "name": "Snare Dusty",
+   "cat": "snare",
+   "file": "samples/s02-snare-dusty.wav",
+   "dur": 0.8,
+   "tags": "lofi vintage-mic",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/snare/lofi_snare_center_vl32.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "s03",
+   "name": "Snare Rimshot",
+   "cat": "snare",
+   "file": "samples/s03-snare-rimshot.wav",
+   "dur": 0.8,
+   "tags": "rimshot",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_rimshot_vl12.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_rimshot_vl12.flac",
+     "gain": 0.5
+    }
+   ]
+  },
+  {
+   "id": "s04",
+   "name": "Snare Fat",
+   "cat": "snare",
+   "file": "samples/s04-snare-fat.wav",
+   "dur": 0.9,
+   "tags": "room fat",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/mid/snare/mid_snare_offcenter_vl30.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_offcenter_vl30.flac",
+     "gain": 0.6
+    }
+   ]
+  },
+  {
+   "id": "s05",
+   "name": "Snare Muted",
+   "cat": "snare",
+   "file": "samples/s05-snare-muted.wav",
+   "dur": 0.492,
+   "tags": "muted short",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_muted_vl16.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_muted_vl16.flac",
+     "gain": 0.3
+    }
+   ]
+  },
+  {
+   "id": "s06",
+   "name": "Snare Off",
+   "cat": "snare",
+   "file": "samples/s06-snare-off.wav",
+   "dur": 0.7,
+   "tags": "snares-off tonal",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snareoff/oh_snareoff_center_vl12.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snareoff/room_snareoff_center_vl12.flac",
+     "gain": 0.5
+    }
+   ]
+  },
+  {
+   "id": "s07",
+   "name": "Snare Flam",
+   "cat": "snare",
+   "file": "samples/s07-snare-flam.wav",
+   "dur": 0.8,
+   "tags": "lofi flam",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/snare/lofi_snare_flam_vl12.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "s08",
+   "name": "Snare Ghost",
+   "cat": "snare",
+   "file": "samples/s08-snare-ghost.wav",
+   "dur": 0.5,
+   "tags": "ghost soft",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_center_vl10.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_center_vl10.flac",
+     "gain": 0.3
+    }
+   ]
+  },
+  {
+   "id": "s09",
+   "name": "Rimclick",
+   "cat": "snare",
+   "file": "samples/s09-rimclick.wav",
+   "dur": 0.399,
+   "tags": "rim crossstick",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_crossstick_vl16.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_crossstick_vl16.flac",
+     "gain": 0.3
+    }
+   ]
+  },
+  {
+   "id": "s10",
+   "name": "Snare Modern",
+   "cat": "snare",
+   "file": "samples/s10-snare-modern.wav",
+   "dur": 0.703,
+   "tags": "bright",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Snare Drum, Modern 1/Snare2_HitSN_v9_rr1_Mid.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "s11",
+   "name": "Rope Snare",
+   "cat": "snare",
+   "file": "samples/s11-rope-snare.wav",
+   "dur": 0.8,
+   "tags": "field old",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Snare Drum, Rope Tension/Low/RopeSnare_low_sn_Main_vl3_rr1.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "c01",
+   "name": "Clap Crowd",
+   "cat": "clap",
+   "file": "samples/c01-clap-crowd.wav",
+   "dur": 0.422,
+   "tags": "group hands",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr1.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "c02",
+   "name": "Clap Crowd 2",
+   "cat": "clap",
+   "file": "samples/c02-clap-crowd-2.wav",
+   "dur": 0.7,
+   "tags": "group hands",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr4.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "c03",
+   "name": "Clap Solo",
+   "cat": "clap",
+   "file": "samples/c03-clap-solo.wav",
+   "dur": 0.194,
+   "tags": "single hands",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/SoloClap_vl4.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "h01",
+   "name": "Hat Closed",
+   "cat": "hat",
+   "file": "samples/h01-hat-closed.wav",
+   "dur": 0.35,
+   "tags": "closed",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_closed_vl4_rr1.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/mid/hh/mid_hh_closed_vl4_rr1.flac",
+     "gain": 0.5
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h02",
+   "name": "Hat Closed Soft",
+   "cat": "hat",
+   "file": "samples/h02-hat-closed-soft.wav",
+   "dur": 0.3,
+   "tags": "closed soft",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_closed_vl2_rr1.flac",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h03",
+   "name": "Hat Lofi",
+   "cat": "hat",
+   "file": "samples/h03-hat-lofi.wav",
+   "dur": 0.35,
+   "tags": "lofi closed",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/hh/lofi_hh_closed_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h04",
+   "name": "Hat Pedal",
+   "cat": "hat",
+   "file": "samples/h04-hat-pedal.wav",
+   "dur": 0.35,
+   "tags": "pedal foot",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_pedal_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h05",
+   "name": "Hat Half",
+   "cat": "hat",
+   "file": "samples/h05-hat-half.wav",
+   "dur": 0.8,
+   "tags": "half open",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_half_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h06",
+   "name": "Hat 3/4",
+   "cat": "hat",
+   "file": "samples/h06-hat-3-4.wav",
+   "dur": 1.2,
+   "tags": "three-quarter open",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_34_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h07",
+   "name": "Hat Open",
+   "cat": "hat",
+   "file": "samples/h07-hat-open.wav",
+   "dur": 2.0,
+   "tags": "open",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_open_vl4_rr1.flac",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "h08",
+   "name": "Hat Tight",
+   "cat": "hat",
+   "file": "samples/h08-hat-tight.wav",
+   "dur": 0.3,
+   "tags": "closed tight",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Hi-Hat Cymbal/HiHat_HitC_v3_rr1_Mid.wav",
+     "gain": 1.0
+    }
+   ],
+   "choke": 1
+  },
+  {
+   "id": "y01",
+   "name": "Ride",
+   "cat": "cymbal",
+   "file": "samples/y01-ride.wav",
+   "dur": 3.0,
+   "tags": "ride jazz",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/ride/oh_ride_ride_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "y02",
+   "name": "Ride Bell",
+   "cat": "cymbal",
+   "file": "samples/y02-ride-bell.wav",
+   "dur": 2.5,
+   "tags": "bell",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/ride/oh_ride_bell_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "y03",
+   "name": "Crash",
+   "cat": "cymbal",
+   "file": "samples/y03-crash.wav",
+   "dur": 3.5,
+   "tags": "crash",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/crash/oh_crash_crash_vl3_rr1.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "y04",
+   "name": "Flat Ride Crash",
+   "cat": "cymbal",
+   "file": "samples/y04-flat-ride-crash.wav",
+   "dur": 3.0,
+   "tags": "flat dark",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/flatride/oh_flatride_crash_vl4.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "t01",
+   "name": "Tom Low",
+   "cat": "tom",
+   "file": "samples/t01-tom-low.wav",
+   "dur": 1.2,
+   "tags": "floor",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/ltom/oh_ltom_center_vl14.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/ltom/room_ltom_center_vl14.flac",
+     "gain": 0.5
+    }
+   ]
+  },
+  {
+   "id": "t02",
+   "name": "Tom High",
+   "cat": "tom",
+   "file": "samples/t02-tom-high.wav",
+   "dur": 1.0,
+   "tags": "rack",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/htom/oh_htom_center_vl14.flac",
+     "gain": 1.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/htom/room_htom_center_vl14.flac",
+     "gain": 0.5
+    }
+   ]
+  },
+  {
+   "id": "t03",
+   "name": "Tom Muted",
+   "cat": "tom",
+   "file": "samples/t03-tom-muted.wav",
+   "dur": 0.5,
+   "tags": "muted thud",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/ltom/oh_ltom_muted_vl14.flac",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p01",
+   "name": "Tambourine",
+   "cat": "perc",
+   "file": "samples/p01-tambourine.wav",
+   "dur": 0.8,
+   "tags": "tamb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Tambourine 1/Tamb1_Hit_v2_rr1_Mid.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p02",
+   "name": "Shaker",
+   "cat": "perc",
+   "file": "samples/p02-shaker.wav",
+   "dur": 0.4,
+   "tags": "shake",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Shaker, Small/Mid_Shaker_Slap_rr1.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p03",
+   "name": "Cowbell",
+   "cat": "perc",
+   "file": "samples/p03-cowbell.wav",
+   "dur": 0.397,
+   "tags": "bell",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/cowbell/Cowbell1_Normal_v3_rr1_Close.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p04",
+   "name": "Conga",
+   "cat": "perc",
+   "file": "samples/p04-conga.wav",
+   "dur": 0.8,
+   "tags": "hand latin",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/conga/Conga_22_HitN_101_127_rr1_Close.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p05",
+   "name": "Bongo",
+   "cat": "perc",
+   "file": "samples/p05-bongo.wav",
+   "dur": 0.5,
+   "tags": "hand latin",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/bongoh/BongoH_Hit1_v3_rr1_Close.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p06",
+   "name": "Woodblock",
+   "cat": "perc",
+   "file": "samples/p06-woodblock.wav",
+   "dur": 0.4,
+   "tags": "wood click",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Woodblock/wood_click_f_rr1.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p07",
+   "name": "Claves",
+   "cat": "perc",
+   "file": "samples/p07-claves.wav",
+   "dur": 0.283,
+   "tags": "wood click",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/claves/Claves1_Hit_v3_rr1_Close.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "p08",
+   "name": "Vibraslap",
+   "cat": "perc",
+   "file": "samples/p08-vibraslap.wav",
+   "dur": 1.135,
+   "tags": "rattle fx",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/vibraslap/Vibraslap1_1_Hit_71_127_rr1_Close.wav",
+     "gain": 1.0
+    }
+   ]
+  },
+  {
+   "id": "m01",
+   "name": "Upright Piano C",
+   "cat": "keys",
+   "file": "samples/m01-upright-piano-c.wav",
+   "dur": 3.5,
+   "tags": "piano dusty",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C3_vl3_rr1.wav",
+     "gain": 1.0
+    }
+   ],
+   "root": "C"
+  },
+  {
+   "id": "m02",
+   "name": "Grand Piano Low C",
+   "cat": "keys",
+   "file": "samples/m02-grand-piano-low-c.wav",
+   "dur": 3.0,
+   "tags": "piano bass",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C2_vl3_rr1.wav",
+     "gain": 1.0
+    }
+   ],
+   "root": "C"
+  },
+  {
+   "id": "m03",
+   "name": "Vibes C",
+   "cat": "keys",
+   "file": "samples/m03-vibes-c.wav",
+   "dur": 3.0,
+   "tags": "vibraphone jazz",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Hard Mallets/Vibes_hard_C3_v3_rr1_Main.wav",
+     "gain": 1.0
+    }
+   ],
+   "root": "C"
+  },
+  {
+   "id": "m04",
+   "name": "Tenor Sax Stab C",
+   "cat": "keys",
+   "file": "samples/m04-tenor-sax-stab-c.wav",
+   "dur": 0.524,
+   "tags": "horn stab",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_C3_vl2_rr4.wav",
+     "gain": 1.0
+    }
+   ],
+   "root": "C"
+  }
+ ]
+}
