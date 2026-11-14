@@ -1,0 +1,73 @@
+name: Build BAP-50 Android APK
+on:
+  push:
+    branches: [main, claude/hiphop-boom-bap-sampler-0fru55]
+    paths:
+      - "boombap/**"
+      - "!boombap/download/**"
+      - ".github/workflows/boombap-android.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK parts
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+          yes | "$SDKMGR" --licenses >/dev/null || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Copy web app into assets/www
+        run: |
+          W=boombap/native/Android/app/src/main/assets/www
+          rm -rf "$W" && mkdir -p "$W/samples"
+          cp boombap/index.html boombap/app.css boombap/manifest.webmanifest boombap/icon.svg boombap/icon-192.png boombap/icon-512.png "$W/"
+          cp -r boombap/js "$W/js"
+          cp boombap/samples/*.wav boombap/samples/samples.json "$W/samples/"
+          test "$(ls "$W/samples"/*.wav | wc -l)" -eq 50
+      - name: Build debug APK
+        run: gradle -p boombap/native/Android --no-daemon :app:assembleDebug
+      - name: Check APK
+        run: |
+          APK=boombap/native/Android/app/build/outputs/apk/debug/app-debug.apk
+          test -f "$APK"
+          unzip -l "$APK" | grep -c 'assets/www/samples/.*\.wav' | tee /dev/stderr | grep -qx 50
+          ls -la "$APK"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BAP-50-Android-APK
+          path: boombap/native/Android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+  publish:
+    needs: android
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+      - uses: actions/download-artifact@v4
+        with:
+          name: BAP-50-Android-APK
+          path: release
+      - name: Commit APK to boombap/download
+        run: |
+          mkdir -p boombap/download
+          cp release/app-debug.apk boombap/download/BAP-50-1.0.0.apk
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add boombap/download/BAP-50-1.0.0.apk
+          if git diff --cached --quiet; then echo "APK unchanged"; exit 0; fi
+          git commit -m "BAP-50 1.0.0 Android debug APK [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

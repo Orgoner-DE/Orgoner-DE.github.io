@@ -39,7 +39,31 @@ export function fmtSigned(v, digits = 0) {
   return v > 0 ? '+' + s : s;
 }
 
+// Im Android-APK speichert der System-Dateidialog (BapNative), im Browser ein Download-Link.
+async function nativeSave(name, blob) {
+  const bridge = window.BapNative;
+  const ready = await new Promise((resolve) => {
+    window.__bapSaveReady = resolve;
+    bridge.beginExport(name, blob.type || 'application/octet-stream');
+  });
+  window.__bapSaveReady = null;
+  if (!ready) return false;
+  const buf = new Uint8Array(await blob.arrayBuffer());
+  const CH = 36864; // Vielfaches von 3 -> sauberes Base64 je Block
+  for (let i = 0; i < buf.length; i += CH) {
+    const part = buf.subarray(i, i + CH);
+    let s = '';
+    for (let j = 0; j < part.length; j += 8192) s += String.fromCharCode.apply(null, part.subarray(j, j + 8192));
+    if (!bridge.writeChunk(btoa(s))) { bridge.abortExport(); return false; }
+  }
+  bridge.endExport();
+  return true;
+}
+
+export const isNativeApp = () => !!(window.BapNative && window.BapNative.beginExport);
+
 export function download(name, blob) {
+  if (isNativeApp()) return nativeSave(name, blob);
   const a = el('a', { href: URL.createObjectURL(blob), download: name });
   document.body.append(a);
   a.click();

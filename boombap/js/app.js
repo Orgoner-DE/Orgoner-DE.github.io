@@ -1,5 +1,5 @@
 // BAP-50 – Oberfläche und Bedienlogik.
-import { el, $, clamp, padLabel, noteName, fmtSigned, download, debounce } from './util.js';
+import { el, $, clamp, padLabel, noteName, fmtSigned, download, debounce, isNativeApp } from './util.js';
 import { Knob, Fader } from './controls.js';
 import { Catalog, CATS, VINTAGE } from './catalog.js';
 import { Engine, DELAY_TIMES } from './engine.js';
@@ -1338,8 +1338,8 @@ BUILDERS.file = (root) => {
   };
   const exportWav = async (order, label) => {
     const { buffer } = await renderPatterns(P(), S.catalog, order, { tail: 2, sampleRate: 44100 });
-    download(`${(P().name || 'bap50').replace(/[^\w\- ]+/g, '')}-${label}.wav`, encodeWav(buffer));
-    toast('WAV exportiert');
+    const ok = await download(`${(P().name || 'bap50').replace(/[^\w\- ]+/g, '')}-${label}.wav`, encodeWav(buffer));
+    if (ok !== false) toast('WAV exportiert');
   };
   wav1.addEventListener('click', busy(wav1, () => exportWav([p.cur.ptn], 'P' + (p.cur.ptn + 1))));
   wav4.addEventListener('click', busy(wav4, () => exportWav([p.cur.ptn, p.cur.ptn, p.cur.ptn, p.cur.ptn], 'P' + (p.cur.ptn + 1) + 'x4')));
@@ -1364,12 +1364,12 @@ BUILDERS.file = (root) => {
   base.addEventListener('change', () => { p.midi.base = +base.value; dirty(); });
   root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'MIDI-Eingang' }),
     el('div', { class: 'row' }, midiBtn, base, el('span', { class: 'muted', id: 'midiState', text: S.midiStatus })),
-    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, +16 … +63 alle Bänke direkt. MIDI Start/Stop steuern den Transport. Getestet im Browser, nicht mit jeder Hardware.' })));
+    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, +16 … +63 alle Bänke direkt. MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System. Nicht mit jeder Hardware getestet.' })));
 
   // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
   root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>50 echte Aufnahmen (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon). Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul><p>Workflow angelehnt an klassische Pad-Sampler: 4 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+    el('div', { class: 'prose', html: `<p>50 echte Aufnahmen (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon). Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.0.0.apk" style="color:var(--teal)">BAP-50-1.0.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 4 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
 };
 
 function loadProject(raw, msg) {
@@ -1385,7 +1385,34 @@ function loadProject(raw, msg) {
 }
 
 // ---------- MIDI ----------
+// Zerlegt rohe MIDI-Bytes (Android-Brücke) in einzelne Nachrichten, inkl. Running Status.
+let midiRun = 0;
+let midiBuf = [];
+function parseMidiBytes(bytes) {
+  for (const b of bytes) {
+    if (b >= 0xf8) { onMidi({ data: [b] }); continue; }
+    if (b >= 0x80) {
+      midiRun = b < 0xf0 ? b : 0;
+      midiBuf = [b];
+      continue;
+    }
+    if (!midiRun) continue;
+    if (!midiBuf.length) midiBuf = [midiRun];
+    midiBuf.push(b);
+    const need = (midiRun & 0xf0) === 0xc0 || (midiRun & 0xf0) === 0xd0 ? 2 : 3;
+    if (midiBuf.length >= need) { onMidi({ data: midiBuf }); midiBuf = []; }
+  }
+}
+
 async function enableMidi() {
+  if (window.BapMidi && window.BapMidi.connect) {
+    window.BAP_midi = parseMidiBytes;
+    window.BAP_midiDevices = (list) => setMidiState(list && list.length ? 'Android MIDI: ' + list.map((d) => d.name).join(', ') : 'Kein MIDI-Gerät gefunden (USB anstecken)');
+    S.midi = { native: true };
+    window.BapMidi.connect();
+    if (S.view === 'file') renderView('file');
+    return;
+  }
   if (!navigator.requestMIDIAccess) { setMidiState('Web MIDI wird hier nicht unterstützt (z. B. Safari)'); return; }
   try {
     S.midi = await navigator.requestMIDIAccess({ sysex: false });
@@ -1463,7 +1490,8 @@ function frame() {
 
 // ---------- Start ----------
 $('#bootBtn').addEventListener('click', boot);
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
+window.__bapResume = () => { if (S.ctx && S.ctx.state !== 'running') S.ctx.resume(); };
+if ('serviceWorker' in navigator && location.protocol === 'https:' && !isNativeApp()) {
   navigator.serviceWorker.register('sw.js').catch(() => { /* offline-Cache optional */ });
 }
 window.__bap = S; // für Tests und Neugierige
