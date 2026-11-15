@@ -13,7 +13,7 @@ export const CATS = {
   tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', bass: 'Bass', fx: 'FX', user: 'Eigene',
 };
 
-export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', user: 'Eigene' };
+export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', synth: 'Synth', user: 'Eigene' };
 
 const DB_NAME = 'bap50';
 const STORE = 'samples';
@@ -120,13 +120,23 @@ export class Catalog {
     buf.copyToChannel(data, 0);
     this.buffers.set(rec.id, buf);
     this.userRecs.set(rec.id, rec);
-    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false });
+    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false, synth: rec.synth || null, root: rec.root || undefined });
+  }
+
+  // Im Browser berechneter Werks-Klang (Synth), nicht gespeichert, bei jedem Start neu.
+  addGenerated(meta, data, sr) {
+    const buf = new AudioBuffer({ length: Math.max(1, data.length), numberOfChannels: 1, sampleRate: sr });
+    buf.copyToChannel(data, 0);
+    this.buffers.set(meta.id, buf);
+    for (const k of Array.from(this.cache.keys())) if (k.startsWith(meta.id + '|')) this.cache.delete(k);
+    for (const k of Array.from(this.peaks.keys())) if (k.startsWith(meta.id + ':')) this.peaks.delete(k);
+    this.add({ ...meta, dur: +(data.length / sr).toFixed(3), builtin: true });
   }
 
   // Speichert ein eigenes Sample (mono Float32) und gibt die ID zurück.
-  async addUser(name, data, sr, tags = 'eigene', cat = 'user') {
+  async addUser(name, data, sr, tags = 'eigene', cat = 'user', synth = null, root = undefined) {
     const id = 'u' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
-    const rec = { id, name, sr, data, tags, cat };
+    const rec = { id, name, sr, data, tags, cat, synth, root };
     this.addUserRecord(rec);
     const stored = await dbPut(rec);
     return { id, stored };

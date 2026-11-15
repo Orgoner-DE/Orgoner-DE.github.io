@@ -12,6 +12,12 @@ export function swingOffset(i, bpm, swing) {
 }
 
 // Reine Funktion: alle Trigger eines Patterns ab Startzeit (für Offline-Render).
+// Roll: erster Schlag voll, folgende etwas leiser, letzter wieder kräftiger
+export function rollVelo(v, r, n) {
+  if (n <= 1 || r === 0) return v;
+  return Math.max(1, Math.round(v * (r === n - 1 ? 0.9 : 0.72)));
+}
+
 export function patternEvents(project, ptnIdx, t0) {
   const ptn = project.patterns[ptnIdx];
   const sd = stepDur(project.bpm);
@@ -20,7 +26,10 @@ export function patternEvents(project, ptnIdx, t0) {
     const t = t0 + i * sd + swingOffset(i, project.bpm, project.swing);
     for (const [k, arr] of Object.entries(ptn.steps)) {
       const v = arr[i];
-      if (v > 0) ev.push({ pad: +k, v, t, tune: (ptn.tune[k] && ptn.tune[k][i]) || 0 });
+      if (!(v > 0)) continue;
+      const tune = (ptn.tune[k] && ptn.tune[k][i]) || 0;
+      const roll = (ptn.roll && ptn.roll[k] && ptn.roll[k][i]) || 1;
+      for (let r = 0; r < roll; r++) ev.push({ pad: +k, v: rollVelo(v, r, roll), t: t + (r * sd) / roll, tune });
     }
   }
   return { events: ev, dur: ptn.len * sd };
@@ -149,7 +158,9 @@ export class Sequencer {
         if (!v) continue;
         const key = k + ':' + i;
         if (this.skip.has(key)) { this.skip.delete(key); continue; }
-        this.engine.trigger(+k, v, ts, (ptn.tune[k] && ptn.tune[k][i]) || 0);
+        const tune = (ptn.tune[k] && ptn.tune[k][i]) || 0;
+        const roll = (ptn.roll && ptn.roll[k] && ptn.roll[k][i]) || 1;
+        for (let r = 0; r < roll; r++) this.engine.trigger(+k, rollVelo(v, r, roll), ts + (r * sd) / roll, tune);
       }
       if (p.metro && i % 4 === 0) this.engine.click(ts, i % 16 === 0);
       this.queue.push({ t: ts, step: i, ptn: p.cur.ptn });

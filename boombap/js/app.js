@@ -6,10 +6,11 @@ import { Engine, DELAY_TIMES } from './engine.js';
 import { Sequencer, REPEAT_DIVS, stepDur } from './seq.js';
 import {
   NUM_PATTERNS, NUM_PADS, NUM_BANKS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
-  saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History,
+  saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads,
 } from './state.js';
 import { renderPatterns, songOrder, encodeWav, toMono } from './render.js';
 import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
+import { renderSynth, randomize, SYNTH_PRESETS, SYNTH_DEFAULT, WAVES, CHORDS, CHORD_NAMES } from './synth.js';
 
 const S = {
   ctx: null, catalog: new Catalog(), engine: null, seq: null, project: null, history: new History(),
@@ -49,7 +50,7 @@ function toast(msg) {
 const autosave = debounce(() => { saveAuto(P()); }, 600);
 function dirty() { autosave(); updateLCD(); }
 
-function snapshot() { return JSON.stringify({ pads: P().pads, patterns: P().patterns, song: P().song }); }
+function snapshot() { return JSON.stringify({ pads: P().pads, patterns: P().patterns, song: P().song, master: P().master, bpm: P().bpm, swing: P().swing }); }
 function pushUndo(force = false) {
   const now = performance.now();
   if (!force && now - S.lastUndo < 700) return;
@@ -59,6 +60,9 @@ function pushUndo(force = false) {
 function restore(snap) {
   const o = JSON.parse(snap);
   P().pads = o.pads; P().patterns = o.patterns; P().song = o.song;
+  if (o.master) P().master = o.master;
+  if (o.bpm) P().bpm = o.bpm;
+  if (o.swing) P().swing = o.swing;
   S.engine.setProject(P());
   renderAll();
   dirty();
@@ -105,6 +109,8 @@ async function boot() {
       $('#bootFill').style.width = Math.round((d / n) * 100) + '%';
       $('#bootMsg').textContent = `Lade Samples ${d}/${n}`;
     });
+    $('#bootMsg').textContent = 'Synth-Klänge berechnen …';
+    await renderFactorySynths();
     const saved = loadAuto();
     S.project = saved ? normalizeProject(saved, catOf) : defaultProject(catOf);
     S.engine = await new Engine(S.ctx, S.catalog, S.project).init();
@@ -129,7 +135,7 @@ async function boot() {
 }
 
 // ---------- Aufbau ----------
-const TABS = [['seq', 'SEQ'], ['pad', 'PAD'], ['mix', 'MIX'], ['samples', 'SAMPLES'], ['chop', 'CHOP'], ['song', 'SONG'], ['file', 'PROJEKT']];
+const TABS = [['seq', 'SEQ'], ['pad', 'PAD'], ['mix', 'MIX'], ['samples', 'SAMPLES'], ['synth', 'SYNTH'], ['chop', 'CHOP'], ['song', 'SONG'], ['file', 'PROJEKT']];
 const BUILDERS = {};
 
 function buildUI() {
@@ -271,10 +277,10 @@ function updateLCD() {
 
 // ---------- Pad-Leiste ----------
 const PB = {};
-const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX'];
+const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth'];
 function buildPadbar() {
   const bar = $('#padbar');
-  PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b));
+  PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b), 'banks');
   PB.bank.prepend(el('span', { class: 'lab', text: 'BANK' }));
   PB.full = el('button', { type: 'button', text: 'FULL', title: 'Volle Anschlagstärke' });
   PB.full.addEventListener('click', () => setFull(!S.fullLevel));
@@ -497,11 +503,19 @@ function loadGroove(idx) {
   P().patterns[P().cur.ptn] = grooveToPattern(g);
   P().bpm = g.bpm;
   P().swing = g.swing;
+  if (g.preset) {
+    const pads = presetKitPads(g.preset, catOf);
+    pads.forEach((pad, k) => { const i = g.bank * 16 + k; P().pads[i] = pad; S.engine.strip(i); S.engine.updatePad(i); });
+    if (g.master) Object.assign(P().master, g.master);
+    S.engine.applyMaster();
+    setBank(g.bank);
+  }
   S.engine.applyDelayTime();
   updateTransport();
+  updatePads();
   refreshSeq();
   dirty();
-  toast(`Groove „${g.name}“ in Pattern ${P().cur.ptn + 1}`);
+  toast(g.preset ? `Preset „${g.name.replace(/ \(.*\)$/, '')}“: Kit auf Bank ${BANK_NAMES[g.bank]}, Groove in Pattern ${P().cur.ptn + 1}` : `Groove „${g.name}“ in Pattern ${P().cur.ptn + 1}`);
 }
 
 function patternUsed(i) { return Object.values(P().patterns[i].steps).some((a) => a.some((v) => v > 0)); }
@@ -523,12 +537,12 @@ function copyPatternToFree() {
   toast('Kein freies Pattern mehr');
 }
 
-function clearPattern() { pushUndo(true); const ptn = curPtn(); ptn.steps = {}; ptn.tune = {}; refreshSeq(); dirty(); toast('Pattern geleert'); }
+function clearPattern() { pushUndo(true); const ptn = curPtn(); ptn.steps = {}; ptn.tune = {}; ptn.roll = {}; refreshSeq(); dirty(); toast('Pattern geleert'); }
 
 function clearBankLanes() {
   pushUndo(true);
   const ptn = curPtn();
-  for (let i = 0; i < 16; i++) { delete ptn.steps[bankBase() + i]; delete ptn.tune[bankBase() + i]; }
+  for (let i = 0; i < 16; i++) { delete ptn.steps[bankBase() + i]; delete ptn.tune[bankBase() + i]; if (ptn.roll) delete ptn.roll[bankBase() + i]; }
   refreshSeq();
   dirty();
   toast(`Spuren von Bank ${BANK_NAMES[P().cur.bank]} geleert`);
@@ -538,7 +552,7 @@ function doublePattern() {
   const ptn = curPtn();
   if (ptn.len * 2 > MAX_STEPS) { toast('Maximal 4 Takte'); return; }
   pushUndo(true);
-  for (const lane of [ptn.steps, ptn.tune]) for (const arr of Object.values(lane)) for (let i = 0; i < ptn.len; i++) arr[i + ptn.len] = arr[i];
+  for (const lane of [ptn.steps, ptn.tune, ptn.roll || {}]) for (const arr of Object.values(lane)) for (let i = 0; i < ptn.len; i++) arr[i + ptn.len] = arr[i];
   ptn.len *= 2;
   refreshSeq();
   dirty();
@@ -553,6 +567,7 @@ function nudgeLane(d) {
   const rot = (a) => { const c = a.slice(0, ptn.len); for (let k = 0; k < ptn.len; k++) a[k] = c[(k - d + ptn.len) % ptn.len]; };
   rot(arr);
   if (ptn.tune[i]) rot(ptn.tune[i]);
+  if (ptn.roll && ptn.roll[i]) rot(ptn.roll[i]);
   refreshSeq();
   dirty();
 }
@@ -724,6 +739,7 @@ function menus() {
       mi('+ Samples hinzufügen …', addSamplesFromPicker),
       mi(`Datei auf Pad ${padLabel(p.cur.pad)} laden …`, loadFileToCurrentPad),
       mi('Sample aufnehmen (Mikrofon)', recordNewSample),
+      mi('Synth-Klang erstellen …', () => showView('synth')),
       '-',
       mi('Neues leeres Projekt', newEmptyProject),
       mi('Werkseinstellung laden', factoryReset),
@@ -771,7 +787,10 @@ function menus() {
       mi('Pattern leeren', clearPattern),
       '-',
       { header: true, label: 'Groove laden (ersetzt Pattern)' },
-      ...GROOVES.map((g, i) => mi(`${g.name} · ${g.bpm} BPM`, () => loadGroove(i))),
+      ...GROOVES.map((g, i) => (g.preset ? null : mi(`${g.name} · ${g.bpm} BPM`, () => loadGroove(i)))).filter(Boolean),
+      '-',
+      { header: true, label: 'Style-Presets (Kit + Groove + Master)' },
+      ...GROOVES.map((g, i) => (g.preset ? mi(`${g.name.replace(/ \(.*\)$/, '')} · ${g.bpm} BPM`, () => loadGroove(i)) : null)).filter(Boolean),
     ] },
     { id: 'pads', label: 'Pads', items: [
       ...Array.from(BANK_NAMES, (n, i) => mi(`Bank ${n} · ${BANK_TITLES[i]}`, () => setBank(i), { checked: p.cur.bank === i, radio: true, kbd: i === 0 ? ', .' : '' })),
@@ -820,8 +839,8 @@ function menus() {
 }
 
 // ---------- Untere Navigation (Handy/Tablet) ----------
-const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'PAD', '◉'], ['mix', 'MIX', '☰'], ['samples', 'SOUNDS', '♪'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'PROJEKT', '⚙']];
-const VIEW_NAMES = { seq: 'Sequencer (SEQ)', pad: 'Pad-Editor (PAD)', mix: 'Mixer (MIX)', samples: 'Samples (SAMPLES)', chop: 'Chop & Aufnahme (CHOP)', song: 'Song (SONG)', file: 'Projekt (PROJEKT)' };
+const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'PAD', '◉'], ['mix', 'MIX', '☰'], ['samples', 'SOUND', '♪'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'PROJ', '⚙']];
+const VIEW_NAMES = { synth: 'Synth-Sampler (SYNTH)', seq: 'Sequencer (SEQ)', pad: 'Pad-Editor (PAD)', mix: 'Mixer (MIX)', samples: 'Samples (SAMPLES)', chop: 'Chop & Aufnahme (CHOP)', song: 'Song (SONG)', file: 'Projekt (PROJEKT)' };
 
 function buildBottomNav() {
   const nav = $('#botnav');
@@ -989,8 +1008,11 @@ function refreshGrid() {
         bar.style.height = `calc(${Math.round(25 + (v / 127) * 75)}% - 4px)`;
         bar.style.opacity = String(0.45 + (v / 127) * 0.55);
       } else if (bar) bar.remove();
+      const rl = st < ptn.len && ptn.roll && ptn.roll[r.i] ? ptn.roll[r.i][st] : 0;
       c.classList.toggle('t', !!(v && t));
       if (v && t) c.dataset.t = fmtSigned(t); else delete c.dataset.t;
+      c.classList.toggle('rl', !!(v && rl > 1));
+      if (v && rl > 1) c.dataset.r2 = '×' + rl; else delete c.dataset.r2;
       c.setAttribute('aria-label', `${padLabel(r.i)} Step ${st + 1}${v ? ' Velocity ' + v : ' aus'}`);
     });
   }
@@ -1012,14 +1034,19 @@ function refreshPlayhead() {
   lastPh = local;
 }
 
-function setStep(padIdx, st, v, tune = null) {
+function setStep(padIdx, st, v, tune = null, roll = null) {
   const ptn = P().patterns[P().cur.ptn];
+  if (!ptn.roll) ptn.roll = {};
   if (!ptn.steps[padIdx]) ptn.steps[padIdx] = new Array(MAX_STEPS).fill(0);
   ptn.steps[padIdx][st] = v;
   if (tune != null) {
     if (!ptn.tune[padIdx]) ptn.tune[padIdx] = new Array(MAX_STEPS).fill(0);
     ptn.tune[padIdx][st] = tune;
   } else if (!v && ptn.tune[padIdx]) ptn.tune[padIdx][st] = 0;
+  if (roll != null) {
+    if (!ptn.roll[padIdx]) ptn.roll[padIdx] = new Array(MAX_STEPS).fill(0);
+    ptn.roll[padIdx][st] = roll > 1 ? roll : 0;
+  } else if (!v && ptn.roll[padIdx]) ptn.roll[padIdx][st] = 0;
 }
 
 let gridDrag = null;
@@ -1097,17 +1124,22 @@ function openStepPop(padIdx, st, anchor) {
     format: (x) => (m && m.root ? noteName(P().pads[padIdx].tune + x, m.root) + ' ' : '') + fmtSigned(x),
     onInput: (x) => { setStep(padIdx, st, ptn.steps[padIdx][st] || S.paint, x); refreshGrid(); S.engine.trigger(padIdx, ptn.steps[padIdx][st], 0, x); dirty(); },
   });
+  const rl0 = (ptn.roll && ptn.roll[padIdx] && ptn.roll[padIdx][st]) || 1;
+  const kr = knob({
+    label: 'Roll', min: 1, max: 4, step: 1, def: 1, value: rl0, format: (x) => (x <= 1 ? 'aus' : '×' + x),
+    onInput: (x) => { setStep(padIdx, st, ptn.steps[padIdx][st] || S.paint, null, x); refreshGrid(); dirty(); },
+  });
   const del = el('button', { class: 'btn warn', type: 'button', text: 'Löschen' });
   del.addEventListener('click', () => { setStep(padIdx, st, 0); refreshGrid(); refreshPtnBtns(); dirty(); closePop(); });
   const ok = el('button', { class: 'btn pri', type: 'button', text: 'OK' });
   ok.addEventListener('click', closePop);
   popEl = el('div', { class: 'pop', role: 'dialog', 'aria-label': 'Step bearbeiten' },
     el('div', { class: 'label', text: `${padLabel(padIdx)} · Step ${st + 1}` }),
-    el('div', { class: 'knobs', style: { margin: '8px 0' } }, kv.node, kt.node),
+    el('div', { class: 'knobs', style: { margin: '8px 0' } }, kv.node, kt.node, kr.node),
     el('div', { class: 'row', style: { justifyContent: 'space-between', marginBottom: '0' } }, del, ok));
   document.body.append(popEl);
   const r = anchor.getBoundingClientRect();
-  const w = 230;
+  const w = 260;
   popEl.style.left = clamp(r.left + r.width / 2 - w / 2, 8, window.innerWidth - w - 8) + 'px';
   const top = r.bottom + 8 + 190 > window.innerHeight ? r.top - 190 : r.bottom + 8;
   popEl.style.top = clamp(top, 8, window.innerHeight - 200) + 'px';
@@ -1137,6 +1169,8 @@ BUILDERS.pad = (root) => {
 
   const choose = el('button', { class: 'btn pri', type: 'button', text: 'Sample wählen' });
   choose.addEventListener('click', () => showView('samples'));
+  const synthB = el('button', { class: 'btn', type: 'button', text: '∿ Im Synth bearbeiten', hidden: !(meta && meta.synth) });
+  synthB.addEventListener('click', () => openInSynth(meta));
   const fileB = el('button', { class: 'btn', type: 'button', text: '+ Datei', title: 'Eigene Audiodatei direkt auf dieses Pad laden' });
   fileB.addEventListener('click', loadFileToCurrentPad);
   const play = el('button', { class: 'btn', type: 'button', text: '▶ Hören' });
@@ -1156,7 +1190,7 @@ BUILDERS.pad = (root) => {
 
   root.append(el('div', { class: 'padhead' },
     el('div', { class: 'big' }, prevPad, ' ', nextPad, ' ', el('small', { text: padLabel(i) }), meta ? meta.name : (pad.s ? 'Sample fehlt' : 'Leeres Pad')),
-    el('div', { class: 'row', style: { marginBottom: '0' } }, choose, fileB, play, copy, paste, reset, clear)));
+    el('div', { class: 'row', style: { marginBottom: '0' } }, choose, fileB, synthB, play, copy, paste, reset, clear)));
 
   const cv = el('canvas', { class: 'wave', 'aria-label': 'Wellenform. Ziehen verschiebt Start oder Ende.' });
   root.append(cv);
@@ -1636,6 +1670,193 @@ function bindDrop() {
 }
 
 // =====================================================================
+// SYNTH-SAMPLER
+// =====================================================================
+const rootOf = (p) => ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'][((p.note % 12) + 12) % 12];
+
+async function renderFactorySynths() {
+  const sr = S.ctx.sampleRate;
+  const list = SYNTH_PRESETS.slice();
+  const work = async () => {
+    while (list.length) {
+      const pr = list.shift();
+      try {
+        const data = await renderSynth(pr.p, sr);
+        S.catalog.addGenerated({ id: pr.id, name: pr.name, cat: pr.cat, pack: 'synth', tags: 'synth werks ' + pr.cat, root: pr.root || rootOf(pr.p), synth: pr.p }, data, sr);
+      } catch (e) { console.warn('Synth', pr.id, e); }
+    }
+  };
+  await Promise.all([work(), work(), work(), work()]);
+}
+
+function synthState() {
+  if (!S.synth) {
+    const pr = SYNTH_PRESETS[0];
+    S.synth = { p: clone(pr.p), name: pr.name, cat: pr.cat, src: pr.id, data: null, buf: null, auto: true, kb: 0 };
+  }
+  return S.synth;
+}
+
+function openInSynth(meta) {
+  if (!meta || !meta.synth) return;
+  S.synth = { ...synthState(), p: { ...SYNTH_DEFAULT, ...clone(meta.synth) }, name: meta.builtin ? meta.name : meta.name, cat: meta.cat === 'user' ? 'keys' : meta.cat, src: meta.id, data: null, buf: null };
+  showView('synth');
+}
+
+let synthTimer = 0;
+let synthJob = 0;
+function scheduleSynth(play = false, delay = 140) {
+  clearTimeout(synthTimer);
+  synthTimer = setTimeout(() => runSynth(play), delay);
+}
+
+async function runSynth(play = false) {
+  const st = synthState();
+  const job = ++synthJob;
+  const data = await renderSynth(st.p, S.ctx.sampleRate);
+  if (job !== synthJob) return;
+  st.data = data;
+  st.buf = new AudioBuffer({ length: Math.max(1, data.length), numberOfChannels: 1, sampleRate: S.ctx.sampleRate });
+  st.buf.copyToChannel(data, 0);
+  drawSynthWave();
+  const info = $('#synthInfo');
+  if (info) info.textContent = `${(data.length / S.ctx.sampleRate).toFixed(2)} s · Grundton ${rootOf(st.p)}${Math.floor(st.p.note / 12) - 1}`;
+  if (play) S.engine.playBuffer(st.buf, st.kb || 0);
+}
+
+function drawSynthWave() {
+  const cv = S.synthCanvas;
+  const st = S.synth;
+  if (!cv || !cv.isConnected || !st || !st.data) return;
+  const d = st.data;
+  const n = 600;
+  const pk = new Float32Array(n);
+  const per = d.length / n;
+  for (let i = 0; i < n; i++) {
+    let m = 0;
+    for (let j = Math.floor(i * per); j < Math.min(d.length, Math.floor((i + 1) * per)); j++) { const v = Math.abs(d[j]); if (v > m) m = v; }
+    pk[i] = m;
+  }
+  drawWave(cv, pk, { color: getComputedStyle(document.documentElement).getPropertyValue('--c-' + st.cat).trim() || '#f2a33a' });
+}
+
+async function synthToLibrary(assign) {
+  const st = synthState();
+  if (!st.data) await runSynth(false);
+  const name = (st.name || 'Synth').slice(0, 48);
+  const { id, stored } = await S.catalog.addUser(name, st.data, S.ctx.sampleRate, 'synth eigene ' + st.cat, st.cat, clone(st.p), rootOf(st.p));
+  st.src = id;
+  if (assign) {
+    const i = P().cur.pad;
+    assignSampleTo(i, id);
+    P().pads[i].tune = 0;
+    S.engine.updatePad(i);
+    updatePads();
+  } else toast(`„${name}“ in der Bibliothek (Eigene)`);
+  if (!stored) toast('Browser-Speicher nicht verfügbar – Klang gilt nur für diese Sitzung');
+  if (S.view === 'synth') renderView('synth');
+}
+
+BUILDERS.synth = (root) => {
+  root.replaceChildren();
+  const st = synthState();
+  const p = st.p;
+  const set = (field, play = true) => (v) => { p[field] = v; scheduleSynth(play && st.auto, 220); };
+  const k = (label, field, min, max, step, fmt, def, extra = {}) => knob({ label, min, max, step, def: def ?? SYNTH_DEFAULT[field], value: p[field], format: fmt, onInput: set(field), ...extra });
+  const pct = (v) => Math.round(v * 100) + '%';
+  const sec = (v) => (v < 1 ? Math.round(v * 1000) + ' ms' : v.toFixed(2) + ' s');
+  const noteFmt = (v) => noteName(v - 60, 'C') + (Math.floor(v / 12) - 1);
+
+  // Kopfzeile: Klangauswahl
+  const sel = el('select', { class: 'sel-in', 'aria-label': 'Synth-Klang laden', style: { flex: '1 1 200px' } });
+  const groups = {};
+  for (const pr of SYNTH_PRESETS) (groups[CATS[pr.cat] || pr.cat] = groups[CATS[pr.cat] || pr.cat] || []).push(el('option', { value: pr.id, text: pr.name, selected: st.src === pr.id }));
+  sel.append(el('option', { value: '', text: 'Klang laden …' }));
+  for (const [g, opts] of Object.entries(groups)) sel.append(el('optgroup', { label: 'Werk · ' + g }, ...opts));
+  const own = S.catalog.list.filter((m) => !m.builtin && m.synth);
+  if (own.length) sel.append(el('optgroup', { label: 'Eigene Synth-Klänge' }, ...own.map((m) => el('option', { value: m.id, text: m.name, selected: st.src === m.id }))));
+  sel.addEventListener('change', () => {
+    const m = S.catalog.meta(sel.value);
+    if (!m || !m.synth) return;
+    S.synth = { ...st, p: { ...SYNTH_DEFAULT, ...clone(m.synth) }, name: m.name, cat: m.cat === 'user' ? 'keys' : m.cat, src: m.id, data: null, buf: null };
+    renderView('synth');
+    scheduleSynth(true, 10);
+  });
+  const name = el('input', { class: 'txt-in', type: 'text', value: st.name, maxlength: '48', 'aria-label': 'Name des Klangs', style: { flex: '1 1 140px' } });
+  name.addEventListener('input', () => { st.name = name.value; });
+  const catSel = el('select', { class: 'sel-in', 'aria-label': 'Kategorie' }, ...Object.entries(CATS).filter(([c]) => c !== 'user').map(([c, l]) => el('option', { value: c, text: l, selected: st.cat === c })));
+  catSel.addEventListener('change', () => { st.cat = catSel.value; drawSynthWave(); });
+  root.append(el('div', { class: 'row' }, sel, name, catSel));
+
+  const play = el('button', { class: 'btn', type: 'button', text: '▶ Hören' });
+  play.addEventListener('click', () => (st.buf ? S.engine.playBuffer(st.buf, st.kb || 0) : runSynth(true)));
+  const rnd = el('button', { class: 'btn', type: 'button', text: '🎲 Zufall' });
+  rnd.addEventListener('click', () => { st.p = randomize(st.p); st.name = (st.name || 'Synth').replace(/( \*)?$/, ' *'); renderView('synth'); scheduleSynth(true, 10); });
+  const toPad = el('button', { class: 'btn pri', type: 'button', text: `→ Pad ${padLabel(P().cur.pad)}` });
+  toPad.addEventListener('click', () => synthToLibrary(true));
+  const toLib = el('button', { class: 'btn', type: 'button', text: 'In Bibliothek' });
+  toLib.addEventListener('click', () => synthToLibrary(false));
+  const autoB = el('button', { type: 'button', class: st.auto ? 'on' : '', 'aria-pressed': String(st.auto), text: 'AUTO-PLAY' });
+  autoB.addEventListener('click', () => { st.auto = !st.auto; autoB.classList.toggle('on', st.auto); autoB.setAttribute('aria-pressed', String(st.auto)); });
+  root.append(el('div', { class: 'row' }, play, rnd, toPad, toLib, el('div', { class: 'seg teal' }, autoB), el('span', { class: 'muted', id: 'synthInfo', style: { fontSize: '12px' } })));
+
+  const cv = el('canvas', { class: 'wave', 'aria-label': 'Wellenform des berechneten Klangs' });
+  S.synthCanvas = cv;
+  root.append(cv);
+
+  // Mini-Keyboard: spielt den berechneten Klang transponiert
+  const kb = el('div', { class: 'synth-kb', role: 'group', 'aria-label': 'Keyboard zum Vorhören' });
+  for (let i = -12; i <= 12; i++) {
+    const nm = noteName(p.note + i - 60, 'C');
+    const black = nm.includes('#');
+    const key = el('button', { type: 'button', class: 'sk' + (black ? ' b' : '') + (i === 0 ? ' root' : '') + (Math.abs(i) > 6 ? ' outer' : ''), 'aria-label': `${nm} ${fmtSigned(i)}`, text: i === 0 || nm === 'C' ? nm : '' });
+    key.addEventListener('pointerdown', (e) => { e.preventDefault(); st.kb = i; if (st.buf) S.engine.playBuffer(st.buf, i); });
+    kb.append(key);
+  }
+  root.append(kb);
+
+  const card = (title, ...kids) => el('div', { class: 'card' }, el('h3', { text: title }), ...kids);
+  const waveSeg = (field) => seg(Object.keys(WAVES).map((w) => [w, { sine: 'SIN', tri: 'TRI', saw: 'SAW', square: 'SQR' }[w]]), p[field], (v) => { p[field] = v; scheduleSynth(st.auto); });
+  const chordSel = el('select', { class: 'sel-in', 'aria-label': 'Akkord' }, ...Object.keys(CHORDS).map((c) => el('option', { value: c, text: CHORD_NAMES[c], selected: p.chord === c })));
+  chordSel.addEventListener('change', () => { p.chord = chordSel.value; scheduleSynth(st.auto); });
+  const ftSeg = seg([['lp', 'LP'], ['hp', 'HP'], ['bp', 'BP']], p.ft, (v) => { p.ft = v; scheduleSynth(st.auto); });
+  const crushSeg = seg([['off', 'AUS'], ['v40', '40K'], ['v26', '26K'], ['v11', '8 BIT']], p.crush, (v) => { p.crush = v; scheduleSynth(st.auto); });
+  const uniSeg = seg([[1, '1'], [3, '3'], [5, '5']], p.uni, (v) => { p.uni = v; scheduleSynth(st.auto); });
+  uniSeg.prepend(el('span', { class: 'lab', text: 'UNISON' }));
+  const dropB = el('button', { type: 'button', class: p.drop ? 'on' : '', 'aria-pressed': String(!!p.drop), text: 'TAPE-STOP' });
+  dropB.addEventListener('click', () => { p.drop = !p.drop; dropB.classList.toggle('on', p.drop); dropB.setAttribute('aria-pressed', String(p.drop)); scheduleSynth(st.auto); });
+  const cutFmt = (v) => { const h = 20 * Math.pow(2, v * 9.97); return h >= 1000 ? (h / 1000).toFixed(1) + 'k' : Math.round(h) + ''; };
+
+  root.append(el('div', { class: 'edit-grid' },
+    card('Oszillator 1', el('div', { class: 'row' }, waveSeg('w1')), el('div', { class: 'knobs' },
+      k('Oktave', 'o1', -2, 2, 1, fmtSigned, 0, { bipolar: true }).node, k('Fein', 'd1', -50, 50, 1, (v) => fmtSigned(v) + ' ct', 0, { bipolar: true }).node, k('Pegel', 'l1', 0, 1, 0.01, pct).node)),
+    card('Oszillator 2', el('div', { class: 'row' }, waveSeg('w2')), el('div', { class: 'knobs' },
+      k('Oktave', 'o2', -2, 2, 1, fmtSigned, 0, { bipolar: true }).node, k('Halbton', 's2', -12, 12, 1, fmtSigned, 0, { bipolar: true }).node,
+      k('Verstimm.', 'd2', 0, 50, 1, (v) => v + ' ct').node, k('Pegel', 'l2', 0, 1, 0.01, pct).node)),
+    card('Sub · Rauschen · Unison', el('div', { class: 'row' }, uniSeg), el('div', { class: 'knobs' },
+      k('Sub', 'sub', 0, 1, 0.01, pct).node, k('Rauschen', 'noise', 0, 1, 0.01, pct).node, k('Metallic', 'metal', 0, 1, 0.01, pct).node,
+      k('Spread', 'spread', 0, 40, 1, (v) => v + ' ct').node, k('Clap-Bursts', 'bursts', 1, 6, 1, String).node)),
+    card('Tonhöhe', el('div', { class: 'row' }, chordSel), el('div', { class: 'knobs' },
+      k('Note', 'note', 24, 84, 1, noteFmt).node, k('Pitch-Env', 'penv', 0, 48, 1, (v) => '+' + v + ' st').node, k('P-Decay', 'pdec', 0.005, 0.5, 0.005, sec).node,
+      k('Glide', 'glide', -24, 24, 1, (v) => fmtSigned(v) + ' st', 0, { bipolar: true }).node, k('Glide-Zeit', 'gtime', 0.01, 1, 0.01, sec).node)),
+    card('Hüllkurve', el('div', { class: 'knobs' },
+      k('Attack', 'att', 0.001, 2, 0.001, sec).node, k('Decay', 'dec', 0.01, 3, 0.01, sec).node, k('Sustain', 'sus', 0, 1, 0.01, pct).node,
+      k('Release', 'rel', 0.01, 3, 0.01, sec).node, k('Länge', 'len', 0.02, 4, 0.01, sec).node)),
+    card('Filter', el('div', { class: 'row' }, ftSeg), el('div', { class: 'knobs' },
+      k('Cutoff', 'cut', 0, 1, 0.005, cutFmt).node, k('Reso', 'res', 0, 1, 0.01, pct).node,
+      k('Env', 'fenv', -1, 1, 0.01, (v) => fmtSigned(Math.round(v * 6 * 10) / 10) + ' okt', 0, { bipolar: true }).node, k('Env-Decay', 'fdec', 0.01, 2, 0.01, sec).node)),
+    card('LFO', el('div', { class: 'knobs' },
+      k('Rate', 'lrate', 0.05, 12, 0.05, (v) => v.toFixed(2) + ' Hz').node, k('→ Pitch', 'lpitch', 0, 50, 1, (v) => v + ' ct').node,
+      k('→ Filter', 'lfilt', 0, 2, 0.01, pct).node, k('→ Pegel', 'lamp', 0, 1, 0.01, pct).node)),
+    card('Färbung', el('div', { class: 'row' }, crushSeg, el('div', { class: 'seg red' }, dropB)), el('div', { class: 'knobs' }, k('Drive', 'drive', 0, 1, 0.01, pct).node)),
+  ));
+  root.append(el('p', { class: 'hint', html: 'Jede Änderung wird sofort neu berechnet (Auto-Play spielt sie an). <b>→ Pad</b> speichert den Klang als eigenes Sample samt Einstellungen; über PAD → „Im Synth bearbeiten“ lässt er sich später weiter formen. Werks-Klänge liegen im Pack „Synth“ und auf Bank L.' }));
+  if (st.data) drawSynthWave(); else scheduleSynth(false, 10);
+  const info = $('#synthInfo');
+  if (info && st.data) info.textContent = `${(st.data.length / S.ctx.sampleRate).toFixed(2)} s · Grundton ${rootOf(p)}${Math.floor(p.note / 12) - 1}`;
+};
+
+// =====================================================================
 // CHOP
 // =====================================================================
 BUILDERS.chop = (root) => {
@@ -1923,12 +2144,12 @@ BUILDERS.file = (root) => {
   base.addEventListener('change', () => { p.midi.base = +base.value; dirty(); });
   root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'MIDI-Eingang' }),
     el('div', { class: 'row' }, midiBtn, base, el('span', { class: 'muted', id: 'midiState', text: S.midiStatus })),
-    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, +16 … +127 die Pads B01 … H16 direkt. MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System. Nicht mit jeder Hardware getestet.' })));
+    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, ab +16 die Pads ab B01 direkt (bis Note 127). MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System. Nicht mit jeder Hardware getestet.' })));
 
   // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
   root.append(el('div', { class: 'card', id: 'about', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.3.0.apk" style="color:var(--teal)">BAP-50-1.3.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 8 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.4.0.apk" style="color:var(--teal)">BAP-50-1.4.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 12 Bänke × 16 Pads, eingebauter Synth-Sampler, Step-Rolls, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
 };
 
 function loadProject(raw, msg) {

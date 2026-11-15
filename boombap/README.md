@@ -1,10 +1,13 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **1.3.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **1.4.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
 
 ## Funktionen
 
 - **Menüleiste** oben mit allen Funktionen: Datei (Projekt neu/speichern/import/export, WAV-Export, Resample), Bearbeiten (Undo/Redo, Pad kopieren/einfügen/zurücksetzen), Pattern (Wechsel, Länge, Verdoppeln, Kopieren, Spur verschieben, Grooves), Pads (Bänke A–H, Full Level, 16 Levels, Note Repeat), Transport (Play, Aufnahme, Metronom, Song-Modus, Tempo, Swing), Ansicht, MIDI und Hilfe. Bedienbar mit Maus, Touch und Tastatur (Alt, Pfeiltasten, Esc).
+- **Synth-Sampler (SYNTH):** zwei Oszillatoren (Sinus/Dreieck/Säge/Rechteck), Sub, Rauschen, Metallic-Cluster, Unison 1/3/5, Akkorde, Pitch-Hüllkurve, Glide für 808-Slides, ADSR, LP/HP/BP-Filter mit Hüllkurve, LFO auf Tonhöhe/Filter/Pegel, Drive, 12-Bit/8-Bit, Clap-Bursts, Tape-Stop. Auto-Play, Zufall, Keyboard zum Vorhören, „→ Pad“ speichert den Klang samt Einstellungen; über PAD → „Im Synth bearbeiten“ wieder änderbar. 20 Werks-Klänge (808s, Reese, Trap-Kicks, Clap, Hats, Memphis-Cowbell, Glocken, Spieluhr, Horror-Pad, Choir, Drone, Riser, Tape-Drop) werden beim Start berechnet (Pack „Synth“, Bank L).
+- **Style-Presets (dunkler Phonk/Trap):** „Grey Fog“ (145 BPM), „Memphis Grave“ (130 BPM, Cowbell-Melodie), „Coffin Choir“ (150 BPM) – jeweils Kit (Bank I/J/K), Groove mit 808-Melodie und Hi-Hat-Rolls sowie Master-Einstellung. Laden über Pattern → Style-Presets; vorbelegt in Pattern 9–11. Eigene Namen, keine Samples fremder Songs.
+- **Step-Rolls:** 2, 3 oder 4 Schläge pro Step (lange drücken / Rechtsklick auf den Step → Roll).
 - **Eigene Samples hinzufügen:** „+ Samples hinzufügen“ (SAMPLES, Menü Datei) lädt mehrere Audiodateien auf einmal (WAV, MP3, AIFF, FLAC, OGG, M4A, bis 60 s), erkennt die Kategorie am Dateinamen (kick, snare, hat, 808 …) und legt sie auf Wunsch der Reihe nach auf Pads. Dateien lassen sich auch ins Fenster oder direkt auf ein Pad ziehen; „+ Datei“ im Pad-Editor lädt direkt aufs Pad. Eigene Samples bleiben im Browser gespeichert (IndexedDB) und sind umbenennbar.
 - **Handy/Tablet:** feste Navigationsleiste unten (PADS, SEQ, PAD, MIX, SOUNDS, CHOP, SONG, PROJEKT); jede Ansicht bekommt den ganzen Bildschirm.
 
@@ -12,7 +15,7 @@ Version **1.3.0** · läuft unter `/boombap/` dieser Seite, als PWA installierba
   - **Core 50**: akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Claps, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon.
   - **Dusty Bap** (50): gealterte Boom-Bap-Drums (12 Bit, gepitcht, Snare+Clap-Layer), Piano-, Vibes- und E-Piano-Akkorde, Bläser-Stabs, Piano-Bass.
   - **Dark Hill** (50): dunkler Westcoast-Boom-Bap – schwere Drums mit Raum, Timbales, Congas, Guiro, Cuica, Sirenen-/Pfeifen-Quietscher, Flexaton, Gong, Orgel, düsteres Piano, Mundharmonika, Saxophon.
-- **128 Pads** in 8 Bänken (A Boom-Bap-Kern, B Drums 2, C Hats/Becken/Toms/Perc, D Keys, E Dusty-Bap-Drums, F Dusty-Bap-Chops, G Dark-Hill-Drums & Latin, H Dark-Hill-Keys & FX), anschlagdynamisch (Tipp-Höhe im Pad), Full Level.
+- **192 Pads** in 12 Bänken (A Boom-Bap-Kern, B Drums 2, C Hats/Becken/Toms/Perc, D Keys, E Dusty-Bap-Drums, F Dusty-Bap-Chops, G Dark-Hill-Drums & Latin, H Dark-Hill-Keys & FX, I–K Style-Presets, L Synth), anschlagdynamisch (Tipp-Höhe im Pad), Full Level.
 - **16 Levels** (Tune / Velocity) und **Note Repeat** (1/8, 1/16, 1/16T, 1/32), beide auch in der Aufnahme.
 - **Step-Sequencer**: 16 Patterns, 1–4 Takte, Swing 50–75 %, Velocity und Tonhöhe pro Step, Live-Aufnahme quantisiert, Pattern-Wechsel am Pattern-Ende, Spur verschieben, Verdoppeln, Kopieren, Undo/Redo, 8 eigene Grooves (u. a. „Dusty Crate“, „Dark Hill“, „Hill Latin Smoke“).
 - **Song-Modus**: Pattern-Kette mit Wiederholungen.

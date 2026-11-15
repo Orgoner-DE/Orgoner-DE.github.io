@@ -454,6 +454,20 @@ export class Engine {
     this.prev = src;
   }
 
+  // Vorhören eines frei berechneten Buffers (Synth-Keyboard), polyphon.
+  playBuffer(buf, semis = 0, gain = 0.7) {
+    if (!buf) return;
+    const src = this.ctx.createBufferSource();
+    const g = this.ctx.createGain();
+    g.gain.value = gain;
+    src.buffer = buf;
+    src.playbackRate.value = Math.pow(2, semis / 12);
+    src.connect(g);
+    g.connect(this.bus);
+    src.start();
+    src.onended = () => { try { g.disconnect(); } catch (_) { /* egal */ } };
+  }
+
   click(when, accent) {
     const c = this.ctx;
     const o = c.createOscillator();
