@@ -1,8 +1,11 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **1.1.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **1.2.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
 
 ## Funktionen
+
+- **Menüleiste** oben mit allen Funktionen: Datei (Projekt neu/speichern/import/export, WAV-Export, Resample), Bearbeiten (Undo/Redo, Pad kopieren/einfügen/zurücksetzen), Pattern (Wechsel, Länge, Verdoppeln, Kopieren, Spur verschieben, Grooves), Pads (Bänke A–H, Full Level, 16 Levels, Note Repeat), Transport (Play, Aufnahme, Metronom, Song-Modus, Tempo, Swing), Ansicht, MIDI und Hilfe. Bedienbar mit Maus, Touch und Tastatur (Alt, Pfeiltasten, Esc).
+- **Handy/Tablet:** feste Navigationsleiste unten (PADS, SEQ, PAD, MIX, SOUNDS, CHOP, SONG, PROJEKT); jede Ansicht bekommt den ganzen Bildschirm.
 
 - **150 echte Samples** (CC0) in drei Packs, Quellen und Bearbeitung je Datei in `samples/LICENSE.md`:
   - **Core 50**: akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Claps, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon.
@@ -20,7 +23,7 @@ Version **1.1.0** · läuft unter `/boombap/` dieser Seite, als PWA installierba
 - **Export**: Pattern, Pattern ×4 oder Song als WAV (44,1 kHz, 16 Bit, Stereo); Projekt als JSON exportieren/importieren; Autosave und Projekt-Slots im Browser; eigene Samples in IndexedDB.
 - **Sample-Browser** mit Pack-Filter, Kategorien, Suche (Name, Tags wie `lofi`, `room`, `siren`, `organ`) und Vorhören.
 - **MIDI-Eingang** (Web MIDI, Chrome/Edge/Android): Startnote wählbar (36 für Pad-Controller, 0 für Grid-Controller), Start/Stop.
-- **Tastatur**: `Z X C V / A S D F / Q W E R / 1 2 3 4` = Pads (wie das 4×4-Raster), Leertaste Play/Stop, `,` `.` Bank A–H, `T` Aufnahme, Strg+Z / Strg+Umschalt+Z.
+- **Tastatur**: `Z X C V / A S D F / Q W E R / 1 2 3 4` = Pads (wie das 4×4-Raster), Leertaste Play/Stop, `,` `.` Bank A–H, `[` `]` Pattern, `T` Aufnahme, Strg+Z / Strg+Umschalt+Z, Strg+S speichern, Strg+C / Strg+V Pad kopieren/einfügen, `?` Hilfe.
 
 ## Starten
 

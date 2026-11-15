@@ -9,13 +9,14 @@ import {
   saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History,
 } from './state.js';
 import { renderPatterns, songOrder, encodeWav, toMono } from './render.js';
+import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
 
 const S = {
   ctx: null, catalog: new Catalog(), engine: null, seq: null, project: null, history: new History(),
   view: 'seq', page: 0, follow: true, paint: 100, fullLevel: false, levels: 'off', levelsSrc: 0,
   clip: null, midi: null, midiStatus: 'aus', chop: { buf: null, name: '', slices: [], mode: 'play', count: 16, sens: 0.5 },
   rec: null, playStep: -1, shownPtn: -1, lastUndo: 0, sampleQuery: '', sampleCat: 'all', curSample: null, taps: [],
-  songPos: 0, views: {}, strips: [], masterMeter: null,
+  songPos: 0, views: {}, strips: [], masterMeter: null, mScreen: 'pads', hidePads: false,
 };
 
 const P = () => S.project;
@@ -65,8 +66,18 @@ function restore(snap) {
 function undo() { const s = S.history.undo(snapshot()); if (s) { restore(s); toast('Rückgängig'); } }
 function redo() { const s = S.history.redo(snapshot()); if (s) { restore(s); toast('Wiederholt'); } }
 
+function segSet(box, value) {
+  if (!box || !box._vals) return;
+  Array.from(box.querySelectorAll('button')).forEach((b, i) => {
+    const on = box._vals[i] === value;
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+}
+
 function seg(options, value, onPick, cls = '') {
   const box = el('div', { class: 'seg ' + cls, role: 'group' });
+  box._vals = options.map((o) => o[0]);
   for (const [val, label, title] of options) {
     const b = el('button', { type: 'button', class: val === value ? 'on' : '', 'aria-pressed': String(val === value), title: title || null, text: label });
     b.addEventListener('click', () => {
@@ -122,6 +133,8 @@ const TABS = [['seq', 'SEQ'], ['pad', 'PAD'], ['mix', 'MIX'], ['samples', 'SAMPL
 const BUILDERS = {};
 
 function buildUI() {
+  buildMenubar($('#menubar'), menus);
+  buildBottomNav();
   buildTransport();
   buildPadbar();
   buildPads();
@@ -142,11 +155,14 @@ function buildUI() {
 
 function showView(id) {
   S.view = id;
+  S.mScreen = id;
   for (const [k] of TABS) {
     $('#tab-' + k).setAttribute('aria-selected', String(k === id));
     S.views[k].hidden = k !== id;
   }
   renderView(id);
+  updateBottomNav();
+  if (window.matchMedia('(max-width: 980px)').matches) window.scrollTo({ top: 0 });
 }
 
 function renderView(id) { if (BUILDERS[id]) BUILDERS[id](S.views[id]); }
@@ -161,17 +177,11 @@ function buildTransport() {
   T.rec = el('button', { class: 'tbtn rec', type: 'button', title: 'Aufnahme (T)', 'aria-label': 'Aufnahme', html: '● <small>REC</small>' });
   T.metro = el('button', { class: 'tbtn', type: 'button', title: 'Metronom', 'aria-label': 'Metronom', html: '<small>CLICK</small>' });
   T.play.addEventListener('click', () => togglePlay(true));
-  T.stop.addEventListener('click', () => { S.seq.stop(); updateTransport(); });
-  T.rec.addEventListener('click', () => { S.seq.rec = !S.seq.rec; if (S.seq.rec) pushUndo(true); updateTransport(); });
-  T.metro.addEventListener('click', () => { P().metro = !P().metro; updateTransport(); dirty(); });
+  T.stop.addEventListener('click', stopTransport);
+  T.rec.addEventListener('click', toggleRec);
+  T.metro.addEventListener('click', toggleMetro);
 
   const val = el('div', { class: 'val', title: 'Ziehen oder Mausrad, Shift = fein', role: 'spinbutton', tabindex: '0', 'aria-label': 'Tempo' });
-  const setBpm = (v) => {
-    P().bpm = +clamp(v, 40, 200).toFixed(1);
-    S.engine.applyDelayTime();
-    updateTransport();
-    dirty();
-  };
   let dragY = null; let dragV = 0;
   val.addEventListener('pointerdown', (e) => { dragY = e.clientY; dragV = P().bpm; val.setPointerCapture(e.pointerId); });
   val.addEventListener('pointermove', (e) => { if (dragY != null) setBpm(dragV + (dragY - e.clientY) * (e.shiftKey ? 0.05 : 0.25)); });
@@ -189,15 +199,7 @@ function buildTransport() {
   const bpm = el('div', { class: 'bpm' }, el('small', { text: 'BPM' }), minus, val, plus);
 
   const tap = el('button', { class: 'tbtn', type: 'button', title: 'Tempo tippen', html: '<small>TAP</small>' });
-  tap.addEventListener('click', () => {
-    const now = performance.now();
-    S.taps = S.taps.filter((t) => now - t < 2500);
-    S.taps.push(now);
-    if (S.taps.length >= 3) {
-      const iv = (S.taps[S.taps.length - 1] - S.taps[0]) / (S.taps.length - 1);
-      setBpm(Math.round(60000 / iv * 10) / 10);
-    }
-  });
+  tap.addEventListener('click', tapTempo);
   T.swing = knob({ label: 'Swing', min: 50, max: 75, step: 1, def: 50, value: P().swing, small: true, format: (v) => v + '%', onInput: (v) => { P().swing = v; dirty(); } });
   T.undo = el('button', { class: 'tbtn', type: 'button', title: 'Rückgängig (Strg+Z)', 'aria-label': 'Rückgängig', text: '↶' });
   T.redo = el('button', { class: 'tbtn', type: 'button', title: 'Wiederholen (Strg+Umschalt+Z)', 'aria-label': 'Wiederholen', text: '↷' });
@@ -206,6 +208,28 @@ function buildTransport() {
   box.append(T.play, T.stop, T.rec, T.metro, bpm, tap, T.swing.node, T.undo, T.redo);
   updateTransport();
 }
+
+function setBpm(v) {
+  P().bpm = +clamp(v, 40, 200).toFixed(1);
+  S.engine.applyDelayTime();
+  updateTransport();
+  dirty();
+}
+
+function tapTempo() {
+  const now = performance.now();
+  S.taps = S.taps.filter((t) => now - t < 2500);
+  S.taps.push(now);
+  if (S.taps.length >= 3) {
+    const iv = (S.taps[S.taps.length - 1] - S.taps[0]) / (S.taps.length - 1);
+    setBpm(Math.round(60000 / iv * 10) / 10);
+  } else toast('Weiter tippen …');
+}
+
+function stopTransport() { S.seq.stop(); updateTransport(); }
+function toggleRec() { S.seq.rec = !S.seq.rec; if (S.seq.rec) pushUndo(true); updateTransport(); updateLCD(); }
+function toggleMetro() { P().metro = !P().metro; updateTransport(); dirty(); }
+function toggleSong() { P().song.on = !P().song.on; if (S.view === 'song') renderView('song'); updateLCD(); dirty(); }
 
 function togglePlay(fromButton) {
   if (S.ctx.state !== 'running') S.ctx.resume();
@@ -252,22 +276,30 @@ function buildPadbar() {
   PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b));
   PB.bank.prepend(el('span', { class: 'lab', text: 'BANK' }));
   PB.full = el('button', { type: 'button', text: 'FULL', title: 'Volle Anschlagstärke' });
-  PB.full.addEventListener('click', () => { S.fullLevel = !S.fullLevel; PB.full.classList.toggle('on', S.fullLevel); });
+  PB.full.addEventListener('click', () => setFull(!S.fullLevel));
   const fullSeg = el('div', { class: 'seg' }, PB.full);
-  PB.nr = seg([[null, 'AUS'], ['1/8', '8'], ['1/16', '16'], ['1/16T', '16T'], ['1/32', '32']], null, (d) => {
-    S.seq.repeatDiv = d;
-    if (!d) for (const k of Array.from(S.seq.held.keys())) S.seq.release(k);
-    updateLCD();
-  }, 'teal');
+  PB.nr = seg([[null, 'AUS'], ['1/8', '8'], ['1/16', '16'], ['1/16T', '16T'], ['1/32', '32']], null, (d) => setRepeat(d), 'teal');
   PB.nr.prepend(el('span', { class: 'lab', text: 'REPEAT' }));
-  PB.lv = seg([['off', 'AUS'], ['tune', 'TUNE'], ['velo', 'VELO']], 'off', (m) => {
-    S.levels = m;
-    if (m !== 'off') S.levelsSrc = P().cur.pad;
-    updatePads();
-    updateLCD();
-  }, 'red');
+  PB.lv = seg([['off', 'AUS'], ['tune', 'TUNE'], ['velo', 'VELO']], 'off', (m) => setLevels(m), 'red');
   PB.lv.prepend(el('span', { class: 'lab', text: '16 LEVELS' }));
   bar.append(PB.bank, fullSeg, PB.nr, PB.lv);
+}
+
+function setFull(on) { S.fullLevel = on; PB.full.classList.toggle('on', on); PB.full.setAttribute('aria-pressed', String(on)); }
+
+function setRepeat(d) {
+  S.seq.repeatDiv = d;
+  if (!d) for (const k of Array.from(S.seq.held.keys())) S.seq.release(k);
+  segSet(PB.nr, d);
+  updateLCD();
+}
+
+function setLevels(m) {
+  S.levels = m;
+  if (m !== 'off') S.levelsSrc = P().cur.pad;
+  segSet(PB.lv, m);
+  updatePads();
+  updateLCD();
 }
 
 function setBank(b) {
@@ -395,9 +427,19 @@ function bindKeys() {
   const held = new Set();
   const typing = (e) => e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable);
   window.addEventListener('keydown', (e) => {
-    if (typing(e)) return;
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (typing(e) || isMenuOpen()) return;
+    if (e.target && e.target.closest && e.target.closest('.dlg-wrap')) return;
+    const mod = e.ctrlKey || e.metaKey;
+    const kk = e.key.toLowerCase();
+    if (mod && kk === 'z') { e.preventDefault(); if (e.shiftKey) redo(); else undo(); return; }
+    if (mod && kk === 's') { e.preventDefault(); saveProjectSlot(); return; }
+    if (mod && kk === 'c' && !String(window.getSelection ? window.getSelection() : '')) { e.preventDefault(); padCopy(); return; }
+    if (mod && kk === 'v') { e.preventDefault(); padPaste(); return; }
+    if (e.key === 'Alt' && !e.repeat) { e.preventDefault(); const f = $('#mb-file'); if (f) f.focus(); return; }
+    if (mod || e.altKey) return;
+    if (e.key === '?') { showHelp(); return; }
+    if (e.key === '[') { selectPattern(P().cur.ptn - 1); return; }
+    if (e.key === ']') { selectPattern(P().cur.ptn + 1); return; }
     const k = e.key.toLowerCase();
     if (k === ' ') { e.preventDefault(); if (!e.repeat) togglePlay(false); return; }
     if (e.repeat) return;
@@ -405,7 +447,7 @@ function bindKeys() {
     if (local >= 0) { held.add(k); padDown(local, S.fullLevel ? 127 : (e.shiftKey ? 64 : 110)); return; }
     if (k === ',') setBank((P().cur.bank + NUM_BANKS - 1) % NUM_BANKS);
     if (k === '.') setBank((P().cur.bank + 1) % NUM_BANKS);
-    if (k === 't' && !e.shiftKey) { S.seq.rec = !S.seq.rec; updateTransport(); }
+    if (k === 't' && !e.shiftKey) toggleRec();
   });
   window.addEventListener('keyup', (e) => {
     const k = e.key.toLowerCase();
@@ -413,6 +455,393 @@ function bindKeys() {
     held.delete(k);
     padUp(PADKEYS.indexOf(k));
   });
+}
+
+
+// =====================================================================
+// AKTIONEN – gemeinsam für Menüleiste, Tastatur und Ansichten
+// =====================================================================
+const curPtn = () => P().patterns[P().cur.ptn];
+const clone = (o) => JSON.parse(JSON.stringify(o));
+function refreshSeq() { if (S.view === 'seq') renderView('seq'); }
+function refreshPadView() { if (S.view === 'pad') renderView('pad'); }
+
+function selectPattern(i) {
+  i = (i + NUM_PATTERNS) % NUM_PATTERNS;
+  if (S.seq.playing && !P().song.on) {
+    S.seq.queuePattern(i);
+    if (G.ptnBtns.length) refreshPtnBtns();
+    toast(`Pattern ${i + 1} folgt am Ende`);
+  } else {
+    P().cur.ptn = i;
+    S.page = 0;
+    refreshSeq();
+    dirty();
+  }
+  updateLCD();
+}
+
+function setPatternLength(l) {
+  pushUndo(true);
+  curPtn().len = l;
+  if (S.page * 16 >= l) S.page = 0;
+  refreshSeq();
+  dirty();
+}
+
+function loadGroove(idx) {
+  const g = GROOVES[idx];
+  if (!g) return;
+  pushUndo(true);
+  P().patterns[P().cur.ptn] = grooveToPattern(g);
+  P().bpm = g.bpm;
+  P().swing = g.swing;
+  S.engine.applyDelayTime();
+  updateTransport();
+  refreshSeq();
+  dirty();
+  toast(`Groove „${g.name}“ in Pattern ${P().cur.ptn + 1}`);
+}
+
+function patternUsed(i) { return Object.values(P().patterns[i].steps).some((a) => a.some((v) => v > 0)); }
+
+function copyPatternTo(t) {
+  if (t === P().cur.ptn) return;
+  pushUndo(true);
+  P().patterns[t] = clone(curPtn());
+  if (G.ptnBtns.length) refreshPtnBtns();
+  dirty();
+  toast(`Kopiert nach Pattern ${t + 1}`);
+}
+
+function copyPatternToFree() {
+  for (let k = 1; k < NUM_PATTERNS; k++) {
+    const t = (P().cur.ptn + k) % NUM_PATTERNS;
+    if (!patternUsed(t)) { copyPatternTo(t); return; }
+  }
+  toast('Kein freies Pattern mehr');
+}
+
+function clearPattern() { pushUndo(true); const ptn = curPtn(); ptn.steps = {}; ptn.tune = {}; refreshSeq(); dirty(); toast('Pattern geleert'); }
+
+function clearBankLanes() {
+  pushUndo(true);
+  const ptn = curPtn();
+  for (let i = 0; i < 16; i++) { delete ptn.steps[bankBase() + i]; delete ptn.tune[bankBase() + i]; }
+  refreshSeq();
+  dirty();
+  toast(`Spuren von Bank ${BANK_NAMES[P().cur.bank]} geleert`);
+}
+
+function doublePattern() {
+  const ptn = curPtn();
+  if (ptn.len * 2 > MAX_STEPS) { toast('Maximal 4 Takte'); return; }
+  pushUndo(true);
+  for (const lane of [ptn.steps, ptn.tune]) for (const arr of Object.values(lane)) for (let i = 0; i < ptn.len; i++) arr[i + ptn.len] = arr[i];
+  ptn.len *= 2;
+  refreshSeq();
+  dirty();
+}
+
+function nudgeLane(d) {
+  const ptn = curPtn();
+  const i = P().cur.pad;
+  const arr = ptn.steps[i];
+  if (!arr) { toast('Gewähltes Pad hat keine Steps'); return; }
+  pushUndo(true);
+  const rot = (a) => { const c = a.slice(0, ptn.len); for (let k = 0; k < ptn.len; k++) a[k] = c[(k - d + ptn.len) % ptn.len]; };
+  rot(arr);
+  if (ptn.tune[i]) rot(ptn.tune[i]);
+  refreshSeq();
+  dirty();
+}
+
+function selectPad(i) {
+  P().cur.pad = (i + NUM_PADS) % NUM_PADS;
+  const bank = Math.floor(P().cur.pad / 16);
+  if (bank !== P().cur.bank) setBank(bank);
+  updatePads();
+  if (S.view === 'pad') renderView('pad');
+  else if (S.view === 'seq') markSelectedRow();
+  else if (S.view === 'samples') updateSampleTarget();
+  updateLCD();
+}
+
+function padCopy() { S.clip = clone(curPad()); toast(`Pad ${padLabel(P().cur.pad)} kopiert`); refreshPadView(); }
+
+function padPaste() {
+  if (!S.clip) { toast('Erst ein Pad kopieren'); return; }
+  pushUndo(true);
+  const i = P().cur.pad;
+  const old = P().pads[i];
+  P().pads[i] = { ...clone(S.clip), mute: old.mute, solo: old.solo };
+  S.engine.strip(i);
+  S.engine.updatePad(i);
+  updatePads();
+  refreshPadView();
+  dirty();
+  toast(`Eingefügt auf ${padLabel(i)}`);
+}
+
+function padReset() {
+  pushUndo(true);
+  const i = P().cur.pad;
+  const pad = P().pads[i];
+  P().pads[i] = { ...defaultPad(pad.s), choke: pad.choke, mono: pad.mono };
+  S.engine.updatePad(i);
+  updatePads();
+  refreshPadView();
+  dirty();
+}
+
+function padClear() {
+  pushUndo(true);
+  P().pads[P().cur.pad] = defaultPad(null);
+  updatePads();
+  refreshPadView();
+  dirty();
+}
+
+function saveProjectSlot() {
+  const p = P();
+  if (saveSlot(p.name, p)) { toast('Gespeichert: ' + p.name); if (S.view === 'file') renderView('file'); }
+  else toast('Speichern nicht möglich (Browser-Speicher voll oder gesperrt)');
+}
+
+function exportProjectJSON() {
+  const p = P();
+  download(`${p.name || 'bap50'}.bap50.json`, new Blob([JSON.stringify(p)], { type: 'application/json' }));
+}
+
+function importProjectJSON() {
+  const inp = el('input', { type: 'file', accept: '.json,application/json', hidden: true });
+  inp.addEventListener('change', async () => {
+    const f = inp.files && inp.files[0];
+    inp.remove();
+    if (!f) return;
+    try { loadProject(JSON.parse(await f.text()), 'Importiert: ' + f.name); } catch (e) { toast('Ungültige Projektdatei'); }
+  });
+  document.body.append(inp);
+  inp.click();
+}
+
+function factoryReset() {
+  if (confirm('Aktuelles Projekt durch das Werks-Kit mit den Grooves ersetzen? (Rückgängig möglich)')) loadProject(defaultProject(catOf), 'Werkseinstellung geladen');
+}
+
+function newEmptyProject() {
+  if (!confirm('Neues Projekt mit Werks-Kit, aber leeren Patterns anlegen? (Rückgängig möglich)')) return;
+  const p = defaultProject(catOf);
+  p.name = 'Neues Projekt';
+  p.patterns = p.patterns.map(() => ({ len: 32, steps: {}, tune: {} }));
+  p.song.list = [{ p: 0, n: 1 }];
+  loadProject(p, 'Neues Projekt');
+}
+
+let busyNow = false;
+async function runBusy(label, fn) {
+  if (busyNow) { toast('Bitte warten, Rendern läuft …'); return; }
+  busyNow = true;
+  toast(label + ' …');
+  try { await fn(); } catch (e) { console.error(e); toast('Rendern fehlgeschlagen'); }
+  busyNow = false;
+}
+
+async function exportWav(order, label) {
+  const { buffer } = await renderPatterns(P(), S.catalog, order, { tail: 2, sampleRate: 44100 });
+  const ok = await download(`${(P().name || 'bap50').replace(/[^\w\- ]+/g, '')}-${label}.wav`, encodeWav(buffer));
+  if (ok !== false) toast('WAV exportiert');
+}
+
+function exportWavPattern(times = 1) {
+  const i = P().cur.ptn;
+  return runBusy('Rendern', () => exportWav(new Array(times).fill(i), 'P' + (i + 1) + (times > 1 ? 'x' + times : '')));
+}
+
+function exportWavSong() { return runBusy('Song rendern', () => exportWav(songOrder(P()), 'Song')); }
+
+function resampleToPad() {
+  return runBusy('Resample', async () => {
+    const i = P().cur.ptn;
+    const { buffer, musicalLength, offset } = await renderPatterns(P(), S.catalog, [i], { tail: 0.5, sampleRate: S.ctx.sampleRate, dust: false });
+    const a = Math.floor(offset * buffer.sampleRate);
+    const b = a + Math.floor(musicalLength * buffer.sampleRate);
+    const { id, stored } = await S.catalog.addUser(`Resample P${i + 1}`, toMono(buffer, a, b), buffer.sampleRate, 'eigene resample loop');
+    assignSample(id);
+    if (!stored) toast('Resample nur für diese Sitzung (kein Browser-Speicher)');
+  });
+}
+
+function togglePadsPanel() {
+  S.hidePads = !S.hidePads;
+  $('.deck').classList.toggle('no-pads', S.hidePads);
+}
+
+function toggleFullscreen() {
+  const d = document;
+  try {
+    if (d.fullscreenElement) d.exitFullscreen();
+    else if (d.documentElement.requestFullscreen) d.documentElement.requestFullscreen().catch(() => toast('Vollbild hier nicht verfügbar'));
+    else toast('Vollbild hier nicht verfügbar');
+  } catch (_) { toast('Vollbild hier nicht verfügbar'); }
+}
+
+function setMidiBase(n) { P().midi.base = n; dirty(); if (S.view === 'file') renderView('file'); toast('MIDI-Startnote ' + n); }
+
+function showHelp() {
+  const rows = [
+    ['Z X C V · A S D F · Q W E R · 1 2 3 4', 'Pads 1–16 (wie das 4×4-Raster, unten links = 1)'],
+    ['Umschalt + Pad-Taste', 'leiser Anschlag'],
+    ['Leertaste', 'Play / Stop'],
+    ['T', 'Aufnahme an/aus'],
+    [', und .', 'Bank zurück / vor (A–H)'],
+    ['[ und ]', 'Pattern zurück / vor'],
+    ['Strg+Z / Strg+Umschalt+Z', 'Rückgängig / Wiederholen'],
+    ['Strg+S', 'Projekt im Browser speichern'],
+    ['Strg+C / Strg+V', 'Pad kopieren / einfügen'],
+    ['?', 'Diese Hilfe'],
+    ['Alt', 'Menüleiste mit der Tastatur: Fokus auf „Datei“, dann Pfeiltasten'],
+  ];
+  const tbl = el('table', { class: 'keys' }, ...rows.map(([k, d]) => el('tr', {}, el('td', {}, el('kbd', { text: k })), el('td', { text: d }))));
+  openDialog('Tastenkürzel & Bedienung', el('div', {}, tbl,
+    el('p', { class: 'prose', html: '<b>Step-Raster:</b> Tippen setzt/löscht, Wischen malt, lange drücken oder Rechtsklick öffnet Velocity und Tonhöhe. <b>Regler:</b> ziehen, Mausrad oder Pfeiltasten, Doppelklick = Standardwert. <b>Handy:</b> unten zwischen Pads und Ansichten wechseln.' })));
+}
+
+function showAbout() {
+  showView('file');
+  requestAnimationFrame(() => { const c = $('#about'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+}
+
+// ---------- Menüleiste ----------
+function menus() {
+  const p = P();
+  const ptnLen = curPtn().len;
+  const mi = (label, act, extra = {}) => ({ label, act, ...extra });
+  return [
+    { id: 'file', label: 'Datei', items: [
+      mi('Neues leeres Projekt', newEmptyProject),
+      mi('Werkseinstellung laden', factoryReset),
+      '-',
+      mi('Projekt speichern', saveProjectSlot, { kbd: 'Strg+S' }),
+      mi('Projekte verwalten …', () => showView('file')),
+      mi('Projekt exportieren (.json)', exportProjectJSON),
+      mi('Projekt importieren …', importProjectJSON),
+      '-',
+      mi('Pattern als WAV', () => exportWavPattern(1)),
+      mi('Pattern ×4 als WAV', () => exportWavPattern(4)),
+      mi('Song als WAV', exportWavSong),
+      mi('Resample → gewähltes Pad', resampleToPad),
+      '-',
+      mi('Audio laden / Chop …', () => showView('chop')),
+    ] },
+    { id: 'edit', label: 'Bearbeiten', short: 'Edit', items: [
+      mi('Rückgängig', undo, { kbd: 'Strg+Z', disabled: () => !S.history.stack.length }),
+      mi('Wiederholen', redo, { kbd: 'Strg+⇧+Z', disabled: () => !S.history.redoStack.length }),
+      '-',
+      { header: true, label: `Pad ${padLabel(p.cur.pad)} · ${padTitle(p.cur.pad)}` },
+      mi('Sample wählen …', () => showView('samples')),
+      mi('Pad bearbeiten …', () => showView('pad')),
+      mi('Pad kopieren', padCopy, { kbd: 'Strg+C' }),
+      mi('Pad einfügen', padPaste, { kbd: 'Strg+V', disabled: () => !S.clip }),
+      mi('Pad-Werte zurücksetzen', padReset),
+      mi('Pad leeren', padClear),
+      '-',
+      mi('Vorheriges Pad', () => selectPad(p.cur.pad - 1)),
+      mi('Nächstes Pad', () => selectPad(p.cur.pad + 1)),
+    ] },
+    { id: 'pattern', label: 'Pattern', short: 'Ptn', items: [
+      { header: true, label: `Pattern ${p.cur.ptn + 1} · ${ptnLen / 16} Takt(e)` },
+      mi('Vorheriges Pattern', () => selectPattern(p.cur.ptn - 1), { kbd: '[' }),
+      mi('Nächstes Pattern', () => selectPattern(p.cur.ptn + 1), { kbd: ']' }),
+      '-',
+      ...LENGTHS.map((l) => mi(`Länge ${l / 16} Takt${l > 16 ? 'e' : ''}`, () => setPatternLength(l), { checked: ptnLen === l, radio: true })),
+      '-',
+      mi('Verdoppeln', doublePattern, { disabled: ptnLen * 2 > MAX_STEPS }),
+      mi('In nächstes freies Pattern kopieren', copyPatternToFree),
+      mi('Spur des Pads einen Step früher', () => nudgeLane(-1)),
+      mi('Spur des Pads einen Step später', () => nudgeLane(1)),
+      mi(`Spuren von Bank ${BANK_NAMES[p.cur.bank]} leeren`, clearBankLanes),
+      mi('Pattern leeren', clearPattern),
+      '-',
+      { header: true, label: 'Groove laden (ersetzt Pattern)' },
+      ...GROOVES.map((g, i) => mi(`${g.name} · ${g.bpm} BPM`, () => loadGroove(i))),
+    ] },
+    { id: 'pads', label: 'Pads', items: [
+      ...Array.from(BANK_NAMES, (n, i) => mi(`Bank ${n} · ${BANK_TITLES[i]}`, () => setBank(i), { checked: p.cur.bank === i, radio: true, kbd: i === 0 ? ', .' : '' })),
+      '-',
+      mi('Full Level (volle Anschlagstärke)', () => setFull(!S.fullLevel), { checked: S.fullLevel }),
+      '-',
+      { header: true, label: '16 Levels' },
+      ...[['off', 'Aus'], ['tune', 'Tonhöhe (Tune)'], ['velo', 'Anschlag (Velo)']].map(([v, l]) => mi(l, () => setLevels(v), { checked: S.levels === v, radio: true })),
+      '-',
+      { header: true, label: 'Note Repeat' },
+      ...[[null, 'Aus'], ['1/8', '1/8'], ['1/16', '1/16'], ['1/16T', '1/16 Triole'], ['1/32', '1/32']].map(([v, l]) => mi(l, () => setRepeat(v), { checked: S.seq.repeatDiv === v, radio: true })),
+    ] },
+    { id: 'transport', label: 'Transport', short: 'Play', items: [
+      mi(S.seq.playing ? 'Stop' : 'Play', () => togglePlay(false), { kbd: 'Leertaste' }),
+      mi('Alle Stimmen stoppen', () => S.engine.stopAll()),
+      mi('Aufnahme', toggleRec, { kbd: 'T', checked: S.seq.rec }),
+      mi('Metronom', toggleMetro, { checked: !!p.metro }),
+      mi('Song-Modus', toggleSong, { checked: p.song.on }),
+      '-',
+      mi('Tap Tempo', tapTempo),
+      mi('Tempo +1', () => setBpm(Math.round(p.bpm) + 1)),
+      mi('Tempo −1', () => setBpm(Math.round(p.bpm) - 1)),
+      '-',
+      { header: true, label: 'Swing' },
+      ...[50, 54, 58, 62, 66].map((v) => mi(`${v} %${v === 50 ? ' (gerade)' : v === 66 ? ' (Triole)' : ''}`, () => { p.swing = v; updateTransport(); dirty(); }, { checked: p.swing === v, radio: true })),
+    ] },
+    { id: 'view', label: 'Ansicht', short: 'Ansicht', items: [
+      ...TABS.map(([id, label]) => mi(VIEW_NAMES[id] || label, () => showView(id), { checked: S.view === id, radio: true })),
+      '-',
+      mi('Pad-Bereich anzeigen', togglePadsPanel, { checked: !S.hidePads }),
+      mi('Vollbild', toggleFullscreen),
+    ] },
+    { id: 'midi', label: 'MIDI', items: [
+      mi(S.midi ? 'MIDI ist aktiv' : 'MIDI aktivieren', enableMidi, { disabled: !!S.midi }),
+      '-',
+      { header: true, label: 'Startnote' },
+      ...[[36, '36 – Pad-Controller'], [0, '0 – Grid-Controller (APC)'], [24, '24'], [48, '48'], [60, '60']].map(([v, l]) => mi(l, () => setMidiBase(v), { checked: p.midi.base === v, radio: true })),
+      '-',
+      { header: true, label: S.midiStatus },
+    ] },
+    { id: 'help', label: 'Hilfe', short: '?', items: [
+      mi('Tastenkürzel & Bedienung', showHelp, { kbd: '?' }),
+      mi('Über BAP-50 & Lizenzen', showAbout),
+    ] },
+  ];
+}
+
+// ---------- Untere Navigation (Handy/Tablet) ----------
+const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'PAD', '◉'], ['mix', 'MIX', '☰'], ['samples', 'SOUNDS', '♪'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'PROJEKT', '⚙']];
+const VIEW_NAMES = { seq: 'Sequencer (SEQ)', pad: 'Pad-Editor (PAD)', mix: 'Mixer (MIX)', samples: 'Samples (SAMPLES)', chop: 'Chop & Aufnahme (CHOP)', song: 'Song (SONG)', file: 'Projekt (PROJEKT)' };
+
+function buildBottomNav() {
+  const nav = $('#botnav');
+  nav.replaceChildren();
+  for (const [id, label, icon] of NAV) {
+    const b = el('button', { type: 'button', class: 'bn', 'data-id': id, 'aria-label': label }, el('span', { class: 'bn-i', 'aria-hidden': 'true', text: icon }), el('span', { class: 'bn-l', text: label }));
+    b.addEventListener('click', () => { if (id === 'pads') showPadsScreen(); else showView(id); });
+    nav.append(b);
+  }
+  updateBottomNav();
+}
+
+function showPadsScreen() {
+  S.mScreen = 'pads';
+  updateBottomNav();
+  window.scrollTo({ top: 0 });
+}
+
+function updateBottomNav() {
+  const deck = $('.deck');
+  deck.classList.toggle('m-pads', S.mScreen === 'pads');
+  deck.classList.toggle('m-work', S.mScreen !== 'pads');
+  for (const b of $('#botnav').children) {
+    const on = b.dataset.id === (S.mScreen === 'pads' ? 'pads' : S.view);
+    b.classList.toggle('on', on);
+    b.setAttribute('aria-current', on ? 'page' : 'false');
+  }
 }
 
 // =====================================================================
@@ -432,10 +861,7 @@ BUILDERS.seq = (root) => {
   G.ptnBtns = [];
   for (let i = 0; i < NUM_PATTERNS; i++) {
     const b = el('button', { type: 'button', class: 'ptn', title: 'Pattern ' + (i + 1), text: String(i + 1) });
-    b.addEventListener('click', () => {
-      if (S.seq.playing && !p.song.on) { S.seq.queuePattern(i); refreshPtnBtns(); toast(`Pattern ${i + 1} folgt am Ende`); }
-      else { p.cur.ptn = i; S.page = 0; renderView('seq'); dirty(); }
-    });
+    b.addEventListener('click', () => selectPattern(i));
     G.ptnBtns.push(b);
     ptns.append(b);
   }
@@ -443,9 +869,7 @@ BUILDERS.seq = (root) => {
   refreshPtnBtns();
 
   // Werkzeuge
-  const lenSeg = seg(LENGTHS.map((l) => [l, l / 16 + ' T', l / 16 + ' Takt(e)']), ptn.len, (l) => {
-    pushUndo(true); ptn.len = l; if (S.page * 16 >= l) S.page = 0; renderView('seq'); dirty();
-  });
+  const lenSeg = seg(LENGTHS.map((l) => [l, l / 16 + ' T', l / 16 + ' Takt(e)']), ptn.len, (l) => setPatternLength(l));
   lenSeg.prepend(el('span', { class: 'lab', text: 'LÄNGE' }));
   const pages = [];
   for (let i = 0; i < 4; i++) pages.push([i, String(i + 1)]);
@@ -462,57 +886,21 @@ BUILDERS.seq = (root) => {
   const groove = el('select', { class: 'sel-in', 'aria-label': 'Groove laden' },
     el('option', { value: '', text: 'Groove laden …' }),
     ...GROOVES.map((g, i) => el('option', { value: String(i), text: `${g.name} (${g.bpm} BPM, Swing ${g.swing}%)` })));
-  groove.addEventListener('change', () => {
-    const g = GROOVES[+groove.value];
-    if (!g) return;
-    pushUndo(true);
-    p.patterns[p.cur.ptn] = grooveToPattern(g);
-    p.bpm = g.bpm; p.swing = g.swing;
-    S.engine.applyDelayTime();
-    updateTransport();
-    renderView('seq');
-    dirty();
-    toast(`Groove „${g.name}“ geladen`);
-  });
+  groove.addEventListener('change', () => { if (groove.value !== '') loadGroove(+groove.value); });
   const copyTo = el('select', { class: 'sel-in', 'aria-label': 'Pattern kopieren nach' },
     el('option', { value: '', text: 'Kopieren nach …' }),
     ...Array.from({ length: NUM_PATTERNS }, (_, i) => el('option', { value: String(i), text: 'Pattern ' + (i + 1) })));
   copyTo.addEventListener('change', () => {
-    const t = +copyTo.value;
-    if (copyTo.value === '' || t === p.cur.ptn) { copyTo.value = ''; return; }
-    pushUndo(true);
-    p.patterns[t] = JSON.parse(JSON.stringify(ptn));
+    if (copyTo.value !== '') copyPatternTo(+copyTo.value);
     copyTo.value = '';
-    refreshPtnBtns();
-    dirty();
-    toast(`Kopiert nach Pattern ${t + 1}`);
   });
   const clearB = el('button', { class: 'btn warn', type: 'button', text: 'Leeren' });
-  clearB.addEventListener('click', () => { pushUndo(true); ptn.steps = {}; ptn.tune = {}; renderView('seq'); dirty(); });
+  clearB.addEventListener('click', clearPattern);
   const clearBank = el('button', { class: 'btn', type: 'button', text: 'Bank leeren', title: 'Nur die Spuren der aktuellen Bank' });
-  clearBank.addEventListener('click', () => {
-    pushUndo(true);
-    for (let i = 0; i < 16; i++) { delete ptn.steps[bankBase() + i]; delete ptn.tune[bankBase() + i]; }
-    renderView('seq'); dirty();
-  });
+  clearBank.addEventListener('click', clearBankLanes);
   const dbl = el('button', { class: 'btn', type: 'button', text: 'Verdoppeln', title: 'Länge ×2 und Inhalt wiederholen' });
-  dbl.addEventListener('click', () => {
-    if (ptn.len * 2 > MAX_STEPS) { toast('Maximal 4 Takte'); return; }
-    pushUndo(true);
-    for (const lane of [ptn.steps, ptn.tune]) for (const arr of Object.values(lane)) for (let i = 0; i < ptn.len; i++) arr[i + ptn.len] = arr[i];
-    ptn.len *= 2;
-    renderView('seq'); dirty();
-  });
-  const nudge = (d) => {
-    const i = p.cur.pad;
-    const arr = ptn.steps[i];
-    if (!arr) return;
-    pushUndo(true);
-    const rot = (a) => { const s = a.slice(0, ptn.len); for (let k = 0; k < ptn.len; k++) a[k] = s[(k - d + ptn.len) % ptn.len]; };
-    rot(arr);
-    if (ptn.tune[i]) rot(ptn.tune[i]);
-    renderView('seq'); dirty();
-  };
+  dbl.addEventListener('click', doublePattern);
+  const nudge = nudgeLane;
   const nl = el('button', { class: 'btn', type: 'button', text: '◀ Spur', title: 'Spur des gewählten Pads einen Step früher' });
   const nr = el('button', { class: 'btn', type: 'button', text: 'Spur ▶', title: 'Spur des gewählten Pads einen Step später' });
   nl.addEventListener('click', () => nudge(-1));
@@ -745,25 +1133,20 @@ BUILDERS.pad = (root) => {
   const play = el('button', { class: 'btn', type: 'button', text: '▶ Hören' });
   play.addEventListener('click', () => S.engine.trigger(i, 110));
   const copy = el('button', { class: 'btn', type: 'button', text: 'Kopieren' });
-  copy.addEventListener('click', () => { S.clip = JSON.parse(JSON.stringify(pad)); toast('Pad kopiert'); paste.disabled = false; });
+  copy.addEventListener('click', padCopy);
   const paste = el('button', { class: 'btn', type: 'button', text: 'Einfügen', disabled: !S.clip });
-  paste.addEventListener('click', () => {
-    if (!S.clip) return;
-    pushUndo(true);
-    p.pads[i] = { ...JSON.parse(JSON.stringify(S.clip)), mute: pad.mute, solo: pad.solo };
-    S.engine.updatePad(i); updatePads(); renderView('pad'); dirty();
-  });
+  paste.addEventListener('click', padPaste);
   const reset = el('button', { class: 'btn warn', type: 'button', text: 'Werte zurück' });
-  reset.addEventListener('click', () => {
-    pushUndo(true);
-    p.pads[i] = { ...defaultPad(pad.s), choke: pad.choke, mono: pad.mono };
-    S.engine.updatePad(i); updatePads(); renderView('pad'); dirty();
-  });
+  reset.addEventListener('click', padReset);
   const clear = el('button', { class: 'btn warn', type: 'button', text: 'Pad leeren' });
-  clear.addEventListener('click', () => { pushUndo(true); p.pads[i] = defaultPad(null); updatePads(); renderView('pad'); dirty(); });
+  clear.addEventListener('click', padClear);
+  const prevPad = el('button', { class: 'btn', type: 'button', 'aria-label': 'Vorheriges Pad', text: '◀' });
+  const nextPad = el('button', { class: 'btn', type: 'button', 'aria-label': 'Nächstes Pad', text: '▶' });
+  prevPad.addEventListener('click', () => selectPad(i - 1));
+  nextPad.addEventListener('click', () => selectPad(i + 1));
 
   root.append(el('div', { class: 'padhead' },
-    el('div', { class: 'big' }, el('small', { text: padLabel(i) }), meta ? meta.name : (pad.s ? 'Sample fehlt' : 'Leeres Pad')),
+    el('div', { class: 'big' }, prevPad, ' ', nextPad, ' ', el('small', { text: padLabel(i) }), meta ? meta.name : (pad.s ? 'Sample fehlt' : 'Leeres Pad')),
     el('div', { class: 'row', style: { marginBottom: '0' } }, choose, play, copy, paste, reset, clear)));
 
   const cv = el('canvas', { class: 'wave', 'aria-label': 'Wellenform. Ziehen verschiebt Start oder Ende.' });
@@ -1309,7 +1692,7 @@ BUILDERS.file = (root) => {
   const name = el('input', { class: 'txt-in', type: 'text', value: p.name, 'aria-label': 'Projektname', maxlength: '60', style: { flex: '1 1 200px' } });
   name.addEventListener('input', () => { p.name = name.value || 'Projekt'; dirty(); });
   const save = el('button', { class: 'btn pri', type: 'button', text: 'Im Browser speichern' });
-  save.addEventListener('click', () => { if (saveSlot(p.name, p)) { toast('Gespeichert: ' + p.name); renderView('file'); } else toast('Speichern nicht möglich (Browser-Speicher voll oder gesperrt)'); });
+  save.addEventListener('click', saveProjectSlot);
   root.append(el('div', { class: 'card' }, el('h3', { text: 'Projekt' }), el('div', { class: 'row' }, name, save)));
 
   const slots = listSlots();
@@ -1325,18 +1708,14 @@ BUILDERS.file = (root) => {
   }
 
   const exp = el('button', { class: 'btn', type: 'button', text: 'Projekt exportieren (.json)' });
-  exp.addEventListener('click', () => download(`${p.name || 'bap50'}.bap50.json`, new Blob([JSON.stringify(p)], { type: 'application/json' })));
-  const impIn = el('input', { type: 'file', accept: '.json,application/json', hidden: true });
+  exp.addEventListener('click', exportProjectJSON);
   const imp = el('button', { class: 'btn', type: 'button', text: 'Projekt importieren' });
-  imp.addEventListener('click', () => impIn.click());
-  impIn.addEventListener('change', async () => {
-    const f = impIn.files && impIn.files[0];
-    if (!f) return;
-    try { loadProject(JSON.parse(await f.text()), 'Importiert: ' + f.name); } catch (e) { toast('Ungültige Projektdatei'); }
-  });
+  imp.addEventListener('click', importProjectJSON);
   const fresh = el('button', { class: 'btn warn', type: 'button', text: 'Werkseinstellung' });
-  fresh.addEventListener('click', () => { if (confirm('Aktuelles Projekt durch das Werks-Kit mit den Grooves ersetzen?')) loadProject(defaultProject(catOf), 'Werkseinstellung geladen'); });
-  root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Gespeicherte Projekte' }), slotBox, el('div', { class: 'row', style: { marginTop: '10px', marginBottom: '0' } }, exp, imp, impIn, fresh)));
+  fresh.addEventListener('click', factoryReset);
+  const empty = el('button', { class: 'btn', type: 'button', text: 'Neues leeres Projekt' });
+  empty.addEventListener('click', newEmptyProject);
+  root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Gespeicherte Projekte' }), slotBox, el('div', { class: 'row', style: { marginTop: '10px', marginBottom: '0' } }, exp, imp, empty, fresh)));
 
   const wav1 = el('button', { class: 'btn pri', type: 'button', text: 'Pattern als WAV' });
   const wav4 = el('button', { class: 'btn', type: 'button', text: 'Pattern ×4 als WAV' });
@@ -1346,26 +1725,14 @@ BUILDERS.file = (root) => {
     b.disabled = true;
     const old = b.textContent;
     b.textContent = 'Rendern …';
-    try { await fn(); } catch (e) { console.error(e); toast('Rendern fehlgeschlagen'); }
+    await fn();
     b.disabled = false;
     b.textContent = old;
   };
-  const exportWav = async (order, label) => {
-    const { buffer } = await renderPatterns(P(), S.catalog, order, { tail: 2, sampleRate: 44100 });
-    const ok = await download(`${(P().name || 'bap50').replace(/[^\w\- ]+/g, '')}-${label}.wav`, encodeWav(buffer));
-    if (ok !== false) toast('WAV exportiert');
-  };
-  wav1.addEventListener('click', busy(wav1, () => exportWav([p.cur.ptn], 'P' + (p.cur.ptn + 1))));
-  wav4.addEventListener('click', busy(wav4, () => exportWav([p.cur.ptn, p.cur.ptn, p.cur.ptn, p.cur.ptn], 'P' + (p.cur.ptn + 1) + 'x4')));
-  wavS.addEventListener('click', busy(wavS, () => exportWav(songOrder(p), 'Song')));
-  resample.addEventListener('click', busy(resample, async () => {
-    const { buffer, musicalLength, offset } = await renderPatterns(P(), S.catalog, [p.cur.ptn], { tail: 0.5, sampleRate: S.ctx.sampleRate, dust: false });
-    const a = Math.floor(offset * buffer.sampleRate);
-    const b = a + Math.floor(musicalLength * buffer.sampleRate);
-    const { id, stored } = await S.catalog.addUser(`Resample P${p.cur.ptn + 1}`, toMono(buffer, a, b), buffer.sampleRate, 'eigene resample loop');
-    assignSample(id);
-    if (!stored) toast('Resample nur für diese Sitzung (kein Browser-Speicher)');
-  }));
+  wav1.addEventListener('click', busy(wav1, () => exportWavPattern(1)));
+  wav4.addEventListener('click', busy(wav4, () => exportWavPattern(4)));
+  wavS.addEventListener('click', busy(wavS, exportWavSong));
+  resample.addEventListener('click', busy(resample, resampleToPad));
   root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Export' }),
     el('div', { class: 'row' }, wav1, wav4, wavS, resample),
     el('p', { class: 'hint', text: 'WAV: 44,1 kHz, 16 Bit, Stereo, mit 2 s Ausklang. Resample rendert das Pattern ohne Vinyl-Rauschen als Loop und legt es auf das gewählte Pad.' })));
@@ -1382,8 +1749,8 @@ BUILDERS.file = (root) => {
 
   // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
-  root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.1.0.apk" style="color:var(--teal)">BAP-50-1.1.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 8 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+  root.append(el('div', { class: 'card', id: 'about', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
+    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.2.0.apk" style="color:var(--teal)">BAP-50-1.2.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 8 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
 };
 
 function loadProject(raw, msg) {
