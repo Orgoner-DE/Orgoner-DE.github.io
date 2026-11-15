@@ -685,6 +685,7 @@ function updatePlayerUI() {
   $('#miniTitle').textContent = ep.title; $('#miniPod').textContent = ep.podcast;
   $('#npTitle').textContent = ep.title; $('#npPod').textContent = ep.podcast;
   const playing = !audio.paused && !!audio.src;
+  if (window.FunkhausNative) { try { window.FunkhausNative.playback(playing, ep.title || '', ep.podcast || ''); } catch {} }
   $('#miniPlay').innerHTML = playing ? ICON.pause : ICON.play;
   $('#miniPlay').setAttribute('aria-label', playing ? 'Pause' : 'Abspielen');
   $('#npPlay').innerHTML = playing ? ICON.pause : ICON.play;
@@ -1036,8 +1037,10 @@ function renderMore() {
 
 /* ---------- OPML ---------- */
 function exportOpml() {
+  const native = window.FunkhausNative;
   const body = state.subs.map((s) => `    <outline type="rss" text="${esc(s.title)}" title="${esc(s.title)}" xmlUrl="${esc(s.feedUrl)}"${s.link ? ` htmlUrl="${esc(s.link)}"` : ''}/>`).join('\n');
   const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n  <head><title>Funkhaus Abos</title><dateCreated>${new Date().toUTCString()}</dateCreated></head>\n  <body>\n${body}\n  </body>\n</opml>\n`;
+  if (native) { native.saveFile('funkhaus-abos.opml', xml); return; }
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([xml], { type: 'text/x-opml' }));
   a.download = 'funkhaus-abos.opml'; document.body.appendChild(a); a.click(); a.remove();
@@ -1099,6 +1102,11 @@ function navigate() {
   if (route.name === 'neu') refreshAll(false);
 }
 window.addEventListener('hashchange', navigate);
+
+/* ---------- Android-Hülle ---------- */
+window.__fhBack = () => { if ($('#sheet').classList.contains('open')) { closeSheet(); return true; } return false; };
+window.__fhToggle = () => togglePlay();
+window.__fhSkip = (d) => skip(d);
 
 /* ---------- Start ---------- */
 if (state.current) {
