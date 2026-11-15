@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14110f">
+<meta name="application-version" content="1.0.0">
+<meta name="description" content="Funkhaus: Podcasts suchen, abonnieren und hören. Läuft im Browser, speichert alles lokal.">
+<title>Funkhaus – Podcasts</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>
+  :root {
+    --bg: #14110f;
+    --bg2: #1c1815;
+    --panel: #241f1b;
+    --line: #3a322b;
+    --text: #f4ede6;
+    --muted: #a99c90;
+    --accent: #ff9f43;
+    --accent-ink: #1a1008;
+    --ok: #7bd389;
+    --danger: #ff6b6b;
+    --radius: 14px;
+    --nav-h: 62px;
+    --mini-h: 0px;
+    --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; background: var(--bg); color: var(--text); }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 15px; line-height: 1.45;
+    min-height: 100vh;
+    padding-bottom: calc(var(--nav-h) + var(--mini-h) + var(--safe-b) + 16px);
+  }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  a { color: var(--accent); }
+  img { display: block; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    display: flex; align-items: center; gap: 12px;
+    padding: calc(12px + env(safe-area-inset-top, 0px)) 16px 12px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--line);
+  }
+  header.top h1 { margin: 0; font-size: 1.25rem; letter-spacing: -0.02em; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .iconbtn {
+    width: 40px; height: 40px; border-radius: 50%; border: 0; background: transparent;
+    display: inline-grid; place-items: center; flex: none;
+  }
+  .iconbtn:hover { background: var(--panel); }
+  .iconbtn svg { width: 22px; height: 22px; }
+  .hidden { display: none !important; }
+
+  main { max-width: 900px; margin: 0 auto; padding: 16px; }
+  h2 { font-size: 1.05rem; margin: 22px 0 10px; letter-spacing: -0.01em; }
+  h2:first-child { margin-top: 4px; }
+  .muted { color: var(--muted); }
+  .small { font-size: 0.85rem; }
+
+  .btn {
+    border: 1px solid var(--line); background: var(--panel); border-radius: 999px;
+    padding: 8px 16px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .btn:hover { border-color: var(--muted); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+  .btn.danger { color: var(--danger); }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+  .field {
+    width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--line);
+    background: var(--bg2); outline: none;
+  }
+  .field:focus { border-color: var(--accent); }
+  form.search { display: flex; gap: 8px; }
+  form.search .field { flex: 1; min-width: 0; }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
+  .tile { background: none; border: 0; padding: 0; text-align: left; min-width: 0; }
+  .tile .art { width: 100%; aspect-ratio: 1; border-radius: var(--radius); }
+  .tile .t { margin-top: 6px; font-weight: 600; font-size: .9rem; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .tile .a { font-size: .8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .art { background: var(--panel); object-fit: cover; flex: none; }
+  .badge {
+    position: absolute; top: 6px; right: 6px; background: var(--accent); color: var(--accent-ink);
+    font-size: .72rem; font-weight: 700; border-radius: 999px; padding: 1px 7px;
+  }
+  .tile .wrap { position: relative; }
+
+  .list { display: flex; flex-direction: column; }
+  .result {
+    display: flex; gap: 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line);
+  }
+  .result .art { width: 64px; height: 64px; border-radius: 10px; }
+  .result .info { flex: 1; min-width: 0; }
+  .result .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .result .a { color: var(--muted); font-size: .85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .clickable { cursor: pointer; }
+
+  .ep { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .ep-head { display: flex; gap: 12px; align-items: flex-start; }
+  .ep-head .art { width: 52px; height: 52px; border-radius: 8px; }
+  .ep-main { flex: 1; min-width: 0; }
+  .ep-meta { font-size: .78rem; color: var(--muted); }
+  .ep-title { font-weight: 600; margin: 2px 0; background: none; border: 0; padding: 0; text-align: left; display: block; width: 100%; }
+  .ep.done .ep-title { color: var(--muted); font-weight: 500; }
+  .ep-actions { display: flex; gap: 6px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+  .playpill {
+    display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; border: 1px solid var(--line);
+    background: var(--panel); padding: 5px 12px 5px 8px; font-size: .82rem; font-weight: 600;
+  }
+  .playpill svg { width: 18px; height: 18px; }
+  .playpill.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .playpill .bar { width: 36px; height: 4px; border-radius: 2px; background: color-mix(in srgb, currentColor 25%, transparent); overflow: hidden; }
+  .playpill .bar i { display: block; height: 100%; background: currentColor; }
+  .mini-act { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: transparent; display: inline-grid; place-items: center; color: var(--muted); }
+  .mini-act:hover { color: var(--text); border-color: var(--muted); }
+  .mini-act.on { color: var(--accent); border-color: var(--accent); }
+  .mini-act svg { width: 18px; height: 18px; }
+  .notes { margin-top: 10px; color: #d9cfc5; font-size: .9rem; overflow-wrap: anywhere; }
+  .notes p { margin: 0 0 .6em; }
+  .notes img { max-width: 100%; height: auto; }
+
+  .pod-hero { display: flex; gap: 16px; align-items: flex-start; }
+  .pod-hero .art { width: 128px; height: 128px; border-radius: var(--radius); }
+  .pod-hero h2 { margin: 0 0 4px; font-size: 1.25rem; }
+  .pod-desc { margin-top: 12px; color: #d9cfc5; font-size: .9rem; max-height: 6.2em; overflow: hidden; position: relative; }
+  .pod-desc.open { max-height: none; }
+  .filters { display: flex; gap: 6px; margin: 16px 0 4px; flex-wrap: wrap; }
+  .chip { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 12px; font-size: .85rem; }
+  .chip.on { background: var(--text); color: var(--bg); border-color: var(--text); }
+
+  .empty { text-align: center; padding: 40px 16px; color: var(--muted); }
+  .empty svg { width: 54px; height: 54px; color: var(--line); margin-bottom: 8px; }
+  .card { background: var(--bg2); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; margin-bottom: 14px; }
+  .card h3 { margin: 0 0 6px; font-size: 1rem; }
+  .card p { margin: 0 0 10px; }
+
+  nav.tabs {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 20;
+    display: grid; grid-template-columns: repeat(5, 1fr);
+    height: calc(var(--nav-h) + var(--safe-b)); padding-bottom: var(--safe-b);
+    background: var(--bg2); border-top: 1px solid var(--line);
+  }
+  nav.tabs a {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    color: var(--muted); text-decoration: none; font-size: .7rem;
+  }
+  nav.tabs a svg { width: 22px; height: 22px; }
+  nav.tabs a.on { color: var(--accent); }
+
+  .mini {
+    position: fixed; left: 8px; right: 8px; z-index: 19;
+    bottom: calc(var(--nav-h) + var(--safe-b) + 8px);
+    max-width: 884px; margin: 0 auto;
+    display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 8px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.45); overflow: hidden;
+  }
+  .mini .art { width: 44px; height: 44px; border-radius: 8px; }
+  .mini .info { flex: 1; min-width: 0; background: none; border: 0; padding: 0; text-align: left; }
+  .mini .t { font-weight: 600; font-size: .9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini .a { font-size: .78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mini .prog { position: absolute; left: 0; bottom: 0; height: 2px; background: var(--accent); }
+
+  .sheet {
+    position: fixed; inset: 0; z-index: 40; background: var(--bg);
+    display: flex; flex-direction: column; overflow-y: auto;
+    transform: translateY(100%); transition: transform .28s ease; visibility: hidden;
+  }
+  .sheet.open { transform: none; visibility: visible; }
+  .sheet-inner { width: 100%; max-width: 520px; margin: 0 auto; padding: calc(10px + env(safe-area-inset-top, 0px)) 20px calc(24px + var(--safe-b)); }
+  .sheet-top { display: flex; justify-content: space-between; align-items: center; }
+  .big-art { width: min(78vw, 360px); aspect-ratio: 1; border-radius: 18px; margin: 16px auto 20px; box-shadow: 0 20px 50px rgba(0,0,0,.5); }
+  .np-title { font-size: 1.2rem; font-weight: 700; margin: 0; line-height: 1.3; }
+  .np-pod { color: var(--accent); margin: 4px 0 14px; background: none; border: 0; padding: 0; text-align: left; }
+  input[type=range].seek { width: 100%; accent-color: var(--accent); height: 28px; }
+  .times { display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .controls { display: flex; justify-content: center; align-items: center; gap: 22px; margin: 14px 0 18px; }
+  .ctl { border: 0; background: transparent; display: grid; place-items: center; position: relative; }
+  .ctl svg { width: 34px; height: 34px; }
+  .ctl .n { position: absolute; font-size: .62rem; font-weight: 700; top: 50%; left: 50%; transform: translate(-50%, -38%); }
+  .ctl.play { width: 76px; height: 76px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); }
+  .ctl.play svg { width: 38px; height: 38px; }
+  .np-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .np-opts label { font-size: .75rem; color: var(--muted); display: flex; flex-direction: column; gap: 4px; }
+  .np-opts select { padding: 9px 10px; border-radius: 10px; background: var(--bg2); border: 1px solid var(--line); }
+  .sleep-left { color: var(--accent); font-size: .8rem; text-align: center; margin-top: 8px; min-height: 1.2em; }
+
+  .toast {
+    position: fixed; left: 50%; transform: translateX(-50%);
+    bottom: calc(var(--nav-h) + var(--mini-h) + var(--safe-b) + 18px); z-index: 50;
+    background: var(--text); color: var(--bg); padding: 9px 16px; border-radius: 999px; font-size: .88rem;
+    box-shadow: 0 6px 20px rgba(0,0,0,.4); max-width: calc(100vw - 32px); text-align: center;
+    opacity: 0; pointer-events: none; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin: 30px auto; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .q-item { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); }
+  .q-item .art { width: 48px; height: 48px; border-radius: 8px; }
+  .q-item .info { flex: 1; min-width: 0; }
+  .q-item .t { font-weight: 600; font-size: .92rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+
+  @media (min-width: 700px) {
+    .grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+    .pod-hero .art { width: 170px; height: 170px; }
+  }
+  @media (prefers-reduced-motion: reduce) { .sheet { transition: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <button class="iconbtn hidden" id="backBtn" aria-label="Zurück">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <h1 id="title">Funkhaus</h1>
+  <button class="iconbtn" id="refreshBtn" aria-label="Alle Feeds aktualisieren" title="Aktualisieren">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+  </button>
+</header>
+
+<main id="view" tabindex="-1"></main>
+
+<div class="mini hidden" id="mini">
+  <img class="art" id="miniArt" alt="">
+  <button class="info" id="miniOpen" aria-label="Player öffnen">
+    <div class="t" id="miniTitle"></div>
+    <div class="a" id="miniPod"></div>
+  </button>
+  <button class="iconbtn" id="miniBack" aria-label="15 Sekunden zurück"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg></button>
+  <button class="iconbtn" id="miniPlay" aria-label="Abspielen"></button>
+  <div class="prog" id="miniProg"></div>
+</div>
+
+<nav class="tabs" aria-label="Hauptnavigation">
+  <a href="#/neu" data-tab="neu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l2.9 6.3 6.9.7-5.2 4.6 1.5 6.8L12 17l-6.1 3.4 1.5-6.8L2.2 9l6.9-.7z"/></svg>Neu</a>
+  <a href="#/bibliothek" data-tab="bibliothek"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>Bibliothek</a>
+  <a href="#/suche" data-tab="suche"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>Suche</a>
+  <a href="#/warteschlange" data-tab="warteschlange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l4 3-4 3z" fill="currentColor"/></svg>Als Nächstes</a>
+  <a href="#/mehr" data-tab="mehr"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Mehr</a>
+</nav>
+
+<section class="sheet" id="sheet" aria-label="Wiedergabe" aria-hidden="true">
+  <div class="sheet-inner">
+    <div class="sheet-top">
+      <button class="iconbtn" id="sheetClose" aria-label="Player schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></button>
+      <span class="muted small">Läuft gerade</span>
+      <button class="iconbtn" id="sheetQueue" aria-label="Warteschlange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h10M4 18h7"/><path d="M17 15l4 3-4 3z" fill="currentColor"/></svg></button>
+    </div>
+    <img class="big-art art" id="npArt" alt="">
+    <p class="np-title" id="npTitle"></p>
+    <button class="np-pod" id="npPod"></button>
+    <input type="range" class="seek" id="seek" min="0" max="1000" value="0" step="1" aria-label="Position">
+    <div class="times"><span id="tCur">0:00</span><span id="tLeft">-0:00</span></div>
+    <div class="controls">
+      <button class="ctl" id="npBack" aria-label="15 Sekunden zurück"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v5h5"/></svg><span class="n">15</span></button>
+      <button class="ctl play" id="npPlay" aria-label="Abspielen"></button>
+      <button class="ctl" id="npFwd" aria-label="30 Sekunden vor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 3v5h-5"/></svg><span class="n">30</span></button>
+    </div>
+    <div class="np-opts">
+      <label>Tempo
+        <select id="speed">
+          <option value="0.8">0,8×</option><option value="1">1×</option><option value="1.1">1,1×</option>
+          <option value="1.2">1,2×</option><option value="1.3">1,3×</option><option value="1.5">1,5×</option>
+          <option value="1.75">1,75×</option><option value="2">2×</option>
+        </select>
+      </label>
+      <label>Schlaf-Timer
+        <select id="sleep">
+          <option value="0">Aus</option><option value="5">5 Minuten</option><option value="15">15 Minuten</option>
+          <option value="30">30 Minuten</option><option value="45">45 Minuten</option><option value="60">60 Minuten</option>
+          <option value="end">Ende der Folge</option>
+        </select>
+      </label>
+    </div>
+    <div class="sleep-left" id="sleepLeft"></div>
+    <h2>Shownotes</h2>
+    <div class="notes" id="npNotes"></div>
+  </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<audio id="audio" preload="metadata"></audio>
+<input type="file" id="opmlFile" accept=".opml,.xml,text/xml,text/x-opml" class="sr">
+
+<script>
+'use strict';
+/* ============================================================
+   Funkhaus – Podcast-App. Alles lokal im Browser (localStorage).
+   ============================================================ */
+
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15a1 1 0 0 0 1.5.86l12.5-7.5a1 1 0 0 0 0-1.72L8.5 3.64A1 1 0 0 0 7 4.5z"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4.2" height="16" rx="1.2"/><rect x="13.8" y="4" width="4.2" height="16" rx="1.2"/></svg>',
+  queue: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h12M4 12h8M4 18h6M18 13v8M14 17h8"/></svg>',
+  queued: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h12M4 12h8M4 18h6"/><path d="M14 18l2.5 2.5L22 15"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg>',
+  x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 15a8 8 0 1 1 14 0"/><path d="M8.5 13a4 4 0 1 1 7 0"/><circle cx="12" cy="11" r="1.6" fill="currentColor"/><path d="M11 14h2l-.5 6h-1z" fill="currentColor"/></svg>',
+};
+const PLACEHOLDER = 'icons/icon.svg';
+
+/* ---------- Speicher ---------- */
+const store = {
+  get(k, d) { try { const v = localStorage.getItem('fh.' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+  set(k, v) {
+    try { localStorage.setItem('fh.' + k, JSON.stringify(v)); return true; }
+    catch (e) { console.warn('Speichern fehlgeschlagen', k, e); toast('Speicher voll – ältere Folgen werden nicht zwischengespeichert.'); return false; }
+  },
+  del(k) { try { localStorage.removeItem('fh.' + k); } catch {} },
+};
+function hash(s) { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); }
+
+const state = {
+  subs: store.get('subs', []),          // [{feedUrl,title,author,artwork,description,link,updated}]
+  progress: store.get('progress', {}),  // id -> {p: Sekunden, d: Dauer, done: bool}
+  queue: store.get('queue', []),        // [Episode]
+  current: store.get('current', null),  // Episode
+  settings: Object.assign({ speed: 1, proxy: 'auto', customProxy: '', country: 'DE', lastRefresh: 0, seen: {} }, store.get('settings', {})),
+  feedCache: new Map(),                 // feedUrl -> episodes (Laufzeit)
+};
+const saveSubs = () => store.set('subs', state.subs);
+const saveProgress = () => store.set('progress', state.progress);
+const saveQueue = () => store.set('queue', state.queue);
+const saveCurrent = () => store.set('current', state.current);
+const saveSettings = () => store.set('settings', state.settings);
+
+function episodesOf(feedUrl) {
+  if (state.feedCache.has(feedUrl)) return state.feedCache.get(feedUrl);
+  const eps = store.get('ep.' + hash(feedUrl), null);
+  if (eps) state.feedCache.set(feedUrl, eps);
+  return eps;
+}
+function setEpisodes(feedUrl, eps, persist) {
+  state.feedCache.set(feedUrl, eps);
+  if (persist) {
+    // Shownotes kürzen, damit localStorage reicht
+    const slim = eps.slice(0, 150).map((e) => Object.assign({}, e, { notes: (e.notes || '').slice(0, 4000) }));
+    if (!store.set('ep.' + hash(feedUrl), slim)) store.set('ep.' + hash(feedUrl), slim.slice(0, 30).map((e) => Object.assign({}, e, { notes: '' })));
+  }
+}
+const isSub = (url) => state.subs.some((s) => s.feedUrl === url);
+const subOf = (url) => state.subs.find((s) => s.feedUrl === url);
+
+/* ---------- Hilfen ---------- */
+const $ = (s, el = document) => el.querySelector(s);
+const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+function fmtTime(sec) {
+  sec = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  return h ? `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}` : `${m}:${String(s).padStart(2, '0')}`;
+}
+function fmtDur(sec) {
+  if (!sec) return '';
+  const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+  return h ? `${h} Std. ${m} Min.` : `${Math.max(1, m)} Min.`;
+}
+const dateFmt = new Intl.DateTimeFormat('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+function fmtDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts), now = Date.now(), diff = (now - ts) / 86400000;
+  if (diff < 1 && new Date(now).toDateString() === d.toDateString()) return 'Heute';
+  if (diff < 2 && new Date(now - 86400000).toDateString() === d.toDateString()) return 'Gestern';
+  if (diff < 7) return d.toLocaleDateString('de-DE', { weekday: 'long' });
+  return dateFmt.format(d);
+}
+function parseDuration(v) {
+  if (!v) return 0;
+  v = String(v).trim();
+  if (/^\d+(\.\d+)?$/.test(v)) return Math.round(parseFloat(v));
+  const parts = v.split(':').map((x) => parseInt(x, 10) || 0);
+  return parts.reduce((acc, n) => acc * 60 + n, 0);
+}
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+function img(src, cls, alt = '') {
+  return `<img class="art ${cls || ''}" src="${esc(src || PLACEHOLDER)}" alt="${esc(alt)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.onerror=null;this.src='${PLACEHOLDER}'">`;
+}
+
+/* Shownotes: nur harmlose Tags durchlassen */
+const ALLOWED = new Set(['P', 'BR', 'A', 'B', 'STRONG', 'I', 'EM', 'UL', 'OL', 'LI', 'H3', 'H4', 'BLOCKQUOTE']);
+function sanitize(html) {
+  if (!html) return '';
+  if (!/[<&]/.test(html)) return esc(html).replace(/\n/g, '<br>');
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  const walk = (node) => {
+    for (const child of [...node.childNodes]) {
+      if (child.nodeType === 1) {
+        if (!ALLOWED.has(child.tagName)) {
+          if (['SCRIPT', 'STYLE', 'IFRAME', 'OBJECT', 'NOSCRIPT'].includes(child.tagName)) { child.remove(); continue; }
+          walk(child); child.replaceWith(...child.childNodes); continue;
+        }
+        const href = child.tagName === 'A' ? child.getAttribute('href') : null;
+        for (const a of [...child.attributes]) child.removeAttribute(a.name);
+        if (href && /^https?:\/\//i.test(href)) { child.setAttribute('href', href); child.setAttribute('target', '_blank'); child.setAttribute('rel', 'noopener noreferrer'); }
+        walk(child);
+      } else if (child.nodeType !== 3) child.remove();
+    }
+  };
+  walk(doc.body);
+  return doc.body.innerHTML;
+}
+function plain(html) { return new DOMParser().parseFromString(html || '', 'text/html').body.textContent.trim(); }
+
+/* ---------- Netz ---------- */
+const PROXIES = {
+  allorigins: (u) => 'https://api.allorigins.win/raw?url=' + encodeURIComponent(u),
+  corsproxy: (u) => 'https://corsproxy.io/?url=' + encodeURIComponent(u),
+  codetabs: (u) => 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(u),
+};
+async function fetchWithTimeout(url, ms = 15000) {
+  const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), ms);
+  try {
+    const res = await fetch(url, { signal: ctl.signal, redirect: 'follow' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.text();
+  } finally { clearTimeout(t); }
+}
+async function fetchFeedText(url) {
+  const mode = state.settings.proxy;
+  const attempts = [];
+  if (mode === 'custom' && state.settings.customProxy) {
+    const p = state.settings.customProxy;
+    attempts.push(p.includes('{url}') ? p.replace('{url}', encodeURIComponent(url)) : p + encodeURIComponent(url));
+  } else if (mode !== 'auto' && PROXIES[mode]) {
+    attempts.push(PROXIES[mode](url));
+  } else {
+    attempts.push(url, ...Object.values(PROXIES).map((f) => f(url)));
+  }
+  let lastErr;
+  for (const a of attempts) {
+    try {
+      const text = await fetchWithTimeout(a);
+      if (/<(rss|feed|rdf:RDF)[\s>]/i.test(text.slice(0, 5000))) return text;
+      lastErr = new Error('Kein RSS-Feed');
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('Feed nicht erreichbar');
+}
+
+/* Apple-Verzeichnis: fetch, bei CORS-Problemen JSONP */
+let jsonpN = 0;
+function jsonp(url) {
+  return new Promise((resolve, reject) => {
+    const cb = '__fhjsonp' + (++jsonpN);
+    const s = document.createElement('script');
+    const t = setTimeout(() => { cleanup(); reject(new Error('Zeitüberschreitung')); }, 12000);
+    function cleanup() { clearTimeout(t); delete window[cb]; s.remove(); }
+    window[cb] = (data) => { cleanup(); resolve(data); };
+    s.onerror = () => { cleanup(); reject(new Error('Netzwerkfehler')); };
+    s.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + cb;
+    document.head.appendChild(s);
+  });
+}
+async function itunes(path) {
+  const url = 'https://itunes.apple.com/' + path;
+  try { return JSON.parse(await fetchWithTimeout(url, 12000)); }
+  catch { return jsonp(url); }
+}
+async function searchPodcasts(term) {
+  const data = await itunes(`search?media=podcast&entity=podcast&limit=40&country=${state.settings.country}&term=${encodeURIComponent(term)}`);
+  return (data.results || []).filter((r) => r.feedUrl).map(fromItunes);
+}
+function fromItunes(r) {
+  return { feedUrl: r.feedUrl, title: r.collectionName || r.trackName, author: r.artistName, artwork: r.artworkUrl600 || r.artworkUrl100, genre: r.primaryGenreName, count: r.trackCount };
+}
+async function topPodcasts() {
+  const cc = state.settings.country.toLowerCase();
+  const key = 'top.' + cc, cached = store.get(key, null);
+  if (cached && Date.now() - cached.t < 12 * 3600e3) return cached.list;
+  const data = JSON.parse(await fetchWithTimeout(`https://rss.applemarketingtools.com/api/v2/${cc}/podcasts/top/30/podcasts.json`, 12000));
+  const ids = data.feed.results.map((r) => r.id);
+  const look = await itunes('lookup?id=' + ids.join(','));
+  const byId = new Map((look.results || []).map((r) => [String(r.collectionId), r]));
+  const list = ids.map((id) => byId.get(String(id))).filter((r) => r && r.feedUrl).map(fromItunes);
+  store.set(key, { t: Date.now(), list });
+  return list;
+}
+
+/* ---------- RSS-Parser ---------- */
+function kids(el, name) { return el ? [...el.children].filter((c) => c.localName === name || c.nodeName === name) : []; }
+function kid(el, name, ns) {
+  if (!el) return null;
+  for (const c of el.children) {
+    if (ns ? (c.localName === name && (c.prefix === ns || (c.namespaceURI || '').includes(ns))) : c.nodeName === name) return c;
+  }
+  return null;
+}
+const txt = (el) => (el ? el.textContent.trim() : '');
+function parseFeed(xmlText, feedUrl) {
+  const doc = new DOMParser().parseFromString(xmlText, 'text/xml');
+  if (doc.querySelector('parsererror')) throw new Error('Feed konnte nicht gelesen werden');
+  const ch = doc.querySelector('channel');
+  if (ch) {
+    const itImg = kid(ch, 'image', 'itunes');
+    const artwork = (itImg && itImg.getAttribute('href')) || txt(kid(kid(ch, 'image'), 'url'));
+    const meta = {
+      feedUrl, title: txt(kid(ch, 'title')) || feedUrl, author: txt(kid(ch, 'author', 'itunes')) || txt(kid(ch, 'managingEditor')),
+      artwork, description: txt(kid(ch, 'description')) || txt(kid(ch, 'summary', 'itunes')), link: txt(kid(ch, 'link')),
+    };
+    const eps = [];
+    for (const it of kids(ch, 'item')) {
+      const enc = kid(it, 'enclosure');
+      const audio = enc && enc.getAttribute('url');
+      if (!audio) continue;
+      const eImg = kid(it, 'image', 'itunes');
+      const content = kid(it, 'encoded', 'content');
+      const pub = Date.parse(txt(kid(it, 'pubDate'))) || 0;
+      eps.push({
+        id: txt(kid(it, 'guid')) || audio, feedUrl, title: txt(kid(it, 'title')) || 'Ohne Titel', audio,
+        date: pub, duration: parseDuration(txt(kid(it, 'duration', 'itunes'))),
+        image: (eImg && eImg.getAttribute('href')) || '', podcast: meta.title, podArt: artwork,
+        notes: (content ? content.textContent : '') || txt(kid(it, 'description')) || txt(kid(it, 'summary', 'itunes')),
+      });
+    }
+    eps.sort((a, b) => b.date - a.date);
+    return { meta, eps };
+  }
+  const feed = doc.querySelector('feed'); // Atom
+  if (feed) {
+    const meta = { feedUrl, title: txt(kid(feed, 'title')), author: txt(kid(kid(feed, 'author'), 'name')), artwork: txt(kid(feed, 'logo')) || txt(kid(feed, 'icon')), description: txt(kid(feed, 'subtitle')), link: '' };
+    const eps = [];
+    for (const en of kids(feed, 'entry')) {
+      const l = kids(en, 'link').find((x) => x.getAttribute('rel') === 'enclosure');
+      if (!l) continue;
+      const audio = l.getAttribute('href');
+      eps.push({ id: txt(kid(en, 'id')) || audio, feedUrl, title: txt(kid(en, 'title')), audio, date: Date.parse(txt(kid(en, 'published')) || txt(kid(en, 'updated'))) || 0, duration: 0, image: '', podcast: meta.title, podArt: meta.artwork, notes: txt(kid(en, 'content')) || txt(kid(en, 'summary')) });
+    }
+    eps.sort((a, b) => b.date - a.date);
+    return { meta, eps };
+  }
+  throw new Error('Kein Podcast-Feed');
+}
+async function loadFeed(feedUrl, { persist } = {}) {
+  const { meta, eps } = parseFeed(await fetchFeedText(feedUrl), feedUrl);
+  setEpisodes(feedUrl, eps, persist ?? isSub(feedUrl));
+  const s = subOf(feedUrl);
+  if (s) { Object.assign(s, { title: meta.title, author: meta.author, artwork: meta.artwork || s.artwork, description: meta.description, link: meta.link, updated: Date.now() }); saveSubs(); }
+  return { meta, eps };
+}
+
+/* ---------- Abos ---------- */
+function subscribe(meta, eps) {
+  if (isSub(meta.feedUrl)) return;
+  state.subs.push({ feedUrl: meta.feedUrl, title: meta.title, author: meta.author, artwork: meta.artwork, description: meta.description || '', link: meta.link || '', updated: Date.now() });
+  // vorhandene Folgen gelten als "gesehen" – nur wirklich neue werden markiert
+  state.settings.seen[meta.feedUrl] = Date.now(); saveSettings();
+  saveSubs();
+  if (eps) setEpisodes(meta.feedUrl, eps, true);
+  toast('Abonniert: ' + meta.title);
+}
+function unsubscribe(feedUrl) {
+  const s = subOf(feedUrl);
+  state.subs = state.subs.filter((x) => x.feedUrl !== feedUrl); saveSubs();
+  store.del('ep.' + hash(feedUrl));
+  delete state.settings.seen[feedUrl]; saveSettings();
+  if (s) toast('Abo beendet: ' + s.title);
+}
+function newCount(feedUrl) {
+  const eps = episodesOf(feedUrl) || [], seen = state.settings.seen[feedUrl] || 0;
+  return eps.filter((e) => e.date > seen && !(state.progress[e.id] && state.progress[e.id].done)).length;
+}
+let refreshing = false;
+async function refreshAll(force) {
+  if (refreshing || !state.subs.length) return;
+  if (!force && Date.now() - state.settings.lastRefresh < 30 * 60e3) return;
+  refreshing = true; $('#refreshBtn').style.animation = 'spin 1s linear infinite';
+  let fails = 0;
+  await Promise.all(state.subs.map((s) => loadFeed(s.feedUrl, { persist: true }).catch(() => { fails++; })));
+  state.settings.lastRefresh = Date.now(); saveSettings();
+  refreshing = false; $('#refreshBtn').style.animation = '';
+  if (force) toast(fails ? `Aktualisiert – ${fails} Feed(s) nicht erreichbar` : 'Alle Feeds aktuell');
+  render();
+}
+
+/* ---------- Player ---------- */
+const audio = $('#audio');
+let sleepAt = 0, sleepEnd = false, lastSave = 0;
+
+function epById(id, feedUrl) {
+  if (state.current && state.current.id === id) return state.current;
+  const q = state.queue.find((e) => e.id === id); if (q) return q;
+  const eps = feedUrl ? episodesOf(feedUrl) : null;
+  if (eps) { const e = eps.find((x) => x.id === id); if (e) return e; }
+  for (const eps2 of state.feedCache.values()) { const e = eps2.find((x) => x.id === id); if (e) return e; }
+  return lastList.find((e) => e.id === id) || null;
+}
+function slimEp(e) { return { id: e.id, feedUrl: e.feedUrl, title: e.title, audio: e.audio, date: e.date, duration: e.duration, image: e.image, podcast: e.podcast, podArt: e.podArt, notes: (e.notes || '').slice(0, 8000) }; }
+
+function playEpisode(ep, autoplay = true) {
+  if (state.current && state.current.id !== ep.id) storePos();
+  state.current = slimEp(ep); saveCurrent();
+  state.queue = state.queue.filter((e) => e.id !== ep.id); saveQueue();
+  audio.src = ep.audio;
+  const pr = state.progress[ep.id];
+  const start = pr && !pr.done && pr.p > 5 ? pr.p - 2 : 0;
+  audio.playbackRate = state.settings.speed;
+  const onMeta = () => { if (start) audio.currentTime = start; audio.removeEventListener('loadedmetadata', onMeta); };
+  audio.addEventListener('loadedmetadata', onMeta);
+  if (pr && pr.done) { pr.done = false; pr.p = 0; saveProgress(); }
+  if (autoplay) audio.play().catch((e) => { if (e.name !== 'AbortError') toast('Wiedergabe nicht möglich: ' + e.message); });
+  updateMediaSession(); updatePlayerUI(); render();
+}
+function togglePlay() {
+  if (!state.current) return;
+  if (!audio.src) { playEpisode(state.current); return; }
+  if (audio.paused) audio.play().catch((e) => toast('Wiedergabe nicht möglich: ' + e.message));
+  else audio.pause();
+}
+function skip(d) { if (!audio.src) return; audio.currentTime = Math.max(0, Math.min((audio.duration || 1e9) - 0.5, audio.currentTime + d)); storePos(); }
+function storePos() {
+  if (!state.current || !audio.src) return;
+  const id = state.current.id, d = isFinite(audio.duration) ? audio.duration : (state.current.duration || 0);
+  const prev = state.progress[id] || {};
+  state.progress[id] = { p: Math.floor(audio.currentTime), d: Math.floor(d), done: prev.done || (audio.paused && d > 0 && audio.currentTime > d - 20) };
+  saveProgress();
+}
+function markDone(id, done = true) {
+  const pr = state.progress[id] || { p: 0, d: 0 };
+  pr.done = done; if (!done) pr.p = 0;
+  state.progress[id] = pr; saveProgress();
+  if (done) { state.queue = state.queue.filter((e) => e.id !== id); saveQueue(); }
+}
+function toggleQueue(ep) {
+  if (state.queue.some((e) => e.id === ep.id)) { state.queue = state.queue.filter((e) => e.id !== ep.id); toast('Aus „Als Nächstes“ entfernt'); }
+  else { state.queue.push(slimEp(ep)); toast('Zu „Als Nächstes“ hinzugefügt'); }
+  saveQueue();
+}
+function playNext() {
+  const next = state.queue[0];
+  if (next) playEpisode(next); else { updatePlayerUI(); }
+}
+
+audio.addEventListener('timeupdate', () => {
+  if (Date.now() - lastSave > 5000) { lastSave = Date.now(); storePos(); }
+  if (sleepAt && Date.now() >= sleepAt) { audio.pause(); clearSleep(); toast('Schlaf-Timer: Wiedergabe angehalten'); }
+  updateTime();
+});
+audio.addEventListener('play', () => { updatePlayerUI(); updateMediaSession(); });
+audio.addEventListener('pause', () => { storePos(); updatePlayerUI(); });
+audio.addEventListener('loadedmetadata', () => { updateTime(); });
+audio.addEventListener('ended', () => {
+  if (state.current) { markDone(state.current.id); }
+  if (sleepEnd) { clearSleep(); toast('Schlaf-Timer: Folge zu Ende'); updatePlayerUI(); render(); return; }
+  playNext(); render();
+});
+audio.addEventListener('error', () => {
+  if (audio.src) toast('Audio konnte nicht geladen werden.');
+  updatePlayerUI();
+});
+window.addEventListener('pagehide', storePos);
+document.addEventListener('visibilitychange', () => { if (document.hidden) storePos(); });
+
+function updateTime() {
+  const cur = audio.currentTime || (state.current && state.progress[state.current.id] ? state.progress[state.current.id].p : 0);
+  const dur = isFinite(audio.duration) && audio.duration ? audio.duration : (state.current ? state.current.duration : 0);
+  $('#miniProg').style.width = dur ? (cur / dur * 100) + '%' : '0';
+  if (!seeking) $('#seek').value = dur ? Math.round(cur / dur * 1000) : 0;
+  $('#tCur').textContent = fmtTime(cur);
+  $('#tLeft').textContent = '-' + fmtTime((dur - cur) / (audio.playbackRate || 1));
+  if (sleepAt) $('#sleepLeft').textContent = 'Stoppt in ' + fmtTime((sleepAt - Date.now()) / 1000);
+  if ('mediaSession' in navigator && navigator.mediaSession.setPositionState && dur && isFinite(audio.duration)) {
+    try { navigator.mediaSession.setPositionState({ duration: audio.duration, position: Math.min(audio.currentTime, audio.duration), playbackRate: audio.playbackRate }); } catch {}
+  }
+}
+function updatePlayerUI() {
+  const ep = state.current;
+  $('#mini').classList.toggle('hidden', !ep);
+  document.documentElement.style.setProperty('--mini-h', ep ? '68px' : '0px');
+  if (!ep) return;
+  const art = ep.image || ep.podArt || PLACEHOLDER;
+  for (const el of [$('#miniArt'), $('#npArt')]) { if (el.getAttribute('src') !== art) { el.src = art; el.onerror = () => { el.onerror = null; el.src = PLACEHOLDER; }; } }
+  $('#miniTitle').textContent = ep.title; $('#miniPod').textContent = ep.podcast;
+  $('#npTitle').textContent = ep.title; $('#npPod').textContent = ep.podcast;
+  const playing = !audio.paused && !!audio.src;
+  $('#miniPlay').innerHTML = playing ? ICON.pause : ICON.play;
+  $('#miniPlay').setAttribute('aria-label', playing ? 'Pause' : 'Abspielen');
+  $('#npPlay').innerHTML = playing ? ICON.pause : ICON.play;
+  $('#npPlay').setAttribute('aria-label', playing ? 'Pause' : 'Abspielen');
+  const notes = $('#npNotes');
+  if (notes.dataset.id !== ep.id) { notes.dataset.id = ep.id; notes.innerHTML = sanitize(ep.notes) || '<span class="muted">Keine Shownotes.</span>'; }
+  $('#speed').value = String(state.settings.speed);
+  updateTime();
+  document.querySelectorAll('.playpill[data-id]').forEach((b) => {
+    const on = b.dataset.id === ep.id && playing;
+    b.classList.toggle('on', on); b.querySelector('.ic').innerHTML = on ? ICON.pause : ICON.play;
+  });
+}
+function updateMediaSession() {
+  if (!('mediaSession' in navigator) || !state.current) return;
+  const ep = state.current, art = ep.image || ep.podArt;
+  navigator.mediaSession.metadata = new MediaMetadata({
+    title: ep.title, artist: ep.podcast, album: 'Funkhaus',
+    artwork: art ? [{ src: art, sizes: '512x512' }] : [{ src: new URL('icons/icon-512.png', location.href).href, sizes: '512x512', type: 'image/png' }],
+  });
+  const h = {
+    play: () => audio.play(), pause: () => audio.pause(),
+    seekbackward: (d) => skip(-(d.seekOffset || 15)), seekforward: (d) => skip(d.seekOffset || 30),
+    seekto: (d) => { if (d.seekTime != null) audio.currentTime = d.seekTime; },
+    nexttrack: state.queue.length ? () => { storePos(); playNext(); } : null,
+  };
+  for (const [k, fn] of Object.entries(h)) { try { navigator.mediaSession.setActionHandler(k, fn); } catch {} }
+}
+
+let seeking = false;
+$('#seek').addEventListener('input', () => {
+  seeking = true;
+  const dur = audio.duration || (state.current && state.current.duration) || 0;
+  $('#tCur').textContent = fmtTime($('#seek').value / 1000 * dur);
+});
+$('#seek').addEventListener('change', () => {
+  seeking = false;
+  if (!audio.src && state.current) { playEpisode(state.current, false); }
+  const dur = audio.duration;
+  if (dur && isFinite(dur)) { audio.currentTime = $('#seek').value / 1000 * dur; storePos(); }
+});
+$('#speed').addEventListener('change', (e) => { state.settings.speed = parseFloat(e.target.value); audio.playbackRate = state.settings.speed; saveSettings(); updateTime(); });
+function clearSleep() { sleepAt = 0; sleepEnd = false; $('#sleep').value = '0'; $('#sleepLeft').textContent = ''; }
+$('#sleep').addEventListener('change', (e) => {
+  const v = e.target.value; sleepAt = 0; sleepEnd = false; $('#sleepLeft').textContent = '';
+  if (v === 'end') { sleepEnd = true; $('#sleepLeft').textContent = 'Stoppt am Ende der Folge'; }
+  else if (+v) { sleepAt = Date.now() + (+v) * 60e3; updateTime(); }
+});
+setInterval(() => { if (sleepAt) { if (audio.paused) $('#sleepLeft').textContent = 'Stoppt in ' + fmtTime((sleepAt - Date.now()) / 1000); if (Date.now() >= sleepAt) { audio.pause(); clearSleep(); } } }, 1000);
+
+$('#miniPlay').onclick = togglePlay; $('#npPlay').onclick = togglePlay;
+$('#miniBack').onclick = () => skip(-15); $('#npBack').onclick = () => skip(-15); $('#npFwd').onclick = () => skip(30);
+function openSheet() { $('#sheet').classList.add('open'); $('#sheet').setAttribute('aria-hidden', 'false'); }
+function closeSheet() { $('#sheet').classList.remove('open'); $('#sheet').setAttribute('aria-hidden', 'true'); }
+$('#miniOpen').onclick = openSheet; $('#miniArt').onclick = openSheet;
+$('#sheetClose').onclick = closeSheet;
+$('#sheetQueue').onclick = () => { closeSheet(); location.hash = '#/warteschlange'; };
+$('#npPod').onclick = () => { if (state.current) { closeSheet(); location.hash = '#/podcast/' + encodeURIComponent(state.current.feedUrl); } };
+document.addEventListener('keydown', (e) => {
+  if (e.target.matches('input, select, textarea')) return;
+  if (e.key === ' ' && state.current) { e.preventDefault(); togglePlay(); }
+  else if (e.key === 'ArrowLeft' && audio.src) skip(-15);
+  else if (e.key === 'ArrowRight' && audio.src) skip(30);
+  else if (e.key === 'Escape') closeSheet();
+});
+
+/* ---------- Ansichten ---------- */
+const view = $('#view');
+let lastList = [];   // zuletzt gerendete Folgen (für Klick-Handler)
+let route = { name: 'neu' };
+
+function epRow(e, { showArt = true, filterDone = false } = {}) {
+  const pr = state.progress[e.id], done = pr && pr.done;
+  const isCur = state.current && state.current.id === e.id, playing = isCur && !audio.paused;
+  const queued = state.queue.some((q) => q.id === e.id);
+  const dur = (pr && pr.d) || e.duration;
+  let label;
+  if (done) label = 'Gehört';
+  else if (pr && pr.p > 10 && dur) label = 'Noch ' + fmtDur(dur - pr.p);
+  else label = fmtDur(dur) || 'Abspielen';
+  const pct = pr && dur && !done ? Math.min(100, pr.p / dur * 100) : 0;
+  return `<article class="ep ${done ? 'done' : ''}" data-id="${esc(e.id)}" data-feed="${esc(e.feedUrl)}">
+    <div class="ep-head">
+      ${showArt ? img(e.image || e.podArt, '', '') : ''}
+      <div class="ep-main">
+        <div class="ep-meta">${esc(fmtDate(e.date))}${showArt ? ' · ' + esc(e.podcast) : ''}</div>
+        <button class="ep-title" data-act="notes">${esc(e.title)}</button>
+        <div class="ep-actions">
+          <button class="playpill ${playing ? 'on' : ''}" data-act="play" data-id="${esc(e.id)}"><span class="ic" style="display:contents">${playing ? ICON.pause : ICON.play}</span>${pct ? `<span class="bar"><i style="width:${pct}%"></i></span>` : ''}<span>${esc(label)}</span></button>
+          <button class="mini-act ${queued ? 'on' : ''}" data-act="queue" aria-label="${queued ? 'Aus Als Nächstes entfernen' : 'Zu Als Nächstes'}" title="Als Nächstes">${queued ? ICON.queued : ICON.queue}</button>
+          <button class="mini-act ${done ? 'on' : ''}" data-act="done" aria-label="${done ? 'Als ungehört markieren' : 'Als gehört markieren'}" title="${done ? 'Ungehört' : 'Gehört'}">${ICON.check}</button>
+        </div>
+      </div>
+    </div>
+  </article>`;
+}
+
+view.addEventListener('click', (ev) => {
+  const btn = ev.target.closest('[data-act]'); if (!btn) return;
+  const act = btn.dataset.act;
+  const art = btn.closest('[data-id]');
+  if (act === 'open-pod') { location.hash = '#/podcast/' + encodeURIComponent(btn.dataset.feed); return; }
+  if (act === 'preview') { openPreview(btn.dataset.idx); return; }
+  if (!art) return;
+  const ep = epById(art.dataset.id, art.dataset.feed); if (!ep) return;
+  if (act === 'play') {
+    if (state.current && state.current.id === ep.id && audio.src) togglePlay(); else playEpisode(ep);
+  } else if (act === 'queue') { toggleQueue(ep); render(); }
+  else if (act === 'done') { const pr = state.progress[ep.id]; markDone(ep.id, !(pr && pr.done)); render(); }
+  else if (act === 'notes') {
+    const box = art.querySelector('.notes');
+    if (box) box.remove();
+    else { const d = document.createElement('div'); d.className = 'notes'; d.innerHTML = sanitize(ep.notes) || '<span class="muted">Keine Beschreibung.</span>'; art.querySelector('.ep-main').appendChild(d); }
+  } else if (act === 'q-up') {
+    const i = state.queue.findIndex((q) => q.id === ep.id);
+    if (i > 0) { [state.queue[i - 1], state.queue[i]] = [state.queue[i], state.queue[i - 1]]; saveQueue(); render(); }
+  } else if (act === 'q-del') { state.queue = state.queue.filter((q) => q.id !== ep.id); saveQueue(); render(); }
+});
+
+function setHeader(title, back) {
+  $('#title').textContent = title;
+  $('#backBtn').classList.toggle('hidden', !back);
+  document.querySelectorAll('nav.tabs a').forEach((a) => a.classList.toggle('on', a.dataset.tab === route.tab));
+}
+$('#backBtn').onclick = () => { if (history.length > 1) history.back(); else location.hash = '#/bibliothek'; };
+$('#refreshBtn').onclick = () => {
+  if (route.name === 'podcast') { renderPodcast(route.feed, true); return; }
+  if (!state.subs.length) { toast('Noch keine Abos'); return; }
+  refreshAll(true);
+};
+
+function emptyState(text, actionHtml = '') {
+  return `<div class="empty">${ICON.mic}<p>${text}</p>${actionHtml}</div>`;
+}
+
+function renderNew() {
+  setHeader('Neue Folgen');
+  if (!state.subs.length) {
+    view.innerHTML = emptyState('Willkommen bei Funkhaus!<br>Abonniere Podcasts, dann erscheinen hier ihre neuesten Folgen.', '<a class="btn primary" href="#/suche">Podcasts finden</a>');
+    return;
+  }
+  const all = [];
+  for (const s of state.subs) for (const e of (episodesOf(s.feedUrl) || []).slice(0, 15)) all.push(e);
+  all.sort((a, b) => b.date - a.date);
+  const unplayed = all.filter((e) => !(state.progress[e.id] && state.progress[e.id].done));
+  const list = unplayed.slice(0, 60);
+  lastList = list;
+  const inProgress = all.filter((e) => { const p = state.progress[e.id]; return p && !p.done && p.p > 10; });
+  let html = '';
+  if (inProgress.length) html += `<h2>Weiterhören</h2><div class="list">${inProgress.slice(0, 5).map((e) => epRow(e)).join('')}</div><h2>Neueste</h2>`;
+  html += list.length ? `<div class="list">${list.filter((e) => !inProgress.includes(e)).map((e) => epRow(e)).join('')}</div>` : emptyState(refreshing ? 'Lade Folgen …' : 'Alles gehört. Gut gemacht!');
+  view.innerHTML = html;
+}
+
+function renderLibrary() {
+  setHeader('Bibliothek');
+  if (!state.subs.length) { view.innerHTML = emptyState('Noch keine Abos.', '<a class="btn primary" href="#/suche">Podcasts finden</a>'); return; }
+  const subs = [...state.subs].sort((a, b) => a.title.localeCompare(b.title, 'de'));
+  view.innerHTML = `<div class="grid">${subs.map((s) => {
+    const n = newCount(s.feedUrl);
+    return `<button class="tile" data-act="open-pod" data-feed="${esc(s.feedUrl)}"><div class="wrap">${img(s.artwork, '', s.title)}${n ? `<span class="badge">${n > 99 ? '99+' : n}</span>` : ''}</div><div class="t">${esc(s.title)}</div><div class="a">${esc(s.author || '')}</div></button>`;
+  }).join('')}</div>`;
+}
+
+let searchResults = [], searchTerm = '', topList = null;
+function resultRow(r, i) {
+  return `<div class="result clickable" data-act="preview" data-idx="${i}">${img(r.artwork, '', '')}<div class="info"><div class="t">${esc(r.title)}</div><div class="a">${esc([r.author, r.genre].filter(Boolean).join(' · '))}</div></div>${isSub(r.feedUrl) ? `<span class="muted small">Abonniert</span>` : ''}</div>`;
+}
+function renderSearch() {
+  setHeader('Suche');
+  view.innerHTML = `
+    <form class="search" id="searchForm" role="search">
+      <input class="field" id="q" type="search" placeholder="Podcast, Thema oder Feed-URL" autocomplete="off" value="${esc(searchTerm)}" aria-label="Suchbegriff">
+      <button class="btn primary" type="submit">Suchen</button>
+    </form>
+    <div id="results" style="margin-top:14px"></div>`;
+  const results = $('#results');
+  const showList = (list, title) => {
+    searchResults = list;
+    results.innerHTML = (title ? `<h2>${title}</h2>` : '') + (list.length ? `<div class="list">${list.map(resultRow).join('')}</div>` : emptyState('Nichts gefunden.'));
+  };
+  if (searchTerm && searchResults.length) showList(searchResults, '');
+  else if (topList) showList(topList, 'Beliebt in ' + countryName());
+  else {
+    results.innerHTML = `<h2>Beliebt in ${countryName()}</h2><div class="spinner"></div>`;
+    topPodcasts().then((list) => { topList = list; if (route.name === 'suche' && !searchTerm) showList(list, 'Beliebt in ' + countryName()); })
+      .catch(() => { if (route.name === 'suche' && !searchTerm) results.innerHTML = `<p class="muted small" style="margin-top:16px">Tipp: Suche nach einem Namen oder füge direkt eine RSS-Feed-URL ein.</p>`; });
+  }
+  $('#searchForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const q = $('#q').value.trim(); searchTerm = q;
+    if (!q) { searchResults = []; renderSearch(); return; }
+    if (/^(https?:\/\/|feed:)/i.test(q)) { openFeedUrl(q.replace(/^feed:(\/\/)?/i, 'https://')); return; }
+    results.innerHTML = '<div class="spinner"></div>';
+    try { showList(await searchPodcasts(q), `Ergebnisse für „${esc(q)}“`); }
+    catch { results.innerHTML = emptyState('Suche gerade nicht erreichbar. Prüfe die Verbindung.'); }
+  };
+  if (!searchTerm) setTimeout(() => { const q = $('#q'); if (q && matchMedia('(pointer:fine)').matches) q.focus(); }, 50);
+}
+const countryName = () => ({ DE: 'Deutschland', AT: 'Österreich', CH: 'der Schweiz', US: 'den USA', GB: 'Großbritannien' }[state.settings.country] || state.settings.country);
+
+function openPreview(idx) {
+  const r = searchResults[+idx]; if (!r) return;
+  state.preview = r;
+  location.hash = '#/podcast/' + encodeURIComponent(r.feedUrl);
+}
+function openFeedUrl(url) {
+  state.preview = { feedUrl: url, title: '', author: '', artwork: '' };
+  location.hash = '#/podcast/' + encodeURIComponent(url);
+}
+
+let podFilter = 'alle';
+async function renderPodcast(feedUrl, forceReload) {
+  const s = subOf(feedUrl);
+  const pre = s || (state.preview && state.preview.feedUrl === feedUrl ? state.preview : { feedUrl, title: '', author: '', artwork: '' });
+  setHeader(pre.title || 'Podcast', true);
+  const draw = (meta, eps, loading, error) => {
+    if (route.name !== 'podcast' || route.feed !== feedUrl) return;
+    const subbed = isSub(feedUrl);
+    setHeader(meta.title || 'Podcast', true);
+    let list = eps || [];
+    if (podFilter === 'ungehört') list = list.filter((e) => !(state.progress[e.id] && state.progress[e.id].done));
+    const shown = list.slice(0, showCount);
+    lastList = eps || [];
+    view.innerHTML = `
+      <div class="pod-hero">
+        ${img(meta.artwork, '', meta.title)}
+        <div style="min-width:0">
+          <h2>${esc(meta.title || 'Lade …')}</h2>
+          <div class="muted small">${esc(meta.author || '')}</div>
+          <div class="row" style="margin-top:12px">
+            <button class="btn ${subbed ? '' : 'primary'}" id="subBtn" ${!eps && !subbed ? 'disabled' : ''}>${subbed ? 'Abonniert ✓' : 'Abonnieren'}</button>
+            ${meta.link && /^https?:/.test(meta.link) ? `<a class="btn" href="${esc(meta.link)}" target="_blank" rel="noopener noreferrer">Website</a>` : ''}
+          </div>
+        </div>
+      </div>
+      ${meta.description ? `<div class="pod-desc" id="podDesc">${esc(plain(meta.description))}</div>` : ''}
+      ${error ? `<div class="card" style="margin-top:16px"><h3>Feed nicht erreichbar</h3><p class="muted small">${esc(error)}</p><button class="btn" id="retry">Erneut versuchen</button></div>` : ''}
+      ${eps ? `<div class="filters">
+          <button class="chip ${podFilter === 'alle' ? 'on' : ''}" data-f="alle">Alle (${eps.length})</button>
+          <button class="chip ${podFilter === 'ungehört' ? 'on' : ''}" data-f="ungehört">Ungehört</button>
+        </div>
+        <div class="list">${shown.map((e) => epRow(e, { showArt: false })).join('') || emptyState('Keine Folgen.')}</div>
+        ${list.length > shown.length ? `<div style="text-align:center;margin:16px"><button class="btn" id="more">Weitere Folgen (${list.length - shown.length})</button></div>` : ''}` : ''}
+      ${loading ? '<div class="spinner"></div>' : ''}`;
+    const sb = $('#subBtn');
+    if (sb) sb.onclick = () => {
+      if (isSub(feedUrl)) { if (confirm('Abo von „' + meta.title + '“ beenden?')) { unsubscribe(feedUrl); draw(meta, eps); } }
+      else { subscribe(meta, eps); draw(meta, eps); }
+    };
+    const pd = $('#podDesc'); if (pd) pd.onclick = () => pd.classList.toggle('open');
+    const rt = $('#retry'); if (rt) rt.onclick = () => renderPodcast(feedUrl, true);
+    const mo = $('#more'); if (mo) mo.onclick = () => { showCount += 50; draw(meta, eps); };
+    view.querySelectorAll('.chip[data-f]').forEach((c) => c.onclick = () => { podFilter = c.dataset.f; showCount = 50; draw(meta, eps); });
+  };
+  let showCount = 50;
+  const cached = episodesOf(feedUrl);
+  if (s) { state.settings.seen[feedUrl] = Date.now(); saveSettings(); }
+  draw(pre, cached, !cached || forceReload);
+  if (cached && !forceReload && s && Date.now() - (s.updated || 0) < 30 * 60e3) return;
+  try {
+    const { meta, eps } = await loadFeed(feedUrl);
+    if (state.preview && state.preview.feedUrl === feedUrl && !meta.artwork) meta.artwork = state.preview.artwork;
+    const cur = subOf(feedUrl) || meta;
+    draw(Object.assign({}, meta, { artwork: cur.artwork || meta.artwork }), eps, false);
+    if (forceReload) toast('Feed aktualisiert');
+  } catch (e) {
+    draw(pre, cached, false, cached ? null : (e.message || 'Unbekannter Fehler') + '. Manche Feeds blockieren Browser-Zugriffe – unter „Mehr“ kannst du einen anderen Proxy wählen.');
+    if (cached && forceReload) toast('Aktualisieren fehlgeschlagen');
+  }
+}
+
+function renderQueue() {
+  setHeader('Als Nächstes');
+  let html = '';
+  if (state.current) {
+    lastList = [state.current, ...state.queue];
+    html += `<h2>Läuft gerade</h2><div class="list">${epRow(state.current)}</div>`;
+  } else lastList = [...state.queue];
+  html += `<h2>Warteschlange</h2>`;
+  if (!state.queue.length) html += `<p class="muted">Leer. Tippe bei einer Folge auf ${ICON.queue.replace('<svg', '<svg style="width:16px;height:16px;vertical-align:-3px"')}, um sie hier einzureihen. Nach dem Ende einer Folge startet automatisch die nächste.</p>`;
+  else {
+    html += `<div class="list">${state.queue.map((e, i) => `<div class="q-item" data-id="${esc(e.id)}" data-feed="${esc(e.feedUrl)}">
+      ${img(e.image || e.podArt)}
+      <div class="info"><div class="ep-meta">${esc(e.podcast)}</div><div class="t">${esc(e.title)}</div></div>
+      <button class="mini-act" data-act="play" aria-label="Jetzt abspielen">${ICON.play}</button>
+      ${i ? `<button class="mini-act" data-act="q-up" aria-label="Nach oben">${ICON.up}</button>` : ''}
+      <button class="mini-act" data-act="q-del" aria-label="Entfernen">${ICON.x}</button>
+    </div>`).join('')}</div>
+    <div style="margin-top:14px"><button class="btn danger" id="clearQ">Warteschlange leeren</button></div>`;
+  }
+  view.innerHTML = html;
+  const c = $('#clearQ'); if (c) c.onclick = () => { if (confirm('Warteschlange leeren?')) { state.queue = []; saveQueue(); render(); } };
+}
+
+function renderMore() {
+  setHeader('Mehr');
+  const used = (() => { let n = 0; try { for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k.startsWith('fh.')) n += (localStorage.getItem(k) || '').length; } } catch {} return n; })();
+  view.innerHTML = `
+    <div class="card">
+      <h3>Feed per URL hinzufügen</h3>
+      <p class="muted small">Für Podcasts, die nicht im Verzeichnis stehen – z. B. private Feeds.</p>
+      <form class="search" id="urlForm"><input class="field" id="feedUrl" type="url" placeholder="https://…/feed.xml" required><button class="btn primary">Öffnen</button></form>
+    </div>
+    <div class="card">
+      <h3>OPML Import & Export</h3>
+      <p class="muted small">Abos aus einer anderen Podcast-App übernehmen oder sichern.</p>
+      <div class="row"><button class="btn" id="imp">OPML importieren</button><button class="btn" id="exp" ${state.subs.length ? '' : 'disabled'}>OPML exportieren</button></div>
+    </div>
+    <div class="card">
+      <h3>Verzeichnis-Land</h3>
+      <p class="muted small">Für Suche und Charts.</p>
+      <select class="field" id="country">
+        ${[['DE', 'Deutschland'], ['AT', 'Österreich'], ['CH', 'Schweiz'], ['US', 'USA'], ['GB', 'Großbritannien']].map(([c, n]) => `<option value="${c}" ${state.settings.country === c ? 'selected' : ''}>${n}</option>`).join('')}
+      </select>
+    </div>
+    <div class="card">
+      <h3>Feed-Abruf</h3>
+      <p class="muted small">Viele Podcast-Server erlauben keinen direkten Abruf aus dem Browser (CORS). Dann wird der Feed über einen öffentlichen Proxy geladen. Der Proxy-Betreiber sieht, welche Feed-Adressen du abrufst. Audio läuft immer direkt.</p>
+      <select class="field" id="proxy">
+        <option value="auto">Automatisch (direkt, dann Proxys)</option>
+        <option value="allorigins">Nur allorigins.win</option>
+        <option value="corsproxy">Nur corsproxy.io</option>
+        <option value="codetabs">Nur codetabs.com</option>
+        <option value="custom">Eigener Proxy …</option>
+      </select>
+      <input class="field ${state.settings.proxy === 'custom' ? '' : 'hidden'}" id="customProxy" style="margin-top:8px" placeholder="https://mein-proxy.example/?url={url}" value="${esc(state.settings.customProxy)}">
+    </div>
+    <div class="card">
+      <h3>Daten</h3>
+      <p class="muted small">${state.subs.length} Abo(s) · ${Object.keys(state.progress).length} Folgen mit Fortschritt · ${(used / 1024).toFixed(0)} KB lokal gespeichert. Alles bleibt auf diesem Gerät.</p>
+      <button class="btn danger" id="reset">Alle Daten löschen</button>
+    </div>
+    <p class="muted small" style="text-align:center">Funkhaus 1.0.0 · Verzeichnis: Apple Podcasts · Leertaste = Play/Pause, ←/→ = Springen</p>`;
+  $('#proxy').value = state.settings.proxy;
+  $('#urlForm').onsubmit = (e) => { e.preventDefault(); openFeedUrl($('#feedUrl').value.trim()); };
+  $('#imp').onclick = () => $('#opmlFile').click();
+  $('#exp').onclick = exportOpml;
+  $('#country').onchange = (e) => { state.settings.country = e.target.value; saveSettings(); topList = null; searchResults = []; searchTerm = ''; };
+  $('#proxy').onchange = (e) => { state.settings.proxy = e.target.value; saveSettings(); $('#customProxy').classList.toggle('hidden', e.target.value !== 'custom'); };
+  $('#customProxy').onchange = (e) => { state.settings.customProxy = e.target.value.trim(); saveSettings(); };
+  $('#reset').onclick = () => {
+    if (!confirm('Wirklich alle Abos, Fortschritte und Einstellungen löschen?')) return;
+    audio.pause(); audio.removeAttribute('src');
+    try { Object.keys(localStorage).filter((k) => k.startsWith('fh.')).forEach((k) => localStorage.removeItem(k)); } catch {}
+    location.reload();
+  };
+}
+
+/* ---------- OPML ---------- */
+function exportOpml() {
+  const body = state.subs.map((s) => `    <outline type="rss" text="${esc(s.title)}" title="${esc(s.title)}" xmlUrl="${esc(s.feedUrl)}"${s.link ? ` htmlUrl="${esc(s.link)}"` : ''}/>`).join('\n');
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>\n<opml version="2.0">\n  <head><title>Funkhaus Abos</title><dateCreated>${new Date().toUTCString()}</dateCreated></head>\n  <body>\n${body}\n  </body>\n</opml>\n`;
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([xml], { type: 'text/x-opml' }));
+  a.download = 'funkhaus-abos.opml'; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+$('#opmlFile').addEventListener('change', async (e) => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  const doc = new DOMParser().parseFromString(await f.text(), 'text/xml');
+  const outlines = [...doc.querySelectorAll('outline[xmlUrl], outline[xmlurl]')];
+  let added = 0;
+  for (const o of outlines) {
+    const url = o.getAttribute('xmlUrl') || o.getAttribute('xmlurl');
+    if (!url || isSub(url)) continue;
+    state.subs.push({ feedUrl: url, title: o.getAttribute('title') || o.getAttribute('text') || url, author: '', artwork: '', description: '', link: o.getAttribute('htmlUrl') || '', updated: 0 });
+    state.settings.seen[url] = Date.now(); added++;
+  }
+  saveSubs(); saveSettings();
+  toast(added ? `${added} Podcast(s) importiert – lade Feeds …` : 'Keine neuen Feeds in der Datei');
+  if (added) { location.hash = '#/bibliothek'; refreshAll(true); }
+});
+
+/* ---------- Routing ---------- */
+function parseRoute() {
+  const h = location.hash.replace(/^#\/?/, '');
+  const [name, ...rest] = h.split('/');
+  if (name === 'podcast' && rest.length) return { name: 'podcast', feed: decodeURIComponent(rest.join('/')), tab: 'bibliothek' };
+  const valid = ['neu', 'bibliothek', 'suche', 'warteschlange', 'mehr'];
+  const n = valid.includes(name) ? name : (state.subs.length ? 'neu' : 'suche');
+  return { name: n, tab: n };
+}
+function render() {
+  const y = window.scrollY;
+  if (route.name === 'neu') renderNew();
+  else if (route.name === 'bibliothek') renderLibrary();
+  else if (route.name === 'suche') renderSearch();
+  else if (route.name === 'warteschlange') renderQueue();
+  else if (route.name === 'mehr') renderMore();
+  else if (route.name === 'podcast') { rerenderPodcastRows(); return; }
+  window.scrollTo(0, y);
+}
+/* In der Podcast-Ansicht nur die Folgen-Zeilen neu zeichnen (kein Neuladen) */
+function rerenderPodcastRows() {
+  view.querySelectorAll('article.ep').forEach((el) => {
+    const ep = epById(el.dataset.id, el.dataset.feed); if (!ep) return;
+    const open = !!el.querySelector('.notes');
+    const tmp = document.createElement('div'); tmp.innerHTML = epRow(ep, { showArt: false });
+    const fresh = tmp.firstElementChild; el.replaceWith(fresh);
+    if (open) fresh.querySelector('.ep-title').click();
+  });
+  const sb = $('#subBtn');
+  if (sb) { const on = isSub(route.feed); sb.textContent = on ? 'Abonniert ✓' : 'Abonnieren'; sb.classList.toggle('primary', !on); }
+}
+function navigate() {
+  route = parseRoute();
+  closeSheet();
+  if (route.name === 'podcast') { podFilter = 'alle'; renderPodcast(route.feed); }
+  else render();
+  window.scrollTo(0, 0);
+  if (route.name === 'neu') refreshAll(false);
+}
+window.addEventListener('hashchange', navigate);
+
+/* ---------- Start ---------- */
+if (state.current) {
+  // Letzte Folge vorbereiten (ohne Autoplay)
+  audio.src = state.current.audio; audio.playbackRate = state.settings.speed;
+  const pr = state.progress[state.current.id];
+  if (pr && pr.p) audio.addEventListener('loadedmetadata', function f() { audio.currentTime = Math.max(0, pr.p - 2); audio.removeEventListener('loadedmetadata', f); });
+  updateMediaSession();
+}
+updatePlayerUI();
+navigate();
+
+if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
