@@ -151,6 +151,7 @@ function buildUI() {
   renderView(S.view);
   updateLCD();
   bindKeys();
+  bindDrop();
 }
 
 function showView(id) {
@@ -700,6 +701,7 @@ function showHelp() {
     ['Strg+S', 'Projekt im Browser speichern'],
     ['Strg+C / Strg+V', 'Pad kopieren / einfügen'],
     ['?', 'Diese Hilfe'],
+    ['Datei ins Fenster ziehen', 'Samples hinzufügen; direkt auf ein Pad ziehen = auf dieses Pad legen'],
     ['Alt', 'Menüleiste mit der Tastatur: Fokus auf „Datei“, dann Pfeiltasten'],
   ];
   const tbl = el('table', { class: 'keys' }, ...rows.map(([k, d]) => el('tr', {}, el('td', {}, el('kbd', { text: k })), el('td', { text: d }))));
@@ -719,6 +721,10 @@ function menus() {
   const mi = (label, act, extra = {}) => ({ label, act, ...extra });
   return [
     { id: 'file', label: 'Datei', items: [
+      mi('+ Samples hinzufügen …', addSamplesFromPicker),
+      mi(`Datei auf Pad ${padLabel(p.cur.pad)} laden …`, loadFileToCurrentPad),
+      mi('Sample aufnehmen (Mikrofon)', recordNewSample),
+      '-',
       mi('Neues leeres Projekt', newEmptyProject),
       mi('Werkseinstellung laden', factoryReset),
       '-',
@@ -740,6 +746,7 @@ function menus() {
       '-',
       { header: true, label: `Pad ${padLabel(p.cur.pad)} · ${padTitle(p.cur.pad)}` },
       mi('Sample wählen …', () => showView('samples')),
+      mi('Eigene Datei aufs Pad laden …', loadFileToCurrentPad),
       mi('Pad bearbeiten …', () => showView('pad')),
       mi('Pad kopieren', padCopy, { kbd: 'Strg+C' }),
       mi('Pad einfügen', padPaste, { kbd: 'Strg+V', disabled: () => !S.clip }),
@@ -1130,6 +1137,8 @@ BUILDERS.pad = (root) => {
 
   const choose = el('button', { class: 'btn pri', type: 'button', text: 'Sample wählen' });
   choose.addEventListener('click', () => showView('samples'));
+  const fileB = el('button', { class: 'btn', type: 'button', text: '+ Datei', title: 'Eigene Audiodatei direkt auf dieses Pad laden' });
+  fileB.addEventListener('click', loadFileToCurrentPad);
   const play = el('button', { class: 'btn', type: 'button', text: '▶ Hören' });
   play.addEventListener('click', () => S.engine.trigger(i, 110));
   const copy = el('button', { class: 'btn', type: 'button', text: 'Kopieren' });
@@ -1147,7 +1156,7 @@ BUILDERS.pad = (root) => {
 
   root.append(el('div', { class: 'padhead' },
     el('div', { class: 'big' }, prevPad, ' ', nextPad, ' ', el('small', { text: padLabel(i) }), meta ? meta.name : (pad.s ? 'Sample fehlt' : 'Leeres Pad')),
-    el('div', { class: 'row', style: { marginBottom: '0' } }, choose, play, copy, paste, reset, clear)));
+    el('div', { class: 'row', style: { marginBottom: '0' } }, choose, fileB, play, copy, paste, reset, clear)));
 
   const cv = el('canvas', { class: 'wave', 'aria-label': 'Wellenform. Ziehen verschiebt Start oder Ende.' });
   root.append(cv);
@@ -1368,6 +1377,11 @@ BUILDERS.samples = (root) => {
   root.replaceChildren();
   const search = el('input', { class: 'txt-in', type: 'search', placeholder: 'Suchen: kick, dusty, rim, lofi, piano, siren, organ, timbale …', value: S.sampleQuery, 'aria-label': 'Samples durchsuchen', style: { flex: '1 1 220px' } });
   const target = el('div', { class: 'muted', id: 'sampleTarget' });
+  const addB = el('button', { class: 'btn pri', type: 'button', text: '+ Samples hinzufügen', title: 'Audiodateien laden (mehrere möglich) – oder einfach ins Fenster ziehen' });
+  addB.addEventListener('click', addSamplesFromPicker);
+  const recB = el('button', { class: 'btn', type: 'button', text: '● Aufnehmen' });
+  recB.addEventListener('click', recordNewSample);
+  root.append(el('div', { class: 'row' }, addB, recB, el('span', { class: 'muted', style: { fontSize: '12px' }, text: 'WAV, MP3, AIFF, FLAC, OGG, M4A · bis 60 s · Dateien auch per Drag & Drop, direkt auf ein Pad' })));
   root.append(el('div', { class: 'row' }, search, target));
   const packs = el('div', { class: 'chips', role: 'group', 'aria-label': 'Packs' });
   const packList = [['all', 'Alle Packs'], ...Object.entries(PACKS)];
@@ -1421,8 +1435,16 @@ BUILDERS.samples = (root) => {
           renderView('samples');
           updatePads();
         });
-        row.append(del);
-        row.style.gridTemplateColumns = '36px minmax(0,1fr) auto auto auto';
+        const ren = el('button', { type: 'button', class: 'btn', 'aria-label': 'Umbenennen ' + m.name, text: '✎' });
+        ren.addEventListener('click', async () => {
+          const n = prompt('Neuer Name', m.name);
+          if (n == null || !n.trim()) return;
+          await S.catalog.updateUser(m.id, { name: n.trim() });
+          renderView('samples');
+          updatePads();
+        });
+        row.append(ren, del);
+        row.style.gridTemplateColumns = '36px minmax(0,1fr) auto auto auto auto';
       }
       list.append(row);
     }
@@ -1439,9 +1461,10 @@ function updateSampleTarget() {
   if (t) t.textContent = `Ziel: ${padLabel(P().cur.pad)} (${padTitle(P().cur.pad)}) – Pad antippen zum Wechseln`;
 }
 
-function assignSample(id) {
+function assignSample(id) { assignSampleTo(P().cur.pad, id); }
+
+function assignSampleTo(i, id, quiet = false) {
   pushUndo(true);
-  const i = P().cur.pad;
   const pad = P().pads[i];
   const cat = catOf(id);
   pad.s = id;
@@ -1450,11 +1473,166 @@ function assignSample(id) {
   if (cat === 'hat' && !pad.choke) { pad.choke = 1; pad.mono = true; }
   S.engine.strip(i);
   S.engine.updatePad(i);
-  S.engine.trigger(i, 110);
+  if (!quiet) S.engine.trigger(i, 110);
   updatePads();
   if (S.view === 'samples') renderView('samples');
+  if (S.view === 'pad' && i === P().cur.pad) renderView('pad');
   dirty();
-  toast(`${S.catalog.meta(id).name} → ${padLabel(i)}`);
+  if (!quiet) toast(`${S.catalog.meta(id).name} → ${padLabel(i)}`);
+}
+
+// =====================================================================
+// EIGENE SAMPLES HINZUFÜGEN (Dateiauswahl, Drag & Drop)
+// =====================================================================
+const AUDIO_ACCEPT = 'audio/*,.wav,.wave,.aif,.aiff,.mp3,.flac,.ogg,.oga,.opus,.m4a,.aac,.caf';
+const AUDIO_EXT = /\.(wav|wave|aif|aiff|mp3|flac|ogg|oga|opus|m4a|aac|caf)$/i;
+const CAT_WORDS = [
+  ['kick', /kick|\bbd\b|bass ?drum|\bkik\b/],
+  ['snare', /snare|\bsd\b|\bsnr\b|\brim/],
+  ['clap', /clap|\bsnap|klatsch/],
+  ['hat', /hat\b|hats\b|\bhh\b|hihat|\boh\b|\bch\b/],
+  ['cymbal', /crash|ride|cymbal|\bcym|splash|china/],
+  ['tom', /\btom/],
+  ['bass', /bass|\b808|\bsub\b/],
+  ['fx', /\bfx|riser|sweep|scratch|vox|vocal|noise|vinyl|siren|impact|whoosh|horn ?fx/],
+  ['keys', /piano|keys|rhodes|chord|organ|stab|horn|sax|brass|guitar|synth|\bpad\b|vibe|string|flute|loop/],
+  ['perc', /perc|shak|tamb|conga|bongo|cowbell|clave|wood|triang|guiro|timbal|agogo|cabasa/],
+];
+
+function guessCat(name) {
+  const n = ' ' + name.toLowerCase().replace(/[_\-.()[\]]+/g, ' ') + ' ';
+  for (const [c, re] of CAT_WORDS) if (re.test(n)) return c;
+  return 'user';
+}
+
+function pickFiles(multiple = true) {
+  return new Promise((resolve) => {
+    const inp = el('input', { type: 'file', accept: AUDIO_ACCEPT, multiple, hidden: true });
+    inp.addEventListener('change', () => { const f = Array.from(inp.files || []); inp.remove(); resolve(f); });
+    document.body.append(inp);
+    inp.click();
+  });
+}
+
+async function decodeFile(f) {
+  if (f.size > 80 * 1024 * 1024) throw new Error('Datei zu groß');
+  const buf = await S.ctx.decodeAudioData(await f.arrayBuffer());
+  const len = Math.min(buf.length, Math.floor(buf.sampleRate * 60));
+  const mono = toMono(buf, 0, len);
+  let st = 0;
+  while (st < mono.length && Math.abs(mono[st]) < 0.0006) st++;
+  st = Math.max(0, st - Math.floor(buf.sampleRate * 0.002));
+  if (st > mono.length - 64) st = 0;
+  return { data: st ? mono.slice(st) : mono, sr: buf.sampleRate, cut: buf.length > len };
+}
+
+async function importSampleFiles(fileList, targetPad = null) {
+  const files = Array.from(fileList || []).filter((f) => /^audio\//.test(f.type) || AUDIO_EXT.test(f.name));
+  if (!files.length) { toast('Keine Audiodateien gefunden'); return []; }
+  if (S.ctx.state !== 'running') S.ctx.resume();
+  toast(files.length > 1 ? `Importiere ${files.length} Dateien …` : `Importiere ${files[0].name} …`);
+  const added = [];
+  let failed = 0;
+  let notStored = false;
+  for (const f of files.slice(0, 64)) {
+    try {
+      const { data, sr, cut } = await decodeFile(f);
+      const name = f.name.replace(/\.[^.]+$/, '').slice(0, 48) || 'Sample';
+      const cat = guessCat(name);
+      const { id, stored } = await S.catalog.addUser(name, data, sr, 'eigene import', cat);
+      if (!stored) notStored = true;
+      added.push({ id, name, cat, cut });
+    } catch (e) {
+      console.warn('Import fehlgeschlagen', f.name, e);
+      failed++;
+    }
+  }
+  if (!added.length) { toast('Import fehlgeschlagen – Format nicht lesbar'); return []; }
+  if (targetPad != null) {
+    assignSampleTo(targetPad, added[0].id);
+    if (notStored) toast('Hinweis: Browser-Speicher nicht verfügbar – Sample gilt nur für diese Sitzung');
+  } else {
+    if (S.view === 'samples') renderView('samples');
+    showImportDialog(added, failed, notStored);
+  }
+  return added;
+}
+
+async function addSamplesFromPicker() {
+  const files = await pickFiles(true);
+  if (files.length) await importSampleFiles(files);
+}
+
+async function loadFileToCurrentPad() {
+  const files = await pickFiles(false);
+  if (files.length) await importSampleFiles(files.slice(0, 1), P().cur.pad);
+}
+
+function recordNewSample() {
+  showView('chop');
+  if (!S.rec) toggleMic();
+}
+
+function showImportDialog(added, failed, notStored) {
+  const start = P().cur.pad;
+  const catOpts = [...Object.entries(CATS)];
+  const list = el('div', { class: 'imp-list' });
+  for (const a of added) {
+    const pl = el('button', { type: 'button', class: 'btn', 'aria-label': 'Vorhören ' + a.name, text: '▶' });
+    pl.addEventListener('click', () => S.engine.preview(a.id));
+    const nm = el('input', { class: 'txt-in', type: 'text', value: a.name, maxlength: '48', 'aria-label': 'Name' });
+    nm.addEventListener('change', () => { S.catalog.updateUser(a.id, { name: nm.value.trim() || a.name }); a.name = nm.value; });
+    const cs = el('select', { class: 'sel-in', 'aria-label': 'Kategorie' }, ...catOpts.map(([k, l]) => el('option', { value: k, text: l, selected: k === a.cat })));
+    cs.addEventListener('change', () => { S.catalog.updateUser(a.id, { cat: cs.value }); a.cat = cs.value; });
+    list.append(el('div', { class: 'imp-row' }, pl, nm, cs, a.cut ? el('span', { class: 'muted', title: 'Auf 60 s gekürzt', text: '60 s' }) : el('span')));
+  }
+  const last = Math.min(NUM_PADS - 1, start + added.length - 1);
+  const toPads = el('button', { class: 'btn pri', type: 'button', text: added.length > 1 ? `Auf Pads ${padLabel(start)} – ${padLabel(last)} legen` : `Auf Pad ${padLabel(start)} legen` });
+  const done = el('button', { class: 'btn', type: 'button', text: 'Nur in der Bibliothek' });
+  const msg = [`${added.length} Sample${added.length > 1 ? 's' : ''} hinzugefügt.`];
+  if (failed) msg.push(`${failed} Datei${failed > 1 ? 'en' : ''} nicht lesbar.`);
+  if (notStored) msg.push('Browser-Speicher nicht verfügbar: gilt nur für diese Sitzung.');
+  else msg.push('Gespeichert im Browser (bleibt erhalten).');
+  const close = openDialog('Samples hinzugefügt', el('div', {},
+    el('p', { class: 'prose', text: msg.join(' ') }), list,
+    el('div', { class: 'row', style: { marginTop: '12px', marginBottom: '0' } }, toPads, done)));
+  toPads.addEventListener('click', () => {
+    added.forEach((a, k) => { if (start + k < NUM_PADS) assignSampleTo(start + k, a.id, true); });
+    selectPad(start);
+    close();
+    toast(`${Math.min(added.length, NUM_PADS - start)} Pads belegt ab ${padLabel(start)}`);
+  });
+  done.addEventListener('click', () => {
+    close();
+    S.samplePack = 'user';
+    S.sampleCat = 'all';
+    showView('samples');
+  });
+}
+
+function bindDrop() {
+  let depth = 0;
+  const hasFiles = (e) => e.dataTransfer && Array.from(e.dataTransfer.types || []).includes('Files');
+  const clearMarks = () => { document.body.classList.remove('dropping'); for (const b of padEls) if (b) b.classList.remove('drop-target'); };
+  window.addEventListener('dragenter', (e) => { if (!hasFiles(e)) return; depth++; document.body.classList.add('dropping'); });
+  window.addEventListener('dragleave', () => { depth = Math.max(0, depth - 1); if (!depth) clearMarks(); });
+  window.addEventListener('dragover', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'copy';
+    const padEl = e.target.closest && e.target.closest('.pad');
+    for (const b of padEls) if (b) b.classList.toggle('drop-target', b === padEl);
+  });
+  window.addEventListener('drop', (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    depth = 0;
+    const padEl = e.target.closest && e.target.closest('.pad');
+    clearMarks();
+    const files = e.dataTransfer.files;
+    if (padEl) importSampleFiles(files, bankBase() + +padEl.dataset.i);
+    else importSampleFiles(files);
+  });
 }
 
 // =====================================================================
@@ -1750,7 +1928,7 @@ BUILDERS.file = (root) => {
   // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
   root.append(el('div', { class: 'card', id: 'about', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.2.0.apk" style="color:var(--teal)">BAP-50-1.2.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 8 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.3.0.apk" style="color:var(--teal)">BAP-50-1.3.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 8 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
 };
 
 function loadProject(raw, msg) {

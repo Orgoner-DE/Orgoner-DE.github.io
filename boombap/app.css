@@ -440,3 +440,15 @@ table.keys td:first-child { white-space: nowrap; padding-right: 12px; }
 @media (max-width: 360px) {
   .mb-btn { padding: 7px 5px; font-size: 12px; }
 }
+
+/* ---------- Samples hinzufügen ---------- */
+.imp-list { display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.imp-row { display: grid; grid-template-columns: 40px minmax(0, 1fr) 130px auto; gap: 6px; align-items: center; }
+.imp-row .txt-in { width: 100%; }
+@media (max-width: 520px) { .imp-row { grid-template-columns: 40px minmax(0, 1fr) 104px; } .imp-row > span { display: none; } }
+body.dropping::after {
+  content: 'Audiodateien hier ablegen – auf ein Pad ziehen legt sie direkt dorthin';
+  position: fixed; inset: 10px; z-index: 90; pointer-events: none; display: grid; place-items: center; text-align: center; padding: 24px;
+  border: 3px dashed var(--amber); border-radius: 18px; background: rgba(14, 13, 16, .55); color: var(--amber2); font-weight: 800; font-size: 18px;
+}
+.pad.drop-target { outline: 3px solid var(--teal); outline-offset: 2px; background: radial-gradient(120% 90% at 50% 20%, #4fd1c566, var(--pad) 75%); }

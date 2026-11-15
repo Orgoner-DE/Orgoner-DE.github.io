@@ -119,6 +119,12 @@ public final class MainActivity extends Activity {
                 try { intent = params.createIntent(); }
                 catch (Exception e) { intent = new Intent(Intent.ACTION_GET_CONTENT).setType("*/*"); }
                 intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
+                if (intent.getType() == null || intent.getType().isEmpty()) {
+                    boolean audio = false;
+                    for (String t : params.getAcceptTypes()) if (t != null && (t.startsWith("audio") || t.startsWith(".wav") || t.startsWith(".mp3"))) audio = true;
+                    intent.setType(audio ? "audio/*" : "*/*");
+                }
                 try {
                     startActivityForResult(intent, PICK_FILE);
                     return true;

@@ -77,6 +77,7 @@ export class Catalog {
     this.buffers = new Map(); // id -> AudioBuffer (Original)
     this.cache = new Map();   // id|vint|rev -> AudioBuffer
     this.peaks = new Map();
+    this.userRecs = new Map();
     this.libraries = {};
   }
 
@@ -118,16 +119,27 @@ export class Catalog {
     const buf = new AudioBuffer({ length: Math.max(1, data.length), numberOfChannels: 1, sampleRate: rec.sr });
     buf.copyToChannel(data, 0);
     this.buffers.set(rec.id, buf);
-    this.add({ id: rec.id, name: rec.name, cat: 'user', pack: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false });
+    this.userRecs.set(rec.id, rec);
+    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false });
   }
 
   // Speichert ein eigenes Sample (mono Float32) und gibt die ID zurück.
-  async addUser(name, data, sr, tags = 'eigene') {
-    const id = 'u' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36);
-    const rec = { id, name, sr, data, tags };
+  async addUser(name, data, sr, tags = 'eigene', cat = 'user') {
+    const id = 'u' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
+    const rec = { id, name, sr, data, tags, cat };
     this.addUserRecord(rec);
     const stored = await dbPut(rec);
     return { id, stored };
+  }
+
+  // Name oder Kategorie eines eigenen Samples ändern (auch in IndexedDB).
+  async updateUser(id, changes) {
+    const rec = this.userRecs.get(id);
+    const m = this.byId.get(id);
+    if (!rec || !m || m.builtin) return false;
+    if (changes.name != null) { rec.name = m.name = String(changes.name).slice(0, 60) || m.name; }
+    if (changes.cat != null && (CATS[changes.cat] || changes.cat === 'user')) { rec.cat = m.cat = changes.cat; }
+    return dbPut(rec);
   }
 
   async removeUser(id) {
@@ -138,6 +150,7 @@ export class Catalog {
     this.buffers.delete(id);
     for (const k of Array.from(this.cache.keys())) if (k.startsWith(id + '|')) this.cache.delete(k);
     this.peaks.delete(id);
+    this.userRecs.delete(id);
     await dbDelete(id);
   }
 
