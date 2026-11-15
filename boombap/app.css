@@ -587,3 +587,68 @@ body.dropping::after {
 @media (max-width: 1500px) { .tab-g { font-size: 0; padding: 0; width: 1px; height: 22px; background: var(--line); border: 0; margin: 0 4px; } .tab-g:first-child { display: none; } }
 @media (max-width: 1150px) { .tab { padding: 8px 7px; font-size: 11.5px; } }
 @media (max-width: 1350px) and (min-width: 981px) { .tab .ti { display: none; } .tab { padding: 7px 7px; font-size: 11.5px; letter-spacing: .03em; } }
+
+/* ---------- Controller (APC mini mk2) ---------- */
+.apc-wrap { display: grid; grid-template-columns: minmax(0, 560px) minmax(0, 1fr); gap: 12px; align-items: start; }
+.apc-card { padding: 14px; }
+.apc-dev {
+  display: grid; grid-template-columns: minmax(0, 1fr) 58px; grid-template-areas: 'grid scenes' 'tracks shift';
+  gap: 8px 10px; padding: 12px; border-radius: 12px; background: linear-gradient(#1c1b20, #141317); border: 1px solid #000;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+}
+.apc-grid { grid-area: grid; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
+.apc-pad {
+  --led: #141317; --lv: 1;
+  position: relative; aspect-ratio: 1; min-width: 0; border-radius: 5px; border: 1px solid #000; padding: 0;
+  background: #2a292e; color: #e9e6df; cursor: pointer; overflow: hidden; touch-action: none;
+  font: 600 8px/1.05 var(--mono); letter-spacing: .02em;
+}
+.apc-pad::before { content: ''; position: absolute; inset: 0; background: var(--led); opacity: var(--lv); transition: opacity .05s; }
+.apc-pad.lit::before { box-shadow: 0 0 10px var(--led); }
+.apc-pad span { position: relative; display: block; padding: 2px; text-shadow: 0 0 2px #000, 0 0 3px #000; word-break: break-word; }
+.apc-pad:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+.apc-pad.pulse::before { animation: apcPulse 1s ease-in-out infinite; }
+.apc-pad.blink::before, .apc-btn.blink i { animation: apcBlink .5s steps(1) infinite; }
+@keyframes apcPulse { 50% { opacity: calc(var(--lv) * .35); } }
+@keyframes apcBlink { 50% { opacity: .12; } }
+.apc-scenes { grid-area: scenes; display: grid; grid-template-rows: repeat(8, minmax(0, 1fr)); gap: 5px; }
+.apc-tracks { grid-area: tracks; display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 5px; }
+.apc-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; min-width: 0; min-height: 34px;
+  border: 1px solid #000; border-radius: 6px; background: #232227; color: var(--muted); cursor: pointer; padding: 3px 2px;
+  font: 600 8.5px/1.05 var(--mono); letter-spacing: .03em; text-align: center;
+}
+.apc-btn i { width: 70%; max-width: 26px; height: 5px; border-radius: 3px; background: #3a1512; }
+.apc-btn.sc i { background: #12301a; }
+.apc-btn.tr.on i, .apc-btn.tr.blink i { background: #ff3b2f; box-shadow: 0 0 6px #ff3b2f; }
+.apc-btn.sc.on i, .apc-btn.sc.blink i { background: #3dff6a; box-shadow: 0 0 6px #3dff6a; }
+.apc-btn.on span { color: var(--text); }
+.apc-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.apc-btn.shift { grid-area: shift; font-size: 9px; }
+.apc-btn.shift.on { background: var(--amber); color: #1b1408; }
+.apc-side { display: grid; gap: 12px; min-width: 0; }
+.apc-set { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 8px 10px; align-items: center; }
+.apc-set .lab { font-size: 11px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+.apc-set .seg { justify-self: start; }
+.apc-help { display: grid; gap: 6px; font-size: 13px; }
+.apc-h { display: grid; grid-template-columns: 130px minmax(0, 1fr); gap: 10px; }
+.apc-h b { color: var(--amber2); font-weight: 600; }
+.apc-h span { color: var(--text); min-width: 0; }
+@media (max-width: 1100px) { .apc-wrap { grid-template-columns: minmax(0, 1fr); } .apc-card { max-width: 560px; } }
+@media (max-width: 640px) {
+  .apc-dev { grid-template-columns: minmax(0, 1fr) 44px; padding: 8px; gap: 6px; }
+  .apc-grid, .apc-scenes, .apc-tracks { gap: 3px; }
+  .apc-pad { font-size: 6.5px; border-radius: 4px; }
+  .apc-btn { font-size: 6.5px; min-height: 30px; padding: 2px 1px; }
+  .apc-set, .apc-h { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .apc-set .lab { margin-top: 6px; }
+  .apc-card { padding: 8px; }
+}
+@media (prefers-reduced-motion: reduce) { .apc-pad.pulse::before, .apc-pad.blink::before, .apc-btn.blink i { animation: none; } }
+.apc-pad.lt span { color: #111; text-shadow: 0 0 2px rgba(255,255,255,.6); }
+/* Tab-Leiste mit 9 Bereichen: Gruppen als Trennstriche, kompakter, ab 1281 px einzeilig */
+.tabs { gap: 3px; }
+.tab { padding: 8px 7px; }
+.tab-g { font-size: 0; padding: 0; width: 1px; height: 22px; background: var(--line); border: 0; margin: 0 4px; }
+.tab-g:first-child { display: none; }
+@media (max-width: 1400px) and (min-width: 981px) { .tab .ti { display: none; } .tab { padding: 7px 7px; font-size: 11.5px; letter-spacing: .03em; } }

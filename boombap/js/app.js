@@ -13,6 +13,7 @@ import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
 import { readZip, makeZip } from './zip.js';
 import { detectBpm, decideLoop, isMelodic, chopLoop, master, classifyDrum } from './chopper.js';
 import { renderSynth, randomize, SYNTH_PRESETS, SYNTH_DEFAULT, WAVES, CHORDS, CHORD_NAMES } from './synth.js';
+import { Apc, MODES as APC_MODES, cssFor } from './apc.js';
 
 const S = {
   ctx: null, catalog: new Catalog(), engine: null, seq: null, project: null, history: new History(),
@@ -122,6 +123,7 @@ async function boot() {
       onRecord: (pad, step) => { S.recFlash = { pad, step }; S.needGridRefresh = true; autosave(); },
       onSongPos: (i) => { S.songPos = i; S.needSongRefresh = true; },
     });
+    S.apc = new Apc(apcApi());
     buildUI();
     $('#boot').hidden = true;
     $('#app').hidden = false;
@@ -129,6 +131,10 @@ async function boot() {
     document.addEventListener('visibilitychange', () => {
       if (!document.hidden && S.ctx.state !== 'running') S.ctx.resume();
     });
+    window.addEventListener('pagehide', () => { if (S.apc && S.apc.connected && S.apc.enabled) S.apc.clearDevice(); });
+    let auto = false;
+    try { auto = localStorage.getItem(midiAutoKey()) === '1'; } catch (_) { /* egal */ }
+    if (auto || (window.BapMidi && window.BapMidi.connect)) enableMidi();
   } catch (e) {
     console.error(e);
     $('#bootMsg').textContent = 'Start fehlgeschlagen: ' + (e && e.message ? e.message : e);
@@ -137,7 +143,7 @@ async function boot() {
 }
 
 // ---------- Aufbau ----------
-const TABS = [['seq', 'SEQUENCER', '▤', 'Spielen'], ['pad', 'PAD-EDIT', '◉'], ['mix', 'MIXER', '☰'], ['song', 'SONG', '≡'], ['samples', 'SAMPLE-BANK', '▥', 'Klänge'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['file', 'IMPORT / EXPORT', '⇅', 'Daten']];
+const TABS = [['seq', 'SEQUENCER', '▤', 'Spielen'], ['pad', 'PAD-EDIT', '◉'], ['mix', 'MIXER', '☰'], ['song', 'SONG', '≡'], ['samples', 'SAMPLE-BANK', '▥', 'Klänge'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['file', 'IMPORT / EXPORT', '⇅', 'Daten'], ['apc', 'APC', '▦']];
 const BUILDERS = {};
 
 function buildUI() {
@@ -150,7 +156,7 @@ function buildUI() {
   const views = $('#views');
   for (const [id, label, icon, group] of TABS) {
     if (group) tabs.append(el('span', { class: 'tab-g', 'aria-hidden': 'true', text: group }));
-    const t = el('button', { class: 'tab', role: 'tab', type: 'button', 'aria-selected': String(id === S.view), 'aria-controls': 'view-' + id, id: 'tab-' + id },
+    const t = el('button', { class: 'tab', role: 'tab', type: 'button', 'aria-selected': String(id === S.view), 'aria-controls': 'view-' + id, id: 'tab-' + id, title: VIEW_NAMES[id] || null },
       el('span', { class: 'ti', 'aria-hidden': 'true', text: icon }), el('span', { text: label }));
     t.addEventListener('click', () => showView(id));
     tabs.append(t);
@@ -730,6 +736,9 @@ function showHelp() {
     ['?', 'Diese Hilfe'],
     ['Datei ins Fenster ziehen', 'Samples hinzufügen; direkt auf ein Pad ziehen = auf dieses Pad legen'],
     ['Alt', 'Menüleiste mit der Tastatur: Fokus auf „Datei“, dann Pfeiltasten'],
+    ['APC mini mk2: Scene 1–5', 'Modus PADS · SEQ · LANE · MIX · MENÜ (Belegung im Bereich CONTROLLER)'],
+    ['APC: Scene 6 / 7 / 8', 'Seite blättern · Play/Stop · Aufnahme'],
+    ['APC: Shift + Pad', 'Pad/Spur wählen, ohne zu spielen'],
   ];
   const tbl = el('table', { class: 'keys' }, ...rows.map(([k, d]) => el('tr', {}, el('td', {}, el('kbd', { text: k })), el('td', { text: d }))));
   openDialog('Tastenkürzel & Bedienung', el('div', {}, tbl,
@@ -844,6 +853,12 @@ function menus() {
     { id: 'midi', label: 'MIDI', items: [
       mi(S.midi ? 'MIDI ist aktiv' : 'MIDI aktivieren', enableMidi, { disabled: !!S.midi }),
       '-',
+      { header: true, label: 'APC mini mk2' + (S.apc && S.apc.connected ? ' · verbunden' : '') },
+      mi('Controller-Ansicht (LED-Spiegel) …', () => showView('apc')),
+      mi('Steuerung + LEDs', () => { S.apc.setEnabled(!S.apc.enabled); if (S.view === 'apc') renderView('apc'); }, { checked: !!(S.apc && S.apc.enabled) }),
+      ...APC_MODES.map(([k, l], n) => mi(`Modus ${l}`, () => S.apc.setMode(k), { checked: !!S.apc && S.apc.mode === k, radio: true, kbd: 'Scene ' + (n + 1) })),
+      mi('LED-Test', () => { S.apc.ledTest(); }),
+      '-',
       { header: true, label: 'Startnote' },
       ...[[36, '36 – Pad-Controller'], [0, '0 – Grid-Controller (APC)'], [24, '24'], [48, '48'], [60, '60']].map(([v, l]) => mi(l, () => setMidiBase(v), { checked: p.midi.base === v, radio: true })),
       '-',
@@ -858,7 +873,7 @@ function menus() {
 
 // ---------- Untere Navigation (Handy/Tablet) ----------
 const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'EDIT', '◉'], ['mix', 'MIX', '☰'], ['samples', 'BANK', '▥'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'DATEI', '⇅']];
-const VIEW_NAMES = { synth: 'Synth-Sampler', seq: 'Sequencer', pad: 'Pad-Editor', mix: 'Mixer', samples: 'Sample-Bank', chop: 'Chop & Aufnahme', song: 'Song', file: 'Import / Export' };
+const VIEW_NAMES = { synth: 'Synth-Sampler', seq: 'Sequencer', pad: 'Pad-Editor', mix: 'Mixer', samples: 'Sample-Bank', chop: 'Chop & Aufnahme', song: 'Song', file: 'Import / Export', apc: 'Controller (APC mini mk2)' };
 
 function buildBottomNav() {
   const nav = $('#botnav');
@@ -2680,9 +2695,10 @@ BUILDERS.file = (root) => {
   root.append(el('div', { class: 'io-grid', style: { marginTop: '10px' } },
     el('div', { class: 'card' }, el('h3', { text: 'MIDI-Eingang' }),
       el('div', { class: 'row' }, midiBtn, base, el('span', { class: 'muted', id: 'midiState', text: S.midiStatus })),
+      ioItem('▦', 'APC mini mk2', 'LEDs, 5 Modi am Gerät, Fader – Controller-Ansicht öffnen', () => showView('apc'), { pri: !!(S.apc && S.apc.connected) }),
       el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, ab +16 die Pads ab B01 direkt (bis Note 127). MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System.' })),
     el('div', { class: 'card', id: 'about' }, el('h3', { text: 'Über BAP-50' }),
-      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && m.pack !== 'synth').length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.6.0.apk" style="color:var(--teal)">BAP-50-1.6.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` }))));
+      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && m.pack !== 'synth').length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.7.0.apk" style="color:var(--teal)">BAP-50-1.7.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos. Gerätenamen (z. B. APC mini mk2) stehen nur als Hinweis auf die Kompatibilität; keine Verbindung zum Hersteller.</p>` }))));
 };
 
 function loadProject(raw, msg) {
@@ -2697,33 +2713,192 @@ function loadProject(raw, msg) {
   toast(msg);
 }
 
-// ---------- MIDI ----------
-// Zerlegt rohe MIDI-Bytes (Android-Brücke) in einzelne Nachrichten, inkl. Running Status.
-let midiRun = 0;
-let midiBuf = [];
-function parseMidiBytes(bytes) {
-  for (const b of bytes) {
-    if (b >= 0xf8) { onMidi({ data: [b] }); continue; }
-    if (b >= 0x80) {
-      midiRun = b < 0xf0 ? b : 0;
-      midiBuf = [b];
-      continue;
+// =====================================================================
+// CONTROLLER (APC mini mk2)
+// =====================================================================
+const AM = { cells: [], track: [], scene: [], help: null, lab: '' };
+BUILDERS.apc = (root) => {
+  root.replaceChildren();
+  const a = S.apc;
+  const midiB = el('button', { class: 'btn pri', type: 'button', text: S.midi ? 'MIDI aktiv' : 'MIDI aktivieren', disabled: !!S.midi });
+  midiB.addEventListener('click', enableMidi);
+  root.append(el('div', { class: 'sb-head' },
+    el('div', {}, el('h2', { class: 'vh', text: 'Controller · APC mini mk2' }),
+      el('p', { class: 'muted vsub', id: 'apcState', text: apcStateText() })),
+    el('div', { class: 'row', style: { marginBottom: '0' } }, midiB)));
+
+  // Spiegel des Geräts
+  const grid = el('div', { class: 'apc-grid', role: 'group', 'aria-label': 'Pads des Controllers' });
+  AM.cells = [];
+  for (let r = 7; r >= 0; r--) {
+    for (let c = 0; c < 8; c++) {
+      const n = r * 8 + c;
+      const b = el('button', { type: 'button', class: 'apc-pad', 'data-n': String(n) }, el('span'));
+      b.addEventListener('pointerdown', (e) => { e.preventDefault(); b.setPointerCapture && b.setPointerCapture(e.pointerId); a.virtualGrid(n, true); });
+      const up = () => a.virtualGrid(n, false);
+      b.addEventListener('pointerup', up);
+      b.addEventListener('pointercancel', up);
+      b.addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && !e.repeat) { e.preventDefault(); a.virtualGrid(n, true); } });
+      b.addEventListener('keyup', (e) => { if (e.key === 'Enter' || e.key === ' ') up(); });
+      AM.cells[n] = b;
+      grid.append(b);
     }
-    if (!midiRun) continue;
-    if (!midiBuf.length) midiBuf = [midiRun];
-    midiBuf.push(b);
-    const need = (midiRun & 0xf0) === 0xc0 || (midiRun & 0xf0) === 0xd0 ? 2 : 3;
-    if (midiBuf.length >= need) { onMidi({ data: midiBuf }); midiBuf = []; }
+  }
+  const scenes = el('div', { class: 'apc-scenes', role: 'group', 'aria-label': 'Scene-Tasten' });
+  AM.scene = [];
+  for (let k = 0; k < 8; k++) {
+    const b = el('button', { type: 'button', class: 'apc-btn sc' }, el('i'), el('span'));
+    b.addEventListener('click', () => a.virtualScene(k));
+    AM.scene[k] = b;
+    scenes.append(b);
+  }
+  const tracks = el('div', { class: 'apc-tracks', role: 'group', 'aria-label': 'Track-Tasten' });
+  AM.track = [];
+  for (let k = 0; k < 8; k++) {
+    const b = el('button', { type: 'button', class: 'apc-btn tr' }, el('i'), el('span'));
+    b.addEventListener('click', () => a.virtualTrack(k));
+    AM.track[k] = b;
+    tracks.append(b);
+  }
+  const shift = el('button', { type: 'button', class: 'apc-btn shift' + (a.shift ? ' on' : ''), 'aria-pressed': String(a.shift), text: 'SHIFT' });
+  shift.addEventListener('click', () => { a.shift = !a.shift; shift.classList.toggle('on', a.shift); shift.setAttribute('aria-pressed', String(a.shift)); });
+  AM.shift = shift;
+  const dev = el('div', { class: 'apc-dev' }, grid, scenes, tracks, shift);
+
+  // Einstellungen
+  const onB = el('button', { type: 'button', text: a.enabled ? 'AN' : 'AUS', class: a.enabled ? 'on' : '' });
+  onB.addEventListener('click', () => { a.setEnabled(!a.enabled); renderView('apc'); });
+  const modeSeg = seg(APC_MODES.map(([k, l]) => [k, l]), a.mode, (m) => a.setMode(m), 'teal');
+  AM.modeSeg = modeSeg;
+  const fadSeg = seg(FADER_FN, a.fader, (f) => { a.set('fader', f); toast('Fader 1–8: ' + FADER_FN.find(([k]) => k === f)[1]); }, 'teal');
+  const veloSeg = seg([[64, '64'], [90, '90'], [110, '110'], [127, '127']], a.velo, (v) => a.set('velo', v));
+  const brSeg = seg([[2, '50 %'], [4, '75 %'], [6, '100 %']], a.bright, (v) => { a.set('bright', v); });
+  const test = el('button', { class: 'btn', type: 'button', text: 'LED-Test' });
+  test.addEventListener('click', () => { a.ledTest(); toast(a.connected ? 'LED-Test läuft am Gerät' : 'LED-Test (nur Spiegel, kein Gerät verbunden)'); });
+  const resend = el('button', { class: 'btn', type: 'button', text: 'LEDs neu senden' });
+  resend.addEventListener('click', () => { a.resetSent(); a.render(true); toast('LEDs neu gesendet'); });
+  const off = el('button', { class: 'btn', type: 'button', text: 'LEDs aus' });
+  off.addEventListener('click', () => { a.clearDevice(); toast('LEDs am Gerät gelöscht'); });
+  const lbl = (t) => el('span', { class: 'lab', text: t });
+  const set = el('div', { class: 'card' }, el('h3', { text: 'Einstellungen' }),
+    el('div', { class: 'apc-set' },
+      lbl('Steuerung + LEDs'), el('div', { class: 'seg red' }, onB),
+      lbl('Modus (Scene 1–5)'), modeSeg,
+      lbl('Fader 1–8'), fadSeg,
+      lbl('Anschlag Pads'), veloSeg,
+      lbl('Helligkeit'), brSeg),
+    el('div', { class: 'row', style: { marginTop: '10px', marginBottom: '0' } }, test, resend, off),
+    el('p', { class: 'hint', text: 'Ist die Steuerung aus, arbeitet der APC wie ein normaler MIDI-Controller (Startnote im MIDI-Menü). Fader 9 = Master. Am Gerät bleibt der Session-Modus aktiv (nicht Shift + Drum/Note).' }));
+  AM.help = el('div', { class: 'apc-help' });
+  const help = el('div', { class: 'card' }, el('h3', { text: 'Belegung im aktuellen Modus' }), AM.help);
+  AM.lab = '';
+  root.append(el('div', { class: 'apc-wrap' }, el('div', { class: 'card apc-card' }, dev), el('div', { class: 'apc-side' }, set, help)));
+  paintApcMirror(a.render());
+};
+
+function paintApcMirror(f) {
+  if (!AM.cells.length || !f) return;
+  const a = S.apc;
+  const L = a.labels();
+  for (let n = 0; n < 64; n++) {
+    const b = AM.cells[n];
+    if (!b) continue;
+    const st = cssFor(f.pads[n]);
+    const key = st.background + st.opacity + st.anim;
+    if (b._k !== key) {
+      b._k = key;
+      b.style.setProperty('--led', st.background);
+      b.style.setProperty('--lv', String(st.opacity));
+      b.classList.toggle('lit', st.background !== '#141317');
+      const hex = st.background.replace('#', '');
+      const lum = (parseInt(hex.slice(0, 2), 16) * 0.3 + parseInt(hex.slice(2, 4), 16) * 0.59 + parseInt(hex.slice(4, 6), 16) * 0.11) / 255;
+      b.classList.toggle('lt', lum * st.opacity > 0.55);
+      b.classList.toggle('pulse', st.anim === 'pulse');
+      b.classList.toggle('blink', st.anim === 'blink');
+    }
+    if (b._t !== L.grid[n]) { b._t = L.grid[n]; b.firstChild.textContent = L.grid[n]; b.setAttribute('aria-label', L.grid[n] || 'Pad ' + (n + 1)); }
+  }
+  const btn = (b, v, t) => {
+    if (b._v !== v) { b._v = v; b.classList.toggle('on', v === 1); b.classList.toggle('blink', v === 2); }
+    if (b._t !== t) { b._t = t; b.lastChild.textContent = t; }
+  };
+  for (let k = 0; k < 8; k++) { btn(AM.track[k], f.track[k], L.track[k]); btn(AM.scene[k], f.scene[k], L.scene[k]); }
+  if (AM.modeSeg && AM.modeSeg._m !== a.mode) { AM.modeSeg._m = a.mode; segSet(AM.modeSeg, a.mode); }
+  if (AM.shift && AM.shift._s !== a.shift) { AM.shift._s = a.shift; AM.shift.classList.toggle('on', a.shift); }
+  const lab = JSON.stringify(L.help);
+  if (AM.help && AM.lab !== lab) {
+    AM.lab = lab;
+    AM.help.replaceChildren(...L.help.map(([k, v]) => el('div', { class: 'apc-h' }, el('b', { text: k }), el('span', { text: v }))));
   }
 }
 
+// ---------- MIDI ----------
+// Zerlegt rohe MIDI-Bytes (Android-Brücke) in einzelne Nachrichten, inkl. Running Status, getrennt je Quelle.
+const midiParsers = new Map();
+function midiParser(key, sink) {
+  let p = midiParsers.get(key);
+  if (p) return p;
+  let run = 0;
+  let buf = [];
+  let sysex = false;
+  p = (bytes) => {
+    for (const b of bytes) {
+      if (b >= 0xf8) { sink([b]); continue; }
+      if (b === 0xf0) { sysex = true; continue; }
+      if (sysex) { if (b === 0xf7 || b >= 0x80) sysex = false; if (b < 0x80 || b === 0xf7) continue; }
+      if (b >= 0x80) { run = b < 0xf0 ? b : 0; buf = [b]; continue; }
+      if (!run) continue;
+      if (!buf.length) buf = [run];
+      buf.push(b);
+      const need = (run & 0xf0) === 0xc0 || (run & 0xf0) === 0xd0 ? 2 : 3;
+      if (buf.length >= need) { sink(buf); buf = []; }
+    }
+  };
+  midiParsers.set(key, p);
+  return p;
+}
+function parseMidiBytes(bytes, devId, port) {
+  const dev = S.midiDevs && S.midiDevs.get(String(devId));
+  const isApc = !!dev && dev.apc && (port | 0) === 0;
+  midiParser(String(devId) + ':' + (port | 0), (data) => routeMidi(data, isApc))(bytes);
+}
+
+function routeMidi(data, fromApc) {
+  if (fromApc && S.apc && S.apc.enabled && data[0] < 0xf0) { S.apc.onMidi(data); return; }
+  onMidi({ data });
+}
+
+// LED-Daten an den APC (Web-MIDI-Ausgang oder Android-Brücke)
+function apcSend(bytes) {
+  if (!bytes.length) return;
+  try {
+    if (S.apcOut) { S.apcOut.send(bytes); return; }
+    if (S.apcNative != null && window.BapMidi && window.BapMidi.send) window.BapMidi.send(String(S.apcNative), bytes.join(','));
+  } catch (e) { console.warn('APC senden', e); }
+}
+
+function midiAutoKey() { return 'bap50.midi.auto'; }
+
 async function enableMidi() {
+  try { localStorage.setItem(midiAutoKey(), '1'); } catch (_) { /* egal */ }
   if (window.BapMidi && window.BapMidi.connect) {
     window.BAP_midi = parseMidiBytes;
-    window.BAP_midiDevices = (list) => setMidiState(list && list.length ? 'Android MIDI: ' + list.map((d) => d.name).join(', ') : 'Kein MIDI-Gerät gefunden (USB anstecken)');
+    window.BAP_midiDevices = (list) => {
+      S.midiDevs = new Map();
+      let apc = null;
+      for (const d of list || []) {
+        const isApc = S.apc.isApc(d.name);
+        S.midiDevs.set(String(d.id), { ...d, apc: isApc });
+        if (isApc && d.ins > 0 && apc == null) apc = d;
+      }
+      S.apcNative = apc ? String(apc.id) : null;
+      S.apc.setConnected(!!apc, apc ? apc.name : '');
+      setMidiState(list && list.length ? 'Android MIDI: ' + list.map((d) => d.name).join(', ') : 'Kein MIDI-Gerät gefunden (USB anstecken)');
+    };
+    window.BAP_midiReady = (id) => { if (String(id) === S.apcNative) { S.apc.resetSent(); S.apc.render(true); } };
     S.midi = { native: true };
     window.BapMidi.connect();
-    if (S.view === 'file') renderView('file');
+    if (S.view === 'file' || S.view === 'apc') renderView(S.view);
     return;
   }
   if (!navigator.requestMIDIAccess) { setMidiState('Web MIDI wird hier nicht unterstützt (z. B. Safari)'); return; }
@@ -2731,18 +2906,34 @@ async function enableMidi() {
     S.midi = await navigator.requestMIDIAccess({ sysex: false });
     const bind = () => {
       const names = [];
-      for (const inp of S.midi.inputs.values()) { inp.onmidimessage = onMidi; names.push(inp.name); }
+      for (const inp of S.midi.inputs.values()) {
+        const apc = S.apc.isApc(inp.name);
+        inp.onmidimessage = (e) => routeMidi(Array.from(e.data), apc);
+        names.push(inp.name);
+      }
+      let out = null;
+      for (const o of S.midi.outputs.values()) if (!out && S.apc.isApc(o.name)) out = o;
+      const changed = out !== S.apcOut;
+      S.apcOut = out;
+      if (changed || !!out !== S.apc.connected) S.apc.setConnected(!!out, out ? out.name : '');
       setMidiState(names.length ? 'Eingänge: ' + names.join(', ') : 'Kein MIDI-Gerät gefunden');
     };
     S.midi.onstatechange = bind;
     bind();
-    if (S.view === 'file') renderView('file');
+    if (S.view === 'file' || S.view === 'apc') renderView(S.view);
   } catch (e) {
+    S.midi = null;
     setMidiState('MIDI-Zugriff abgelehnt');
   }
 }
 
-function setMidiState(t) { S.midiStatus = t; const n = $('#midiState'); if (n) n.textContent = t; }
+function setMidiState(t) {
+  S.midiStatus = t;
+  const n = $('#midiState');
+  if (n) n.textContent = t;
+  const a = $('#apcState');
+  if (a) a.textContent = apcStateText();
+}
 
 const midiHeld = new Map();
 function onMidi(e) {
@@ -2764,6 +2955,98 @@ function onMidi(e) {
   }
 }
 
+// ---------- APC mini mk2: Brücke zur App ----------
+const apcHeld = new Map();
+const apcRefresh = debounce(() => {
+  if (S.view === 'mix' || S.view === 'pad' || S.view === 'seq') renderView(S.view);
+}, 180);
+const FADER_FN = [['vol', 'LEVEL'], ['pan', 'PAN'], ['sa', 'HALL'], ['sb', 'DELAY'], ['fq', 'FILTER'], ['tune', 'TUNE']];
+
+function apcApi() {
+  return {
+    project: P,
+    playing: () => S.seq.playing,
+    playStep: () => S.playStep,
+    catOf,
+    fullLevel: () => S.fullLevel,
+    repeatDiv: () => S.seq.repeatDiv,
+    levels: () => S.levels,
+    rec: () => S.seq.rec,
+    pending: () => S.seq.pending,
+    meter: (i) => (S.engine.strips.has(i) ? S.engine.meter(i) : 0),
+    send: apcSend,
+    toast,
+    hit(i, velo, key) {
+      if (S.ctx.state !== 'running') S.ctx.resume();
+      const v = S.fullLevel ? 127 : velo;
+      if (Math.floor(i / 16) === P().cur.bank) { const local = i % 16; apcHeld.set(key, { local }); padDown(local, v); return; }
+      if (S.seq.repeatDiv) { S.seq.hold(key, v, 0, i); apcHeld.set(key, { nr: true }); return; }
+      S.engine.trigger(i, v);
+      if (S.seq.playing && S.seq.rec) S.seq.recordHit(i, v);
+    },
+    release(key) {
+      const h = apcHeld.get(key);
+      if (!h) return;
+      apcHeld.delete(key);
+      if (h.local != null) padUp(h.local); else S.seq.release(key);
+    },
+    selectPad: (i) => { selectPad(i); toast(`Pad ${padLabel(i)} · ${padTitle(i)}`); },
+    toggleStep(i, st, velo) {
+      const ptn = curPtn();
+      if (st >= ptn.len) return;
+      pushUndo();
+      const on = ptn.steps[i] && ptn.steps[i][st] > 0;
+      setStep(i, st, on ? 0 : velo);
+      if (!on && !P().pads[i].s) toast(`Pad ${padLabel(i)} ist leer`);
+      S.needGridRefresh = true;
+      dirty();
+    },
+    toggleMute(i) { const pad = P().pads[i]; pad.mute = !pad.mute; S.engine.updateMutes(); updatePads(); apcRefresh(); dirty(); },
+    toggleSolo(i) { const pad = P().pads[i]; pad.solo = !pad.solo; S.engine.updateMutes(); apcRefresh(); dirty(); },
+    setPadParam(i, field, v) {
+      const pad = P().pads[i];
+      if (!pad) return;
+      pushUndo();
+      if (field === 'pan') pad.pan = +(v * 2 - 1).toFixed(2);
+      else if (field === 'tune') pad.tune = Math.round(v * 48 - 24);
+      else if (field === 'vol') pad.vol = +v.toFixed(3);
+      else pad[field] = +v.toFixed(3);
+      S.engine.strip(i);
+      S.engine.updatePad(i);
+      if (field === 'vol' && S.view === 'mix') syncStrip(i); else apcRefresh();
+      dirty();
+    },
+    setMaster(v) { P().master.vol = +v.toFixed(3); S.engine.applyMaster(); apcRefresh(); dirty(); },
+    setMasterParam(k, v) { P().master[k] = v; S.engine.applyMaster(); apcRefresh(); dirty(); toast(`${k === 'dust' ? 'Vinyl' : 'Crunch'} ${v > 0 ? 'an' : 'aus'}`); },
+    selectPattern: (i) => { selectPattern(i); if (!S.seq.playing) toast('Pattern ' + (i + 1)); },
+    setBank: (b) => { setBank(b); toast(`Bank ${BANK_NAMES[b]} · ${bankTitle(b)}`); },
+    setRepeat: (d) => { setRepeat(d); toast(d ? 'Note Repeat ' + d : 'Note Repeat aus'); },
+    setFull: (on) => { setFull(on); toast(on ? 'Full Level an' : 'Full Level aus'); },
+    setLevels: (m) => { setLevels(m); toast(m === 'off' ? '16 Levels aus' : '16 Levels ' + m.toUpperCase()); },
+    togglePlay: () => togglePlay(false),
+    stop: stopTransport,
+    toggleRec,
+    toggleMetro,
+    toggleSong: () => { toggleSong(); toast(P().song.on ? 'Song-Modus an' : 'Song-Modus aus'); },
+    tap: tapTempo,
+    setBpm,
+    setLength: (l) => { setPatternLength(l); toast(`Länge ${l / 16} Takt${l > 16 ? 'e' : ''}`); },
+    double: doublePattern,
+    clearBank: clearBankLanes,
+    undo,
+    redo,
+    setSwing: (v) => { P().swing = v; updateTransport(); updateLCD(); dirty(); toast('Swing ' + v + ' %'); },
+    stopAll: () => { S.engine.stopAll(); for (const k of Array.from(S.seq.held.keys())) S.seq.release(k); toast('Alle Stimmen gestoppt'); },
+  };
+}
+
+function apcStateText() {
+  if (!S.apc) return '';
+  if (!S.midi) return 'MIDI ist aus – „MIDI aktivieren“ antippen';
+  if (!S.apc.connected) return 'Kein APC mini mk2 gefunden – per USB anstecken';
+  return (S.apc.enabled ? 'Verbunden: ' : 'Verbunden (Steuerung aus): ') + S.apc.deviceName;
+}
+
 // ---------- Animationsschleife ----------
 function frame() {
   requestAnimationFrame(frame);
@@ -2781,6 +3064,7 @@ function frame() {
       const arr = ptn.steps[bankBase() + local];
       if (arr && arr[cur.step] > 0 && S.levels === 'off') flashPad(local);
     }
+    if (S.apc) S.apc.onStep(ptn, cur.step);
     if (S.view === 'seq') {
       const pg = Math.floor(cur.step / 16);
       if (S.follow && pg !== S.page && cur.ptn === S.shownPtn) { S.page = pg; renderView('seq'); }
@@ -2799,7 +3083,14 @@ function frame() {
     if (lit) { b.classList.add('hit'); b._nr = true; }
     else if (b._nr) { b._nr = false; b.classList.remove('hit'); }
   }
+  const now = performance.now();
+  if (S.apc && (S.apc.connected || S.view === 'apc') && now - apcLast >= 33) {
+    apcLast = now;
+    const f = S.apc.render();
+    if (S.view === 'apc') paintApcMirror(f);
+  }
 }
+let apcLast = 0;
 
 // ---------- Start ----------
 $('#bootBtn').addEventListener('click', boot);

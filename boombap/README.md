@@ -1,6 +1,6 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **1.6.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **1.7.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
 
 ## Funktionen
 
@@ -32,6 +32,14 @@ Version **1.6.0** · läuft unter `/boombap/` dieser Seite, als PWA installierba
 - **Export**: Pattern, Pattern ×4 oder Song als WAV (44,1 kHz, 16 Bit, Stereo); Projekt als JSON exportieren/importieren; Autosave und Projekt-Slots im Browser; eigene Samples in IndexedDB.
 - **Sample-Browser** mit Pack-Filter, Kategorien, Suche (Name, Tags wie `lofi`, `room`, `siren`, `organ`) und Vorhören.
 - **MIDI-Eingang** (Web MIDI, Chrome/Edge/Android): Startnote wählbar (36 für Pad-Controller, 0 für Grid-Controller), Start/Stop.
+- **APC mini mk2 mit LED-Rückmeldung** (Web MIDI in Chrome/Edge, Android-App über USB): die App setzt die RGB-Pads, Track- und Scene-LEDs selbst (Palette laut öffentlichem Herstellerprotokoll). Fünf Modi über Scene 1–5, Scene 6 blättert, Scene 7 Play/Stop, Scene 8 Aufnahme, Shift + Pad wählt ohne zu spielen:
+  - **PADS** – 64 Pads = 4 Bänke gleichzeitig in Kategorie-Farben, gewähltes Pad pulsiert, Anschläge und Sequencer-Wiedergabe blitzen weiß; Track 1–4 Bank, 5 Full Level, 6 Note Repeat, 7/8 Bänke blättern.
+  - **SEQ** – 8 Spuren × 8 Steps mit Lauflicht, Helligkeit = Anschlag; Track 1–8 = Step-Seiten (bis 4 Takte).
+  - **LANE** – eine Spur mit allen 64 Steps auf dem ganzen Raster.
+  - **MIX** – Mute/Solo je Kanal und Live-Pegelanzeige in Grün/Gelb/Rot, Stufe antippen = Level.
+  - **MENÜ** – Bedienmenü am Gerät: Pattern 1–16, Bänke A–P, Note Repeat/Full Level/16 Levels, Transport (Play, Stop, Rec, Metronom, Song, Tap, BPM ∓), Länge/Verdoppeln/Leeren (mit Shift)/Undo/Redo, Swing, Vinyl, Crunch, Panik.
+  - Fader 1–8 wahlweise Level, Pan, Hall, Delay, Filter oder Tune der 8 Kanäle, Fader 9 Master.
+  - In der App: Bereich **CONTROLLER** mit antippbarem LED-Spiegel, Einstellungen (Modus, Fader-Funktion, Anschlag, Helligkeit, LED-Test) und Belegungsliste je Modus; Einträge auch im MIDI-Menü.
 - **Tastatur**: `Z X C V / A S D F / Q W E R / 1 2 3 4` = Pads (wie das 4×4-Raster), Leertaste Play/Stop, `,` `.` Bank A–H, `[` `]` Pattern, `T` Aufnahme, Strg+Z / Strg+Umschalt+Z, Strg+S speichern, Strg+C / Strg+V Pad kopieren/einfügen, `?` Hilfe.
 
 ## Starten
@@ -55,10 +63,10 @@ Das Skript lädt die Originale von raw.githubusercontent.com, braucht `ffmpeg` u
 
 ## Hinweise
 
-- Eigene Gestaltung; keine Herstellerlogos, Produktnamen oder Firmware. Der Workflow (Pads, 16 Levels, Note Repeat, Swing, 12-Bit-Wandler) ist an klassische Pad-Sampler angelehnt.
-- Getestet in Chromium (Desktop und Telefon-Emulation). Auf echter MIDI-Hardware und in Safari/iOS wurde diese Version nicht abgenommen; Web MIDI fehlt in Safari.
+- Eigene Gestaltung; keine Herstellerlogos oder Firmware. Gerätenamen wie APC mini mk2 nennen nur die Kompatibilität, keine Verbindung zum Hersteller. Der Workflow (Pads, 16 Levels, Note Repeat, Swing, 12-Bit-Wandler) ist an klassische Pad-Sampler angelehnt.
+- Getestet in Chromium (Desktop und Telefon-Emulation). Die APC-Ansteuerung wurde mit simulierten MIDI-Ports getestet, nicht am echten Gerät; in Safari/iOS wurde diese Version nicht abgenommen; Web MIDI fehlt in Safari.
 - Chop/Mikrofon: Nur Material verwenden, an dem du die Rechte hast.
 
 ## Android-App
 
-`native/Android` ist eine WebView-App, die die Web-App aus den Assets lädt (virtuelle HTTPS-Adresse, offline). Export über den System-Dateidialog, Mikrofon für Chop, USB-MIDI über `android.media.midi`. Der Workflow `.github/workflows/boombap-android.yml` baut bei Änderungen an `boombap/` ein Debug-APK und legt es unter `boombap/download/` ab.
+`native/Android` ist eine WebView-App, die die Web-App aus den Assets lädt (virtuelle HTTPS-Adresse, offline). Export über den System-Dateidialog, Mikrofon für Chop, USB-MIDI über `android.media.midi` (Eingang und Ausgang für die LEDs). Der Workflow `.github/workflows/boombap-android.yml` baut bei Änderungen an `boombap/` ein Debug-APK und legt es unter `boombap/download/` ab.

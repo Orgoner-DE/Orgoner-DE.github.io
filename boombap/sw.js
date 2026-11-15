@@ -1,10 +1,10 @@
-/* BAP-50 Service Worker 1.6.0
+/* BAP-50 Service Worker 1.7.0
    Seite und Code: network-first (offline -> Cache). Samples und Icons: cache-first. */
-const VERSION = '1.6.0';
+const VERSION = '1.7.0';
 const CACHE = 'bap50-v' + VERSION;
 const SHELL = [
   './', './index.html', './app.css', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png',
-  './js/app.js', './js/util.js', './js/controls.js', './js/catalog.js', './js/engine.js', './js/seq.js', './js/state.js', './js/render.js', './js/menu.js', './js/synth.js', './js/zip.js', './js/chopper.js',
+  './js/app.js', './js/util.js', './js/controls.js', './js/catalog.js', './js/engine.js', './js/seq.js', './js/state.js', './js/render.js', './js/menu.js', './js/synth.js', './js/zip.js', './js/chopper.js', './js/apc.js',
   './samples/samples.json',
 ];
 
