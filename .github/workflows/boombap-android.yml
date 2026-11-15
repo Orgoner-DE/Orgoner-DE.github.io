@@ -33,14 +33,16 @@ jobs:
           cp boombap/index.html boombap/app.css boombap/manifest.webmanifest boombap/icon.svg boombap/icon-192.png boombap/icon-512.png "$W/"
           cp -r boombap/js "$W/js"
           cp boombap/samples/*.wav boombap/samples/samples.json "$W/samples/"
-          test "$(ls "$W/samples"/*.wav | wc -l)" -eq 50
+          N=$(python3 -c "import json;print(len(json.load(open('boombap/samples/samples.json'))['samples']))")
+          test "$(ls "$W/samples"/*.wav | wc -l)" -eq "$N"
+          echo "SAMPLES=$N" >> "$GITHUB_ENV"
       - name: Build debug APK
         run: gradle -p boombap/native/Android --no-daemon :app:assembleDebug
       - name: Check APK
         run: |
           APK=boombap/native/Android/app/build/outputs/apk/debug/app-debug.apk
           test -f "$APK"
-          unzip -l "$APK" | grep -c 'assets/www/samples/.*\.wav' | tee /dev/stderr | grep -qx 50
+          unzip -l "$APK" | grep -c 'assets/www/samples/.*\.wav' | tee /dev/stderr | grep -qx "$SAMPLES"
           ls -la "$APK"
       - uses: actions/upload-artifact@v4
         with:
@@ -63,11 +65,14 @@ jobs:
           path: release
       - name: Commit APK to boombap/download
         run: |
+          V=$(sed -n "s/.*versionName '\(.*\)'.*/\1/p" boombap/native/Android/app/build.gradle)
+          test -n "$V"
           mkdir -p boombap/download
-          cp release/app-debug.apk boombap/download/BAP-50-1.0.0.apk
+          git rm -q --ignore-unmatch boombap/download/*.apk
+          cp release/app-debug.apk "boombap/download/BAP-50-$V.apk"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add boombap/download/BAP-50-1.0.0.apk
+          git add -A boombap/download
           if git diff --cached --quiet; then echo "APK unchanged"; exit 0; fi
-          git commit -m "BAP-50 1.0.0 Android debug APK [skip ci]"
+          git commit -m "BAP-50 $V Android debug APK [skip ci]"
           git push origin "HEAD:${GITHUB_REF_NAME}"

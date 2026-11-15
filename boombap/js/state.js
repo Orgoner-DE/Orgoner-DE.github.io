@@ -1,7 +1,8 @@
 // Projektmodell, Standard-Kit, Grooves, Speichern/Laden, Undo.
 import { clamp, safeStorage } from './util.js';
 
-export const NUM_PADS = 64;
+export const NUM_PADS = 128;
+export const NUM_BANKS = 8;
 export const NUM_PATTERNS = 16;
 export const MAX_STEPS = 64;
 export const LENGTHS = [16, 32, 48, 64];
@@ -13,7 +14,8 @@ export function defaultPad(s = null) {
   };
 }
 
-// [Sample-ID, Halbtöne] je Pad. Bank A = Boom-Bap-Kern, B = Drums 2, C = Hats/Becken/Toms/Perc, D = Keys.
+// [Sample-ID, Halbtöne] je Pad. A = Boom-Bap-Kern, B = Drums 2, C = Hats/Becken/Toms/Perc, D = Keys,
+// E = Dusty Bap Drums, F = Dusty Bap Chops, G = Dark Hill Drums/Latin, H = Dark Hill Keys/FX.
 const KIT = [
   ['k02'], ['k01'], ['s01'], ['s02'], ['h01'], ['h03'], ['h07'], ['c01'],
   ['s09'], ['s08'], ['p01'], ['p02'], ['y01'], ['y03'], ['m01'], ['m04'],
@@ -23,6 +25,14 @@ const KIT = [
   ['t02'], ['t03'], ['p03'], ['p04'], ['p05'], ['p06'], ['p07'], ['p08'],
   ['m02', 0], ['m02', 3], ['m02', 5], ['m02', 7], ['m02', 10], ['m01', 0], ['m01', 3], ['m01', 5],
   ['m01', 7], ['m01', 10], ['m01', 12], ['m03', 0], ['m03', 3], ['m03', 7], ['m03', 10], ['m04', 3],
+  ['db01'], ['db02'], ['db09'], ['db11'], ['db23'], ['db26'], ['db25'], ['db20'],
+  ['db12'], ['db10'], ['db33'], ['db35'], ['db30'], ['db31'], ['db03'], ['db22'],
+  ['db38'], ['db39'], ['db40'], ['db41'], ['db42'], ['db43'], ['db44'], ['db45'],
+  ['db46'], ['db47'], ['db48'], ['db49'], ['db50', 0], ['db50', 3], ['db50', 5], ['db50', 7],
+  ['dh01'], ['dh02'], ['dh07'], ['dh10'], ['dh15'], ['dh16'], ['dh17'], ['dh14'],
+  ['dh11'], ['dh09'], ['dh19'], ['dh20'], ['dh21'], ['dh23'], ['dh25'], ['dh18'],
+  ['dh40'], ['dh41'], ['dh43'], ['dh44'], ['dh45'], ['dh46'], ['dh47'], ['dh48'],
+  ['dh49'], ['dh29'], ['dh32'], ['dh31'], ['dh34'], ['dh37'], ['dh42'], ['dh50'],
 ];
 
 function padFor(id, tune, catOf) {
@@ -36,7 +46,15 @@ function padFor(id, tune, catOf) {
   if (cat === 'perc') { p.vol = 0.66; p.pan = 0.25; p.sa = 0.1; }
   if (cat === 'tom') { p.sa = 0.1; }
   if (cat === 'keys') { p.vol = 0.62; p.sa = 0.25; p.sb = 0.08; p.vint = 'v26'; p.ft = 'lp'; p.fq = 0.82; p.res = 0.1; }
+  if (cat === 'bass') { p.vol = 0.82; p.mono = true; }
+  if (cat === 'fx') { p.vol = 0.55; p.sa = 0.18; p.sb = 0.15; p.pan = 0.1; }
   if (id === 'k01' || id === 's02') p.vint = 'v26';
+  // Pack-Keys sind schon gealtert: kein zweiter Wandler
+  if (/^d[bh]/.test(id) && cat === 'keys') { p.vint = 'off'; p.fq = 1; p.res = 0; p.sa = 0.15; p.vol = 0.48; }
+  if (/^d[bh]/.test(id) && cat === 'bass') p.vol = id === 'dh46' ? 0.42 : 0.62;
+  if (/^d[bh]/.test(id) && cat === 'fx') p.vol = 0.5;
+  // Pack-Drums sind gesättigt und dichter: etwas leiser einpegeln
+  if (/^d[bh]/.test(id) && ['kick', 'snare', 'clap', 'hat', 'perc', 'cymbal'].includes(cat)) p.vol = +(p.vol * 0.8).toFixed(2);
   return p;
 }
 
@@ -128,6 +146,50 @@ export const GROOVES = [
       [62, '................|......o.........|................|......o.....o...'],
     ],
   },
+  {
+    name: 'Dusty Crate (Bank E/F)', bpm: 90, swing: 60, len: 32,
+    lanes: [
+      [64, 'X......X..X.....|X......X.XX.....'],
+      [66, '....X.......X...|....X.......X...'],
+      [71, '....o.......o...|....o.......o..o'],
+      [68, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x...'],
+      [70, '................|..............x.'],
+      [75, '.g.g.g.g.g.g.g.g|.g.g.g.g.g.g.g.g'],
+      [80, 'x.........o.....|................'],
+      [81, '................|x.........o.....'],
+      [92, 'x......o..x.....|................'],
+      [94, '................|x......o..x.....'],
+    ],
+  },
+  {
+    name: 'Dark Hill (Bank G/H)', bpm: 92, swing: 55, len: 32,
+    lanes: [
+      [96, 'X.....x.X.......|X.....x...X..x..'],
+      [98, '....X.......X...|....X.......X...'],
+      [100, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x.x.'],
+      [101, '.g.g.g.g.g.g.g.g|.g.g.g.g.g.g.g.g'],
+      [114, 'x.........o.....|................'],
+      [115, '................|x.........o.....'],
+      [117, 'x...............|x...............'],
+      [122, '................|............x...'],
+      [106, '................|..........g.o...'],
+      [107, '................|.............ox.'],
+    ],
+  },
+  {
+    name: 'Hill Latin Smoke (Bank G/H)', bpm: 96, swing: 52, len: 32,
+    lanes: [
+      [97, 'X.......X.......|X.......X..X....'],
+      [105, '....X.......X...|....X.......X...'],
+      [100, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x.x.'],
+      [108, '......x.....x...|..x...x.....x.o.'],
+      [109, 'x.........x.....|x.........x.....'],
+      [110, 'o.......o.......|o.......o.......'],
+      [112, 'x...............|................'],
+      [113, '................|x...............'],
+      [121, '................|........x.......'],
+    ],
+  },
 ];
 
 export function grooveToPattern(g) {
@@ -189,7 +251,7 @@ export function normalizeProject(raw, catOf) {
   });
   p.cur = { ...d.cur, ...(raw.cur || {}) };
   p.cur.ptn = clamp(p.cur.ptn | 0, 0, NUM_PATTERNS - 1);
-  p.cur.bank = clamp(p.cur.bank | 0, 0, 3);
+  p.cur.bank = clamp(p.cur.bank | 0, 0, NUM_BANKS - 1);
   p.cur.pad = clamp(p.cur.pad | 0, 0, NUM_PADS - 1);
   p.song = { on: !!(raw.song && raw.song.on), list: ((raw.song && raw.song.list) || d.song.list).map((e) => ({ p: clamp(e.p | 0, 0, NUM_PATTERNS - 1), n: clamp(e.n | 0 || 1, 1, 16) })) };
   p.midi = { ...d.midi, ...(raw.midi || {}) };

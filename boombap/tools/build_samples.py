@@ -233,7 +233,7 @@ def main():
         slug = name.lower().replace("/", "-").replace(" ", "-")
         fname = f"{sid}-{slug}.wav"
         write_wav(os.path.join(args.out, fname), x)
-        entry = {"id": sid, "name": name, "cat": cat, "file": "samples/" + fname,
+        entry = {"id": sid, "name": name, "cat": cat, "pack": "core", "file": "samples/" + fname,
                  "dur": round(len(x) / SR, 3), "tags": extra.get("tags", ""), "src": used}
         for k in ("choke", "root"):
             if k in extra:
@@ -244,7 +244,15 @@ def main():
     doc = {"version": 1, "sampleRate": SR, "license": "CC0-1.0",
            "libraries": {k: {"name": v["name"], "url": v["git"], "license": v["license"]} for k, v in LIBS.items()},
            "categories": CAT_LABEL, "samples": manifest}
-    with open(os.path.join(args.out, "samples.json"), "w", encoding="utf-8") as f:
+    path = os.path.join(args.out, "samples.json")
+    if os.path.isfile(path):  # Erweiterungs-Packs (build_packs.py) behalten
+        old = json.load(open(path, encoding="utf-8"))
+        doc["samples"] += [s for s in old.get("samples", []) if s.get("pack", "core") != "core"]
+        for k in ("packs",):
+            if k in old:
+                doc[k] = old[k]
+        doc["categories"] = {**old.get("categories", {}), **CAT_LABEL}
+    with open(path, "w", encoding="utf-8") as f:
         json.dump(doc, f, ensure_ascii=False, indent=1)
     print("wrote", len(manifest), "samples")
 

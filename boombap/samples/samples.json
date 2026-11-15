@@ -22,13 +22,16 @@
   "cymbal": "Becken",
   "tom": "Tom",
   "perc": "Perc",
-  "keys": "Keys/Horn"
+  "keys": "Keys/Horn",
+  "bass": "Bass",
+  "fx": "FX"
  },
  "samples": [
   {
    "id": "k01",
    "name": "Kick Dusty",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k01-kick-dusty.wav",
    "dur": 0.9,
    "tags": "lofi vintage-mic",
@@ -44,6 +47,7 @@
    "id": "k02",
    "name": "Kick Thump",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k02-kick-thump.wav",
    "dur": 0.9,
    "tags": "close room knock",
@@ -69,6 +73,7 @@
    "id": "k03",
    "name": "Kick Tight",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k03-kick-tight.wav",
    "dur": 0.45,
    "tags": "close short",
@@ -89,6 +94,7 @@
    "id": "k04",
    "name": "Kick Soft",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k04-kick-soft.wav",
    "dur": 0.8,
    "tags": "soft jazz",
@@ -109,6 +115,7 @@
    "id": "k05",
    "name": "Kick Live Room",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k05-kick-live-room.wav",
    "dur": 1.1,
    "tags": "room live",
@@ -134,6 +141,7 @@
    "id": "k06",
    "name": "Kick Lofi Low",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k06-kick-lofi-low.wav",
    "dur": 0.8,
    "tags": "lofi vintage-mic",
@@ -149,6 +157,7 @@
    "id": "k07",
    "name": "Cajon Bass",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k07-cajon-bass.wav",
    "dur": 0.615,
    "tags": "cajon hand",
@@ -164,6 +173,7 @@
    "id": "k08",
    "name": "Concert Boom",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k08-concert-boom.wav",
    "dur": 1.2,
    "tags": "orchestral boom",
@@ -179,6 +189,7 @@
    "id": "k09",
    "name": "Frame Drum Low",
    "cat": "kick",
+   "pack": "core",
    "file": "samples/k09-frame-drum-low.wav",
    "dur": 0.8,
    "tags": "hand frame",
@@ -194,6 +205,7 @@
    "id": "s01",
    "name": "Snare Crack",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s01-snare-crack.wav",
    "dur": 0.785,
    "tags": "close room",
@@ -219,6 +231,7 @@
    "id": "s02",
    "name": "Snare Dusty",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s02-snare-dusty.wav",
    "dur": 0.8,
    "tags": "lofi vintage-mic",
@@ -234,6 +247,7 @@
    "id": "s03",
    "name": "Snare Rimshot",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s03-snare-rimshot.wav",
    "dur": 0.8,
    "tags": "rimshot",
@@ -254,6 +268,7 @@
    "id": "s04",
    "name": "Snare Fat",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s04-snare-fat.wav",
    "dur": 0.9,
    "tags": "room fat",
@@ -274,6 +289,7 @@
    "id": "s05",
    "name": "Snare Muted",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s05-snare-muted.wav",
    "dur": 0.492,
    "tags": "muted short",
@@ -294,6 +310,7 @@
    "id": "s06",
    "name": "Snare Off",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s06-snare-off.wav",
    "dur": 0.7,
    "tags": "snares-off tonal",
@@ -314,6 +331,7 @@
    "id": "s07",
    "name": "Snare Flam",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s07-snare-flam.wav",
    "dur": 0.8,
    "tags": "lofi flam",
@@ -329,6 +347,7 @@
    "id": "s08",
    "name": "Snare Ghost",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s08-snare-ghost.wav",
    "dur": 0.5,
    "tags": "ghost soft",
@@ -349,6 +368,7 @@
    "id": "s09",
    "name": "Rimclick",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s09-rimclick.wav",
    "dur": 0.399,
    "tags": "rim crossstick",
@@ -369,6 +389,7 @@
    "id": "s10",
    "name": "Snare Modern",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s10-snare-modern.wav",
    "dur": 0.703,
    "tags": "bright",
@@ -384,6 +405,7 @@
    "id": "s11",
    "name": "Rope Snare",
    "cat": "snare",
+   "pack": "core",
    "file": "samples/s11-rope-snare.wav",
    "dur": 0.8,
    "tags": "field old",
@@ -399,6 +421,7 @@
    "id": "c01",
    "name": "Clap Crowd",
    "cat": "clap",
+   "pack": "core",
    "file": "samples/c01-clap-crowd.wav",
    "dur": 0.422,
    "tags": "group hands",
@@ -414,6 +437,7 @@
    "id": "c02",
    "name": "Clap Crowd 2",
    "cat": "clap",
+   "pack": "core",
    "file": "samples/c02-clap-crowd-2.wav",
    "dur": 0.7,
    "tags": "group hands",
@@ -429,6 +453,7 @@
    "id": "c03",
    "name": "Clap Solo",
    "cat": "clap",
+   "pack": "core",
    "file": "samples/c03-clap-solo.wav",
    "dur": 0.194,
    "tags": "single hands",
@@ -444,6 +469,7 @@
    "id": "h01",
    "name": "Hat Closed",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h01-hat-closed.wav",
    "dur": 0.35,
    "tags": "closed",
@@ -465,6 +491,7 @@
    "id": "h02",
    "name": "Hat Closed Soft",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h02-hat-closed-soft.wav",
    "dur": 0.3,
    "tags": "closed soft",
@@ -481,6 +508,7 @@
    "id": "h03",
    "name": "Hat Lofi",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h03-hat-lofi.wav",
    "dur": 0.35,
    "tags": "lofi closed",
@@ -497,6 +525,7 @@
    "id": "h04",
    "name": "Hat Pedal",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h04-hat-pedal.wav",
    "dur": 0.35,
    "tags": "pedal foot",
@@ -513,6 +542,7 @@
    "id": "h05",
    "name": "Hat Half",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h05-hat-half.wav",
    "dur": 0.8,
    "tags": "half open",
@@ -529,6 +559,7 @@
    "id": "h06",
    "name": "Hat 3/4",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h06-hat-3-4.wav",
    "dur": 1.2,
    "tags": "three-quarter open",
@@ -545,6 +576,7 @@
    "id": "h07",
    "name": "Hat Open",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h07-hat-open.wav",
    "dur": 2.0,
    "tags": "open",
@@ -561,6 +593,7 @@
    "id": "h08",
    "name": "Hat Tight",
    "cat": "hat",
+   "pack": "core",
    "file": "samples/h08-hat-tight.wav",
    "dur": 0.3,
    "tags": "closed tight",
@@ -577,6 +610,7 @@
    "id": "y01",
    "name": "Ride",
    "cat": "cymbal",
+   "pack": "core",
    "file": "samples/y01-ride.wav",
    "dur": 3.0,
    "tags": "ride jazz",
@@ -592,6 +626,7 @@
    "id": "y02",
    "name": "Ride Bell",
    "cat": "cymbal",
+   "pack": "core",
    "file": "samples/y02-ride-bell.wav",
    "dur": 2.5,
    "tags": "bell",
@@ -607,6 +642,7 @@
    "id": "y03",
    "name": "Crash",
    "cat": "cymbal",
+   "pack": "core",
    "file": "samples/y03-crash.wav",
    "dur": 3.5,
    "tags": "crash",
@@ -622,6 +658,7 @@
    "id": "y04",
    "name": "Flat Ride Crash",
    "cat": "cymbal",
+   "pack": "core",
    "file": "samples/y04-flat-ride-crash.wav",
    "dur": 3.0,
    "tags": "flat dark",
@@ -637,6 +674,7 @@
    "id": "t01",
    "name": "Tom Low",
    "cat": "tom",
+   "pack": "core",
    "file": "samples/t01-tom-low.wav",
    "dur": 1.2,
    "tags": "floor",
@@ -657,6 +695,7 @@
    "id": "t02",
    "name": "Tom High",
    "cat": "tom",
+   "pack": "core",
    "file": "samples/t02-tom-high.wav",
    "dur": 1.0,
    "tags": "rack",
@@ -677,6 +716,7 @@
    "id": "t03",
    "name": "Tom Muted",
    "cat": "tom",
+   "pack": "core",
    "file": "samples/t03-tom-muted.wav",
    "dur": 0.5,
    "tags": "muted thud",
@@ -692,6 +732,7 @@
    "id": "p01",
    "name": "Tambourine",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p01-tambourine.wav",
    "dur": 0.8,
    "tags": "tamb",
@@ -707,6 +748,7 @@
    "id": "p02",
    "name": "Shaker",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p02-shaker.wav",
    "dur": 0.4,
    "tags": "shake",
@@ -722,6 +764,7 @@
    "id": "p03",
    "name": "Cowbell",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p03-cowbell.wav",
    "dur": 0.397,
    "tags": "bell",
@@ -737,6 +780,7 @@
    "id": "p04",
    "name": "Conga",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p04-conga.wav",
    "dur": 0.8,
    "tags": "hand latin",
@@ -752,6 +796,7 @@
    "id": "p05",
    "name": "Bongo",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p05-bongo.wav",
    "dur": 0.5,
    "tags": "hand latin",
@@ -767,6 +812,7 @@
    "id": "p06",
    "name": "Woodblock",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p06-woodblock.wav",
    "dur": 0.4,
    "tags": "wood click",
@@ -782,6 +828,7 @@
    "id": "p07",
    "name": "Claves",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p07-claves.wav",
    "dur": 0.283,
    "tags": "wood click",
@@ -797,6 +844,7 @@
    "id": "p08",
    "name": "Vibraslap",
    "cat": "perc",
+   "pack": "core",
    "file": "samples/p08-vibraslap.wav",
    "dur": 1.135,
    "tags": "rattle fx",
@@ -812,6 +860,7 @@
    "id": "m01",
    "name": "Upright Piano C",
    "cat": "keys",
+   "pack": "core",
    "file": "samples/m01-upright-piano-c.wav",
    "dur": 3.5,
    "tags": "piano dusty",
@@ -828,6 +877,7 @@
    "id": "m02",
    "name": "Grand Piano Low C",
    "cat": "keys",
+   "pack": "core",
    "file": "samples/m02-grand-piano-low-c.wav",
    "dur": 3.0,
    "tags": "piano bass",
@@ -844,6 +894,7 @@
    "id": "m03",
    "name": "Vibes C",
    "cat": "keys",
+   "pack": "core",
    "file": "samples/m03-vibes-c.wav",
    "dur": 3.0,
    "tags": "vibraphone jazz",
@@ -860,6 +911,7 @@
    "id": "m04",
    "name": "Tenor Sax Stab C",
    "cat": "keys",
+   "pack": "core",
    "file": "samples/m04-tenor-sax-stab-c.wav",
    "dur": 0.524,
    "tags": "horn stab",
@@ -871,6 +923,2542 @@
     }
    ],
    "root": "C"
+  },
+  {
+   "id": "db01",
+   "name": "Kick Crate",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db01-kick-crate.wav",
+   "dur": 0.8,
+   "tags": "dusty bap pitch drive crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snon_vl4_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snon_vl4_rr1.flac",
+     "gain": 0.35,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -1,
+    "drive": 0.35,
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "db02",
+   "name": "Kick Knock",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db02-kick-knock.wav",
+   "dur": 0.55,
+   "tags": "dusty bap hp drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snoff_vl4_rr2.flac",
+     "gain": 0.7,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "hp": 35,
+    "drive": 0.55
+   }
+  },
+  {
+   "id": "db03",
+   "name": "Kick Vinyl",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db03-kick-vinyl.wav",
+   "dur": 0.8,
+   "tags": "dusty bap pitch lp crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/kick/lofi_kick_snon_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2,
+    "lp": 6000,
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "db04",
+   "name": "Kick Low Boom",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db04-kick-low-boom.wav",
+   "dur": 1.0,
+   "tags": "dusty bap pitch drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snoff_vl4_rr2.flac",
+     "gain": 0.3,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -3,
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "db05",
+   "name": "Kick Short",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db05-kick-short.wav",
+   "dur": 0.217,
+   "tags": "dusty bap gate drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snoff_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snoff_vl3_rr1.flac",
+     "gain": 0.3,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "gate": 0.22,
+    "drive": 0.4
+   }
+  },
+  {
+   "id": "db06",
+   "name": "Kick Room Stack",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db06-kick-room-stack.wav",
+   "dur": 0.9,
+   "tags": "dusty bap drive crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snon_vl4_rr2.flac",
+     "gain": 0.8,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snon_vl4_rr2.flac",
+     "gain": 0.8,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "drive": 0.45,
+    "crush": "v40"
+   }
+  },
+  {
+   "id": "db07",
+   "name": "Kick Dull",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db07-kick-dull.wav",
+   "dur": 0.7,
+   "tags": "dusty bap lp",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/mid/kick/mid_kick_snon_vl3_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snon_vl3_rr2.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "lp": 1800
+   }
+  },
+  {
+   "id": "db08",
+   "name": "Kick Cajon Thud",
+   "cat": "kick",
+   "pack": "db",
+   "file": "samples/db08-kick-cajon-thud.wav",
+   "dur": 0.6,
+   "tags": "dusty bap pitch lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Cajon/Cajon_hit2_f_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -4,
+    "lp": 2500,
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "db09",
+   "name": "Snare Crack 12",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db09-snare-crack-12.wav",
+   "dur": 0.7,
+   "tags": "dusty bap crush drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_center_vl36.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_center_vl36.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v26",
+    "drive": 0.25
+   }
+  },
+  {
+   "id": "db10",
+   "name": "Snare Dusty Low",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db10-snare-dusty-low.wav",
+   "dur": 0.7,
+   "tags": "dusty bap pitch",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/snare/lofi_snare_center_vl30.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2
+   }
+  },
+  {
+   "id": "db11",
+   "name": "Snare + Clap",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db11-snare-clap.wav",
+   "dur": 0.7,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_center_vl33.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_center_vl33.flac",
+     "gain": 0.3,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr2.wav",
+     "gain": 0.8,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db12",
+   "name": "Rimshot Crunch",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db12-rimshot-crunch.wav",
+   "dur": 0.6,
+   "tags": "dusty bap crush drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/snare/lofi_snare_rimshot_vl12.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v26",
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "db13",
+   "name": "Snare Fat Pitch",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db13-snare-fat-pitch.wav",
+   "dur": 0.8,
+   "tags": "dusty bap pitch drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_offcenter_vl34.flac",
+     "gain": 0.8,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_offcenter_vl34.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -3,
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "db14",
+   "name": "Snare Off Thump",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db14-snare-off-thump.wav",
+   "dur": 0.6,
+   "tags": "dusty bap pitch",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/snareoff/room_snareoff_center_vl12.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snareoff/oh_snareoff_center_vl12.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2
+   }
+  },
+  {
+   "id": "db15",
+   "name": "Snare Stick",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db15-snare-stick.wav",
+   "dur": 0.435,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_stickshot2_vl16.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_stickshot2_vl16.flac",
+     "gain": 0.4,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db16",
+   "name": "Snare Buzz",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db16-snare-buzz.wav",
+   "dur": 0.486,
+   "tags": "dusty bap gate",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/snare/lofi_snare_buzz_vl12.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "gate": 0.5
+   }
+  },
+  {
+   "id": "db17",
+   "name": "Snare Muted 12",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db17-snare-muted-12.wav",
+   "dur": 0.4,
+   "tags": "dusty bap crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/snare/lofi_snare_muted_vl16.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "db18",
+   "name": "Snare Modern 2",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db18-snare-modern-2.wav",
+   "dur": 0.7,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Snare Drum, Modern 2/Snare3M_HitSN_v5_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db19",
+   "name": "Rimshot Modern 3",
+   "cat": "snare",
+   "pack": "db",
+   "file": "samples/db19-rimshot-modern-3.wav",
+   "dur": 0.7,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Snare Drum, Modern 3/Snare4_rimshot_v4_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db20",
+   "name": "Clap Dusty",
+   "cat": "clap",
+   "pack": "db",
+   "file": "samples/db20-clap-dusty.wav",
+   "dur": 0.346,
+   "tags": "dusty bap lp crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr3.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "lp": 7000,
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "db21",
+   "name": "Clap Stack",
+   "cat": "clap",
+   "pack": "db",
+   "file": "samples/db21-clap-stack.wav",
+   "dur": 0.434,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr5.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr6.wav",
+     "gain": 0.8,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db22",
+   "name": "Slapstick Snap",
+   "cat": "clap",
+   "pack": "db",
+   "file": "samples/db22-slapstick-snap.wav",
+   "dur": 0.397,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Slapstick/slapstick_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db23",
+   "name": "Hat Crunch",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db23-hat-crunch.wav",
+   "dur": 0.3,
+   "tags": "dusty bap crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/hh/lofi_hh_closed_vl4_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v26"
+   },
+   "choke": 1
+  },
+  {
+   "id": "db24",
+   "name": "Hat Room Tight",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db24-hat-room-tight.wav",
+   "dur": 0.3,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/hh/room_hh_closed_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_closed_vl3_rr1.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "db25",
+   "name": "Hat Open Dusty",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db25-hat-open-dusty.wav",
+   "dur": 1.2,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/hh/lofi_hh_open_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "db26",
+   "name": "Hat Pedal Lofi",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db26-hat-pedal-lofi.wav",
+   "dur": 0.35,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/hh/lofi_hh_pedal_vl3_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "db27",
+   "name": "Hat Half Lofi",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db27-hat-half-lofi.wav",
+   "dur": 0.7,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/hh/lofi_hh_half_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "db28",
+   "name": "Hat Splash",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db28-hat-splash.wav",
+   "dur": 1.5,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/hh/lofi_hh_splash_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "db29",
+   "name": "Hat 3/4 Room",
+   "cat": "hat",
+   "pack": "db",
+   "file": "samples/db29-hat-3-4-room.wav",
+   "dur": 1.0,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/hh/room_hh_34_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_34_vl3_rr1.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "db30",
+   "name": "Ride Lofi",
+   "cat": "cymbal",
+   "pack": "db",
+   "file": "samples/db30-ride-lofi.wav",
+   "dur": 2.5,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/ride/lofi_ride_ride_vl3_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db31",
+   "name": "Crash Dusty",
+   "cat": "cymbal",
+   "pack": "db",
+   "file": "samples/db31-crash-dusty.wav",
+   "dur": 2.5,
+   "tags": "dusty bap crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/crash/lofi_crash_crash_vl2_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v40"
+   }
+  },
+  {
+   "id": "db32",
+   "name": "Ride Bell Lofi",
+   "cat": "cymbal",
+   "pack": "db",
+   "file": "samples/db32-ride-bell-lofi.wav",
+   "dur": 2.0,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/ride/lofi_ride_bell_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db33",
+   "name": "Tambourine 2",
+   "cat": "perc",
+   "pack": "db",
+   "file": "samples/db33-tambourine-2.wav",
+   "dur": 0.575,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Tambourine 2/Tamb2_Hit_v2_rr2_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db34",
+   "name": "Tamb Shake",
+   "cat": "perc",
+   "pack": "db",
+   "file": "samples/db34-tamb-shake.wav",
+   "dur": 0.795,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Tambourine 1/Tamb1_Shake_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db35",
+   "name": "Shaker Down",
+   "cat": "perc",
+   "pack": "db",
+   "file": "samples/db35-shaker-down.wav",
+   "dur": 0.265,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Shaker, Small/Mid_ShakerDouble_Down_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db36",
+   "name": "Cabasa",
+   "cat": "perc",
+   "pack": "db",
+   "file": "samples/db36-cabasa.wav",
+   "dur": 0.4,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Cabasa/Cabasa1_Hit_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db37",
+   "name": "Triangle",
+   "cat": "perc",
+   "pack": "db",
+   "file": "samples/db37-triangle.wav",
+   "dur": 1.5,
+   "tags": "dusty bap",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Triangles/Triangle1_Hit_v1_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "db38",
+   "name": "Keys Cm9",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db38-keys-cm9.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp crush pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": -2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 3
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26",
+    "pitch": -0.15,
+    "verb": 0.1
+   },
+   "root": "C"
+  },
+  {
+   "id": "db39",
+   "name": "Keys Fm9",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db39-keys-fm9.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp crush pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": -2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 3
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26",
+    "pitch": -0.15,
+    "verb": 0.1
+   },
+   "root": "F"
+  },
+  {
+   "id": "db40",
+   "name": "Keys Abmaj7",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db40-keys-abmaj7.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp crush pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G2_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C3_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 3
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26",
+    "pitch": -0.15,
+    "verb": 0.1
+   },
+   "root": "G#"
+  },
+  {
+   "id": "db41",
+   "name": "Keys Bbm7",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db41-keys-bbm7.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp crush pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C3_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": -2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": -2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26",
+    "pitch": -0.15,
+    "verb": 0.1
+   },
+   "root": "A#"
+  },
+  {
+   "id": "db42",
+   "name": "Keys Ebmaj9",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db42-keys-ebmaj9.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp crush pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 3
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": -2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": -2
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26",
+    "pitch": -0.15,
+    "verb": 0.1
+   },
+   "root": "D#"
+  },
+  {
+   "id": "db43",
+   "name": "Keys G7#9",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db43-keys-g7-9.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp crush pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G2_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C4_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": -1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_G4_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": -2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Upright Piano, Yamaha/Sustains/Upright1_Sus_C5_vl3_rr1.wav",
+     "gain": 0.75,
+     "pitch": -2
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26",
+    "pitch": -0.15,
+    "verb": 0.1
+   },
+   "root": "G"
+  },
+  {
+   "id": "db44",
+   "name": "Vibes Cm7",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db44-vibes-cm7.wav",
+   "dur": 3.0,
+   "tags": "dusty bap lp crush verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_B3_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_D4_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_F4_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_A4_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 6000,
+    "crush": "v40",
+    "verb": 0.15
+   },
+   "root": "C"
+  },
+  {
+   "id": "db45",
+   "name": "Vibes Fm7",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db45-vibes-fm7.wav",
+   "dur": 3.0,
+   "tags": "dusty bap lp crush verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_E3_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_G3_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_B3_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Vibraphone/Soft Mallets/Vibes_soft_D4_v2_rr1_Main.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 6000,
+    "crush": "v40",
+    "verb": 0.15
+   },
+   "root": "F"
+  },
+  {
+   "id": "db46",
+   "name": "EP Cm9",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db46-ep-cm9.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_C3_vl3.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_G#3_vl3.wav",
+     "gain": 0.7,
+     "pitch": -1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_G#3_vl3.wav",
+     "gain": 0.7,
+     "pitch": 2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_C4_vl3.wav",
+     "gain": 0.7,
+     "pitch": 2
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_E4_vl3.wav",
+     "gain": 0.7,
+     "pitch": -1
+    }
+   ],
+   "fx": {
+    "lp": 5000,
+    "drive": 0.2
+   },
+   "root": "C"
+  },
+  {
+   "id": "db47",
+   "name": "EP Abmaj7",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db47-ep-abmaj7.wav",
+   "dur": 2.5,
+   "tags": "dusty bap lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_G#2_vl3.wav",
+     "gain": 0.75,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_E3_vl3.wav",
+     "gain": 0.75,
+     "pitch": -1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_G#3_vl3.wav",
+     "gain": 0.75,
+     "pitch": -1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Electrophones/TX81Z/FM Piano/FMPiano_C4_vl3.wav",
+     "gain": 0.75,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 5000,
+    "drive": 0.2
+   },
+   "root": "G#"
+  },
+  {
+   "id": "db48",
+   "name": "Horns Cm",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db48-horns-cm.wav",
+   "dur": 0.535,
+   "tags": "dusty bap drive crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_C3_vl2_rr4.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_D3_vl2_rr5.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_F#3_vl2_rr6.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_C4_vl2_rr3.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "drive": 0.25,
+    "crush": "v26"
+   },
+   "root": "C"
+  },
+  {
+   "id": "db49",
+   "name": "Horns Fm",
+   "cat": "keys",
+   "pack": "db",
+   "file": "samples/db49-horns-fm.wav",
+   "dur": 0.542,
+   "tags": "dusty bap drive crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_E3_vl2_rr3.wav",
+     "gain": 0.75,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_G#3_vl2_rr1.wav",
+     "gain": 0.75,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_C4_vl2_rr3.wav",
+     "gain": 0.75,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "drive": 0.25,
+    "crush": "v26"
+   },
+   "root": "F"
+  },
+  {
+   "id": "db50",
+   "name": "Piano Bass C",
+   "cat": "bass",
+   "pack": "db",
+   "file": "samples/db50-piano-bass-c.wav",
+   "dur": 2.0,
+   "tags": "dusty bap lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C2_vl3_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 700,
+    "drive": 0.35
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh01",
+   "name": "Hill Kick Heavy",
+   "cat": "kick",
+   "pack": "dh",
+   "file": "samples/dh01-hill-kick-heavy.wav",
+   "dur": 0.9,
+   "tags": "dark hill pitch drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snoff_vl4_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snoff_vl4_rr1.flac",
+     "gain": 0.8,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2,
+    "drive": 0.6
+   }
+  },
+  {
+   "id": "dh02",
+   "name": "Hill Kick Smoke",
+   "cat": "kick",
+   "pack": "dh",
+   "file": "samples/dh02-hill-kick-smoke.wav",
+   "dur": 1.0,
+   "tags": "dark hill pitch lp drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/kick/room_kick_snon_vl4_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snon_vl4_rr1.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -3,
+    "lp": 3000,
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "dh03",
+   "name": "Hill Kick Deep",
+   "cat": "kick",
+   "pack": "dh",
+   "file": "samples/dh03-hill-kick-deep.wav",
+   "dur": 0.597,
+   "tags": "dark hill pitch gate drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Bass Drum 1/BDrumNew_hit_v7_rr1_Sum.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": 3,
+    "gate": 0.6,
+    "drive": 0.5
+   }
+  },
+  {
+   "id": "dh04",
+   "name": "Hill Kick Punch",
+   "cat": "kick",
+   "pack": "dh",
+   "file": "samples/dh04-hill-kick-punch.wav",
+   "dur": 0.6,
+   "tags": "dark hill hp drive crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/kickmic/kick/kickmic_kick_snon_vl4_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/kick/oh_kick_snon_vl4_rr2.flac",
+     "gain": 0.4,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "hp": 40,
+    "drive": 0.5,
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "dh05",
+   "name": "Hill Kick Timp",
+   "cat": "kick",
+   "pack": "dh",
+   "file": "samples/dh05-hill-kick-timp.wav",
+   "dur": 0.7,
+   "tags": "dark hill pitch gate drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Timpani 1/Hit/Timpani1_Hit_v4_rr1_Sum.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -5,
+    "gate": 0.7,
+    "drive": 0.4
+   }
+  },
+  {
+   "id": "dh06",
+   "name": "Hill Kick Lofi Low",
+   "cat": "kick",
+   "pack": "dh",
+   "file": "samples/dh06-hill-kick-lofi-low.wav",
+   "dur": 0.9,
+   "tags": "dark hill pitch drive",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/lofi/kick/lofi_kick_snoff_vl4_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -4,
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "dh07",
+   "name": "Hill Snare Heavy",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh07-hill-snare-heavy.wav",
+   "dur": 1.2,
+   "tags": "dark hill pitch drive verb size",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_center_vl36.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_center_vl36.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_center_vl36.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2,
+    "drive": 0.3,
+    "verb": 0.25,
+    "size": 1.2
+   }
+  },
+  {
+   "id": "dh08",
+   "name": "Hill Snare Verb",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh08-hill-snare-verb.wav",
+   "dur": 1.421,
+   "tags": "dark hill verb size",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_rimshot_vl12.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_rimshot_vl12.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "verb": 0.45,
+    "size": 1.8
+   }
+  },
+  {
+   "id": "dh09",
+   "name": "Hill Snare Dark",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh09-hill-snare-dark.wav",
+   "dur": 1.0,
+   "tags": "dark hill pitch lp",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_offcenter_vl32.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/mid/snare/mid_snare_offcenter_vl32.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -4,
+    "lp": 3200
+   }
+  },
+  {
+   "id": "dh10",
+   "name": "Hill Snare Clap",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh10-hill-snare-clap.wav",
+   "dur": 0.861,
+   "tags": "dark hill verb",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/snaremic/snare/snaremic_snare_center_vl34.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Claps/Clap_rr6.wav",
+     "gain": 0.9,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "verb": 0.3
+   }
+  },
+  {
+   "id": "dh11",
+   "name": "Hill Timbale Snare",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh11-hill-timbale-snare.wav",
+   "dur": 0.9,
+   "tags": "dark hill verb",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/oh/timbales/timb13_vl3_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "verb": 0.15
+   }
+  },
+  {
+   "id": "dh12",
+   "name": "Hill Snare Flam",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh12-hill-snare-flam.wav",
+   "dur": 1.0,
+   "tags": "dark hill pitch",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/snare/room_snare_flam_vl12.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/snare/oh_snare_flam_vl12.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2
+   }
+  },
+  {
+   "id": "dh13",
+   "name": "Hill Rope Snare",
+   "cat": "snare",
+   "pack": "dh",
+   "file": "samples/dh13-hill-rope-snare.wav",
+   "dur": 1.2,
+   "tags": "dark hill verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Membranophones/Struck Membranophones/Snare Drum, Rope Tension/Low/RopeSnare_low_tsn_Main_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "verb": 0.3
+   }
+  },
+  {
+   "id": "dh14",
+   "name": "Hill Slap Verb",
+   "cat": "clap",
+   "pack": "dh",
+   "file": "samples/dh14-hill-slap-verb.wav",
+   "dur": 0.965,
+   "tags": "dark hill verb size",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Slapstick/slapstick_rr2.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "verb": 0.4,
+    "size": 1.5
+   }
+  },
+  {
+   "id": "dh15",
+   "name": "Hill Hat Closed",
+   "cat": "hat",
+   "pack": "dh",
+   "file": "samples/dh15-hill-hat-closed.wav",
+   "dur": 0.3,
+   "tags": "dark hill pitch crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_closed_vl3_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -1,
+    "crush": "v26"
+   },
+   "choke": 1
+  },
+  {
+   "id": "dh16",
+   "name": "Hill Shaker",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh16-hill-shaker.wav",
+   "dur": 0.4,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Shaker, Large/LShaker_Hit_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh17",
+   "name": "Hill Hat Open Long",
+   "cat": "hat",
+   "pack": "dh",
+   "file": "samples/dh17-hill-hat-open-long.wav",
+   "dur": 2.0,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/room/hh/room_hh_open_vl4_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "vd",
+     "file": "Samples/oh/hh/oh_hh_open_vl4_rr1.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "dh18",
+   "name": "Hill Tamb Dark",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh18-hill-tamb-dark.wav",
+   "dur": 0.8,
+   "tags": "dark hill pitch",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Tambourine 2/Tamb2_Hit_v1_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -3
+   }
+  },
+  {
+   "id": "dh19",
+   "name": "Timbale High",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh19-timbale-high.wav",
+   "dur": 0.878,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/oh/timbales/timb13_vl2_rr2.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh20",
+   "name": "Timbale Low",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh20-timbale-low.wav",
+   "dur": 0.9,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/oh/timbales/timb14_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh21",
+   "name": "Conga Open",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh21-conga-open.wav",
+   "dur": 0.8,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/mid/conga/Conga_22_HitN_101_127_rr2_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh22",
+   "name": "Conga Mute",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh22-conga-mute.wav",
+   "dur": 0.5,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/conga/Conga_17_HitHM1_71_127_rr1_Close.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh23",
+   "name": "Tumba",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh23-tumba.wav",
+   "dur": 0.797,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/tumba/Tumba_24_HitN_101_127_rr1_Close.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh24",
+   "name": "Bongo Low",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh24-bongo-low.wav",
+   "dur": 0.5,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/bongol/BongoL_Hit1_v3_rr1_Close.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh25",
+   "name": "Guiro",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh25-guiro.wav",
+   "dur": 0.995,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/guiro/Guiro_Fast_rr1_Close.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh26",
+   "name": "Cowbell Low",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh26-cowbell-low.wav",
+   "dur": 0.6,
+   "tags": "dark hill pitch",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Cowbells/Cowbell2_Normal_v3_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2
+   }
+  },
+  {
+   "id": "dh27",
+   "name": "Agogo Low",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh27-agogo-low.wav",
+   "dur": 0.7,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/agogo/Agogo_Low_v2_rr1_Close.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh28",
+   "name": "Cuica",
+   "cat": "perc",
+   "pack": "dh",
+   "file": "samples/dh28-cuica.wav",
+   "dur": 1.0,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/oh/cuica/Long_p2_Main_vl1_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh29",
+   "name": "Siren Whistle",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh29-siren-whistle.wav",
+   "dur": 2.5,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Free Aerophones/Siren/Main_SirenWhistle-002.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh30",
+   "name": "Siren Short",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh30-siren-short.wav",
+   "dur": 1.5,
+   "tags": "dark hill pitch",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Free Aerophones/Siren/Main_SirenWhistle-008.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": 3
+   }
+  },
+  {
+   "id": "dh31",
+   "name": "Train Whistle",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh31-train-whistle.wav",
+   "dur": 1.5,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Train Whistle, Toy/Main_TrainLow_Double-001.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh32",
+   "name": "Squeal High",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh32-squeal-high.wav",
+   "dur": 0.8,
+   "tags": "dark hill pitch crush",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/whistle/Close_BallWhistle_Short-003.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": 7,
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "dh33",
+   "name": "Squeal Low",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh33-squeal-low.wav",
+   "dur": 1.5,
+   "tags": "dark hill pitch crush verb",
+   "src": [
+    {
+     "lib": "vd",
+     "file": "Samples/perc/close/whistle/Close_BallWhistle_Long-001.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -5,
+    "crush": "v26",
+    "verb": 0.2
+   }
+  },
+  {
+   "id": "dh34",
+   "name": "Flexatone",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh34-flexatone.wav",
+   "dur": 1.5,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Flexatone/flexatone1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh35",
+   "name": "Ratchet",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh35-ratchet.wav",
+   "dur": 0.945,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Ratchet/Ratchet1_Crank_rr1_Mid.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh36",
+   "name": "Didgeridoo Bark",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh36-didgeridoo-bark.wav",
+   "dur": 0.445,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Lip Aerophones/Didgeridoo/Didgeridoo1_Bark1_Main_rr3.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh37",
+   "name": "Gong Dark",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh37-gong-dark.wav",
+   "dur": 4.0,
+   "tags": "dark hill pitch",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Gong 1/gong_2_f.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -5
+   }
+  },
+  {
+   "id": "dh38",
+   "name": "Bowed Cymbal",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh38-bowed-cymbal.wav",
+   "dur": 3.0,
+   "tags": "dark hill",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Struck Idiophones/Suspended Cymbal 1/susCymb1_bow_13.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "dh39",
+   "name": "Glass Eerie",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh39-glass-eerie.wav",
+   "dur": 3.0,
+   "tags": "dark hill pitch verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Idiophones/Friction Idiophones/Wine Glasses/Sustains/Slow/glass1_D#4_Slow_1_Main.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -3,
+    "verb": 0.3
+   }
+  },
+  {
+   "id": "dh40",
+   "name": "Organ Cm",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh40-organ-cm.wav",
+   "dur": 2.5,
+   "tags": "dark hill lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_C3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_D3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_F#3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_C4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 5000,
+    "drive": 0.2
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh41",
+   "name": "Organ Fm",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh41-organ-fm.wav",
+   "dur": 2.5,
+   "tags": "dark hill lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_E2_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_G#2_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_C3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Renaissance Organ/8'/RenOrgan_8foot_Room_E3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 5000,
+    "drive": 0.2
+   },
+   "root": "F"
+  },
+  {
+   "id": "dh42",
+   "name": "Pipe Drone C",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh42-pipe-drone-c.wav",
+   "dur": 3.0,
+   "tags": "dark hill lp",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Pipe Organ/Quiet/NT5_Man3Quiet_C2_rr1.wav",
+     "gain": 0.8,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Edge-blown Aerophones/Pipe Organ/Quiet/NT5_Man3Quiet_F#2_rr1.wav",
+     "gain": 0.8,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 4000
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh43",
+   "name": "Piano Dark Cm",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh43-piano-dark-cm.wav",
+   "dur": 3.0,
+   "tags": "dark hill lp drive crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C2_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_F#2_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_D3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_F#3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 4000,
+    "drive": 0.15,
+    "crush": "v26"
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh44",
+   "name": "Piano Bbm Stab",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh44-piano-bbm-stab.wav",
+   "dur": 2.5,
+   "tags": "dark hill lp drive crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_A#1_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_E2_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_E3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 4000,
+    "drive": 0.15,
+    "crush": "v26"
+   },
+   "root": "A#"
+  },
+  {
+   "id": "dh45",
+   "name": "Piano Blues Hit",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh45-piano-blues-hit.wav",
+   "dur": 2.5,
+   "tags": "dark hill lp crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_E3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_A#3_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_D4_vl3_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 4500,
+    "crush": "v26"
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh46",
+   "name": "Piano Low Doom",
+   "cat": "bass",
+   "pack": "dh",
+   "file": "samples/dh46-piano-low-doom.wav",
+   "dur": 3.0,
+   "tags": "dark hill lp drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C1_vl3_rr1.wav",
+     "gain": 0.8,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Chordophones/Zithers/Grand Piano, Steinway B/NoSus/JHPiano_NoSus_Close_C2_vl3_rr1.wav",
+     "gain": 0.8,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 1800,
+    "drive": 0.4
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh47",
+   "name": "Harmonica Blues C",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh47-harmonica-blues-c.wav",
+   "dur": 2.5,
+   "tags": "dark hill lp verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Free Aerophones/Harmonica-Hohner-Special20-C/Sustains/Vib/Hohner-Special20_Vib_C4.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 6000,
+    "verb": 0.15
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh48",
+   "name": "Sax Dark Long",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh48-sax-dark-long.wav",
+   "dur": 2.5,
+   "tags": "dark hill lp verb",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Vibrato/BrettTenor_Vib_Main_C3_var1.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 4000,
+    "verb": 0.15
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh49",
+   "name": "Horns Minor Low",
+   "cat": "keys",
+   "pack": "dh",
+   "file": "samples/dh49-horns-minor-low.wav",
+   "dur": 0.547,
+   "tags": "dark hill drive",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_C2_vl2_rr1.wav",
+     "gain": 0.75,
+     "pitch": 0
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_D2_vl2_rr4.wav",
+     "gain": 0.75,
+     "pitch": 1
+    },
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Tenor Saxophone/Staccato/BrettTenor_Staccato_Main_F#2_vl2_rr7.wav",
+     "gain": 0.75,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "drive": 0.3
+   },
+   "root": "C"
+  },
+  {
+   "id": "dh50",
+   "name": "Saxello Squeal",
+   "cat": "fx",
+   "pack": "dh",
+   "file": "samples/dh50-saxello-squeal.wav",
+   "dur": 0.3,
+   "tags": "dark hill pitch crush",
+   "src": [
+    {
+     "lib": "vcsl",
+     "file": "Aerophones/Reed Aerophones/Saxello/Staccato/BrettSaxello_Stcts_MainSpirit_A#4_vl2_rr5.wav",
+     "gain": 1.0,
+     "pitch": 4
+    }
+   ],
+   "fx": {
+    "pitch": 5,
+    "crush": "v26"
+   }
   }
- ]
+ ],
+ "packs": {
+  "core": "Core 50",
+  "db": "Dusty Bap",
+  "dh": "Dark Hill"
+ }
 }

@@ -30,8 +30,10 @@ export function noteName(semi, root = 'C') {
   return NOTE_NAMES[n];
 }
 
+export const BANK_NAMES = 'ABCDEFGH';
+
 export function padLabel(i) {
-  return 'ABCD'[Math.floor(i / 16)] + String((i % 16) + 1).padStart(2, '0');
+  return BANK_NAMES[Math.floor(i / 16)] + String((i % 16) + 1).padStart(2, '0');
 }
 
 export function fmtSigned(v, digits = 0) {

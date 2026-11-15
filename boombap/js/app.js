@@ -1,11 +1,11 @@
 // BAP-50 – Oberfläche und Bedienlogik.
-import { el, $, clamp, padLabel, noteName, fmtSigned, download, debounce, isNativeApp } from './util.js';
+import { el, $, clamp, padLabel, noteName, fmtSigned, download, debounce, isNativeApp, BANK_NAMES } from './util.js';
 import { Knob, Fader } from './controls.js';
-import { Catalog, CATS, VINTAGE } from './catalog.js';
+import { Catalog, CATS, PACKS, VINTAGE } from './catalog.js';
 import { Engine, DELAY_TIMES } from './engine.js';
 import { Sequencer, REPEAT_DIVS, stepDur } from './seq.js';
 import {
-  NUM_PATTERNS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
+  NUM_PATTERNS, NUM_PADS, NUM_BANKS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
   saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History,
 } from './state.js';
 import { renderPatterns, songOrder, encodeWav, toMono } from './render.js';
@@ -85,7 +85,7 @@ function knob(opts) { return new Knob(opts); }
 async function boot() {
   const btn = $('#bootBtn');
   btn.disabled = true;
-  $('#bootMsg').textContent = 'Lade 50 Samples …';
+  $('#bootMsg').textContent = 'Lade 150 Samples …';
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
     S.ctx = new AC({ latencyHint: 'interactive' });
@@ -246,9 +246,10 @@ function updateLCD() {
 
 // ---------- Pad-Leiste ----------
 const PB = {};
+const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX'];
 function buildPadbar() {
   const bar = $('#padbar');
-  PB.bank = seg([[0, 'A'], [1, 'B'], [2, 'C'], [3, 'D']], P().cur.bank, (b) => setBank(b));
+  PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b));
   PB.bank.prepend(el('span', { class: 'lab', text: 'BANK' }));
   PB.full = el('button', { type: 'button', text: 'FULL', title: 'Volle Anschlagstärke' });
   PB.full.addEventListener('click', () => { S.fullLevel = !S.fullLevel; PB.full.classList.toggle('on', S.fullLevel); });
@@ -270,7 +271,7 @@ function buildPadbar() {
 }
 
 function setBank(b) {
-  P().cur.bank = clamp(b, 0, 3);
+  P().cur.bank = clamp(b, 0, NUM_BANKS - 1);
   const btns = Array.from(PB.bank.querySelectorAll('button'));
   btns.forEach((x, i) => { x.classList.toggle('on', i === b); x.setAttribute('aria-pressed', String(i === b)); });
   updatePads();
@@ -402,8 +403,8 @@ function bindKeys() {
     if (e.repeat) return;
     const local = PADKEYS.indexOf(k);
     if (local >= 0) { held.add(k); padDown(local, S.fullLevel ? 127 : (e.shiftKey ? 64 : 110)); return; }
-    if (k === ',') setBank((P().cur.bank + 3) % 4);
-    if (k === '.') setBank((P().cur.bank + 1) % 4);
+    if (k === ',') setBank((P().cur.bank + NUM_BANKS - 1) % NUM_BANKS);
+    if (k === '.') setBank((P().cur.bank + 1) % NUM_BANKS);
     if (k === 't' && !e.shiftKey) { S.seq.rec = !S.seq.rec; updateTransport(); }
   });
   window.addEventListener('keyup', (e) => {
@@ -945,7 +946,7 @@ BUILDERS.mix = (root) => {
   const mm = el('div', { class: 'meter', 'aria-hidden': 'true' }, el('i'));
   S.masterMeter = { bar: mm.firstChild, peak: 0 };
   mixer.append(el('div', { class: 'strip master' }, el('div', { class: 'sn', text: 'MASTER' }), el('div', { class: 'fw' }, mm, mf.node), el('div', { class: 'label', text: 'OUT' })));
-  root.append(el('div', { class: 'row sp' }, el('div', { class: 'label', text: `Bank ${'ABCD'[p.cur.bank]} · 16 Kanäle` }), el('div', { class: 'muted', style: { fontSize: '12px' }, text: 'Bank links wechseln. Doppelklick auf Regler = Standardwert.' })), mixer);
+  root.append(el('div', { class: 'row sp' }, el('div', { class: 'label', text: `Bank ${BANK_NAMES[p.cur.bank]} · 16 Kanäle` }), el('div', { class: 'muted', style: { fontSize: '12px' }, text: 'Bank links wechseln. Doppelklick auf Regler = Standardwert.' })), mixer);
 
   const mk = (field, label, fmt, def = 0) => knob({ label, min: 0, max: 1, step: 0.01, def, value: m[field], format: fmt || ((v) => Math.round(v * 100) + '%'), onInput: (v) => { m[field] = v; S.engine.applyMaster(); dirty(); } });
   const dlySeg = seg(Object.keys(DELAY_TIMES).map((k) => [k, k]), m.dlyTime, (v) => { m.dlyTime = v; S.engine.applyMaster(); dirty(); });
@@ -982,13 +983,25 @@ function updateMeters() {
 // =====================================================================
 BUILDERS.samples = (root) => {
   root.replaceChildren();
-  const search = el('input', { class: 'txt-in', type: 'search', placeholder: 'Suchen: kick, dusty, rim, lofi, piano …', value: S.sampleQuery, 'aria-label': 'Samples durchsuchen', style: { flex: '1 1 220px' } });
+  const search = el('input', { class: 'txt-in', type: 'search', placeholder: 'Suchen: kick, dusty, rim, lofi, piano, siren, organ, timbale …', value: S.sampleQuery, 'aria-label': 'Samples durchsuchen', style: { flex: '1 1 220px' } });
   const target = el('div', { class: 'muted', id: 'sampleTarget' });
   root.append(el('div', { class: 'row' }, search, target));
+  const packs = el('div', { class: 'chips', role: 'group', 'aria-label': 'Packs' });
+  const packList = [['all', 'Alle Packs'], ...Object.entries(PACKS)];
+  for (const [k, label] of packList) {
+    const n = k === 'all' ? S.catalog.list.length : S.catalog.list.filter((m) => (m.pack || 'user') === k).length;
+    if (!n) continue;
+    const c = el('button', { type: 'button', class: 'chip pack' + ((S.samplePack || 'all') === k ? ' on' : ''), 'aria-pressed': String((S.samplePack || 'all') === k), text: `${label} ${n}` });
+    c.addEventListener('click', () => { S.samplePack = k; renderView('samples'); });
+    packs.append(c);
+  }
+  root.append(el('div', { class: 'row' }, packs));
+  const inPack = (m) => !S.samplePack || S.samplePack === 'all' || (m.pack || 'user') === S.samplePack;
   const chips = el('div', { class: 'chips', role: 'group', 'aria-label': 'Kategorien' });
   const cats = [['all', 'Alle'], ...Object.entries(CATS)];
   for (const [k, label] of cats) {
-    const n = k === 'all' ? S.catalog.list.length : S.catalog.list.filter((m) => m.cat === k).length;
+    const n = S.catalog.list.filter((m) => inPack(m) && (k === 'all' || m.cat === k)).length;
+    if (!n && k !== 'all') continue;
     if (k === 'user' && !n) continue;
     const c = el('button', { type: 'button', class: 'chip' + (S.sampleCat === k ? ' on' : ''), 'aria-pressed': String(S.sampleCat === k), text: `${label} ${n}` });
     c.addEventListener('click', () => { S.sampleCat = k; renderView('samples'); });
@@ -1002,7 +1015,8 @@ BUILDERS.samples = (root) => {
     const q = S.sampleQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
     const items = S.catalog.list.filter((m) => {
       if (S.sampleCat !== 'all' && m.cat !== S.sampleCat) return false;
-      const hay = `${m.name} ${m.tags || ''} ${CATS[m.cat] || ''} ${m.id}`.toLowerCase();
+      if (!inPack(m)) return false;
+      const hay = `${m.name} ${m.tags || ''} ${CATS[m.cat] || ''} ${PACKS[m.pack] || ''} ${m.id}`.toLowerCase();
       return q.every((w) => hay.includes(w));
     });
     if (!items.length) list.append(el('p', { class: 'muted', text: 'Keine Treffer.' }));
@@ -1010,7 +1024,7 @@ BUILDERS.samples = (root) => {
       const pl = el('button', { type: 'button', class: 'pl', 'aria-label': 'Vorhören ' + m.name, text: '▶' });
       const load = el('button', { type: 'button', class: 'btn pri', text: '→ Pad' });
       const row = el('div', { class: 'srow' + (curPad().s === m.id ? ' cur' : ''), role: 'listitem' }, pl,
-        el('div', { style: { minWidth: '0' } }, el('div', { class: 'nm', text: m.name }), el('div', { class: 'tg', text: `${CATS[m.cat] || m.cat} · ${m.tags || ''}` })),
+        el('div', { style: { minWidth: '0' } }, el('div', { class: 'nm', text: m.name }), el('div', { class: 'tg', text: `${PACKS[m.pack] || 'Eigene'} · ${CATS[m.cat] || m.cat} · ${m.tags || ''}` })),
         el('span', { class: 'du', text: m.dur.toFixed(2) + ' s' }), load);
       row.style.setProperty('--c', `var(--c-${m.cat})`);
       pl.addEventListener('click', () => S.engine.preview(m.id));
@@ -1220,7 +1234,7 @@ async function chopToBank() {
   }
   updatePads();
   dirty();
-  toast(`${Math.min(16, C.slices.length)} Slices auf Bank ${'ABCD'[P().cur.bank]}` + (stored ? '' : ' (nur diese Sitzung)'));
+  toast(`${Math.min(16, C.slices.length)} Slices auf Bank ${BANK_NAMES[P().cur.bank]}` + (stored ? '' : ' (nur diese Sitzung)'));
 }
 
 async function toggleMic() {
@@ -1364,12 +1378,12 @@ BUILDERS.file = (root) => {
   base.addEventListener('change', () => { p.midi.base = +base.value; dirty(); });
   root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'MIDI-Eingang' }),
     el('div', { class: 'row' }, midiBtn, base, el('span', { class: 'muted', id: 'midiState', text: S.midiStatus })),
-    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, +16 … +63 alle Bänke direkt. MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System. Nicht mit jeder Hardware getestet.' })));
+    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, +16 … +127 die Pads B01 … H16 direkt. MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System. Nicht mit jeder Hardware getestet.' })));
 
   // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
   root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>50 echte Aufnahmen (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon). Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.0.0.apk" style="color:var(--teal)">BAP-50-1.0.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 4 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.1.0.apk" style="color:var(--teal)">BAP-50-1.1.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 8 Bänke × 16 Pads, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
 };
 
 function loadProject(raw, msg) {
@@ -1438,7 +1452,7 @@ function onMidi(e) {
   if (st === 0xfc) { S.seq.stop(); updateTransport(); return; }
   const cmd = st & 0xf0;
   const idx = d1 - P().midi.base;
-  if (idx < 0 || idx >= 64) return;
+  if (idx < 0 || idx >= NUM_PADS) return;
   if (cmd === 0x90 && d2 > 0) {
     if (idx < 16) { midiHeld.set(d1, idx); padDown(idx, S.fullLevel ? 127 : d2); }
     else {

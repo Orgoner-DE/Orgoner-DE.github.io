@@ -24,6 +24,8 @@
   --c-tom: #b08cff;
   --c-perc: #7bd88f;
   --c-keys: #ff8ad8;
+  --c-bass: #c9a26b;
+  --c-fx: #ff6f91;
   --c-user: #d7d2c8;
   --radius: 10px;
   --mono: 'Share Tech Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
@@ -286,6 +288,7 @@ h3 { margin: 0 0 8px; font-size: 13px; letter-spacing: .1em; text-transform: upp
 .chips { display: flex; gap: 5px; flex-wrap: wrap; }
 .chip { border: 1px solid var(--line); background: #111013; color: var(--muted); border-radius: 20px; padding: 5px 10px; font-size: 12px; font-weight: 700; }
 .chip.on { background: var(--text); color: #141317; }
+.chip.pack.on { background: var(--amber); color: #1b1408; border-color: var(--amber); }
 .slist { display: grid; gap: 4px; max-height: 560px; overflow-y: auto; padding-right: 2px; }
 .srow {
   display: grid; grid-template-columns: 36px minmax(0, 1fr) auto auto; gap: 8px; align-items: center;

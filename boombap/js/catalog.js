@@ -10,8 +10,10 @@ export const VINTAGE = {
 
 export const CATS = {
   kick: 'Kick', snare: 'Snare', clap: 'Clap', hat: 'HiHat', cymbal: 'Becken',
-  tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', user: 'Eigene',
+  tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', bass: 'Bass', fx: 'FX', user: 'Eigene',
 };
+
+export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', user: 'Eigene' };
 
 const DB_NAME = 'bap50';
 const STORE = 'samples';
@@ -99,7 +101,7 @@ export class Catalog {
         onProgress && onProgress(done, items.length);
       }
     };
-    await Promise.all([worker(), worker(), worker(), worker()]);
+    await Promise.all(Array.from({ length: 6 }, worker));
     for (const s of items) this.add(s);
     const users = await dbAll();
     for (const u of users) this.addUserRecord(u);
@@ -116,7 +118,7 @@ export class Catalog {
     const buf = new AudioBuffer({ length: Math.max(1, data.length), numberOfChannels: 1, sampleRate: rec.sr });
     buf.copyToChannel(data, 0);
     this.buffers.set(rec.id, buf);
-    this.add({ id: rec.id, name: rec.name, cat: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false });
+    this.add({ id: rec.id, name: rec.name, cat: 'user', pack: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false });
   }
 
   // Speichert ein eigenes Sample (mono Float32) und gibt die ID zurück.
