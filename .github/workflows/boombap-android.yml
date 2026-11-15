@@ -67,8 +67,8 @@ jobs:
         run: |
           V=$(sed -n "s/.*versionName '\(.*\)'.*/\1/p" boombap/native/Android/app/build.gradle)
           test -n "$V"
-          mkdir -p boombap/download
           git rm -q --ignore-unmatch boombap/download/*.apk
+          mkdir -p boombap/download
           cp release/app-debug.apk "boombap/download/BAP-50-$V.apk"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
