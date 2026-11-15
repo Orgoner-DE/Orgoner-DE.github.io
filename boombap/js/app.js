@@ -6,11 +6,11 @@ import { Engine, DELAY_TIMES } from './engine.js';
 import { Sequencer, REPEAT_DIVS, stepDur } from './seq.js';
 import {
   NUM_PATTERNS, NUM_PADS, NUM_BANKS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
-  saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads, padForSample,
+  saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads, presetKitIds, padForSample,
 } from './state.js';
 import { renderPatterns, songOrder, encodeWav, toMono } from './render.js';
 import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
-import { readZip } from './zip.js';
+import { readZip, makeZip } from './zip.js';
 import { detectBpm, decideLoop, isMelodic, chopLoop, master, classifyDrum } from './chopper.js';
 import { renderSynth, randomize, SYNTH_PRESETS, SYNTH_DEFAULT, WAVES, CHORDS, CHORD_NAMES } from './synth.js';
 
@@ -102,7 +102,7 @@ function knob(opts) { return new Knob(opts); }
 async function boot() {
   const btn = $('#bootBtn');
   btn.disabled = true;
-  $('#bootMsg').textContent = 'Lade 150 Samples …';
+  $('#bootMsg').textContent = 'Lade Samples …';
   try {
     const AC = window.AudioContext || window.webkitAudioContext;
     S.ctx = new AC({ latencyHint: 'interactive' });
@@ -137,7 +137,7 @@ async function boot() {
 }
 
 // ---------- Aufbau ----------
-const TABS = [['seq', 'SEQ'], ['pad', 'PAD'], ['mix', 'MIX'], ['samples', 'SAMPLES'], ['synth', 'SYNTH'], ['chop', 'CHOP'], ['song', 'SONG'], ['file', 'PROJEKT']];
+const TABS = [['seq', 'SEQUENCER', '▤', 'Spielen'], ['pad', 'PAD-EDIT', '◉'], ['mix', 'MIXER', '☰'], ['song', 'SONG', '≡'], ['samples', 'SAMPLE-BANK', '▥', 'Klänge'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['file', 'IMPORT / EXPORT', '⇅', 'Daten']];
 const BUILDERS = {};
 
 function buildUI() {
@@ -148,8 +148,10 @@ function buildUI() {
   buildPads();
   const tabs = $('#tabs');
   const views = $('#views');
-  for (const [id, label] of TABS) {
-    const t = el('button', { class: 'tab', role: 'tab', type: 'button', 'aria-selected': String(id === S.view), 'aria-controls': 'view-' + id, id: 'tab-' + id, text: label });
+  for (const [id, label, icon, group] of TABS) {
+    if (group) tabs.append(el('span', { class: 'tab-g', 'aria-hidden': 'true', text: group }));
+    const t = el('button', { class: 'tab', role: 'tab', type: 'button', 'aria-selected': String(id === S.view), 'aria-controls': 'view-' + id, id: 'tab-' + id },
+      el('span', { class: 'ti', 'aria-hidden': 'true', text: icon }), el('span', { text: label }));
     t.addEventListener('click', () => showView(id));
     tabs.append(t);
     const v = el('div', { class: 'view', id: 'view-' + id, role: 'tabpanel', 'aria-labelledby': 'tab-' + id, hidden: id !== S.view });
@@ -279,7 +281,7 @@ function updateLCD() {
 
 // ---------- Pad-Leiste ----------
 const PB = {};
-const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth', 'Import 1', 'Import 2', 'Import 3', 'Import 4'];
+const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth', 'Crate Diggers Drums', 'Crate Diggers Bass & Keys', 'Import 1', 'Import 2'];
 function buildPadbar() {
   const bar = $('#padbar');
   PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b), 'banks');
@@ -507,8 +509,15 @@ function loadGroove(idx) {
   P().bpm = g.bpm;
   P().swing = g.swing;
   if (g.preset) {
-    const pads = presetKitPads(g.preset, catOf);
-    pads.forEach((pad, k) => { const i = g.bank * 16 + k; P().pads[i] = pad; S.engine.strip(i); S.engine.updatePad(i); });
+    const kits = g.kits || [[g.preset, g.bank]];
+    for (const [kit, bank] of kits) {
+      const ids = presetKitIds(kit);
+      const cur = P().pads.slice(bank * 16, bank * 16 + 16);
+      const differs = cur.some((pd, k) => pd.s && pd.s !== ids[k]);
+      if (differs && !confirm(`Bank ${BANK_NAMES[bank]} („${bankTitle(bank)}“) ist anders belegt. Mit dem Kit des Presets überschreiben? (Rückgängig möglich)\n\nAbbrechen = Bank behalten`)) continue;
+      presetKitPads(kit, catOf).forEach((pad, k) => { const i = bank * 16 + k; P().pads[i] = pad; S.engine.strip(i); S.engine.updatePad(i); });
+      if (P().bankNames) delete P().bankNames[bank];
+    }
     if (g.master) Object.assign(P().master, g.master);
     S.engine.applyMaster();
     setBank(g.bank);
@@ -739,27 +748,30 @@ function menus() {
   const mi = (label, act, extra = {}) => ({ label, act, ...extra });
   return [
     { id: 'file', label: 'Datei', items: [
-      mi('+ Samples hinzufügen …', addSamplesFromPicker),
-      mi(`Datei auf Pad ${padLabel(p.cur.pad)} laden …`, loadFileToCurrentPad),
-      mi('Sample aufnehmen (Mikrofon)', recordNewSample),
-      mi('Synth-Klang erstellen …', () => showView('synth')),
-      mi('Sample-Pack importieren (ZIP) …', () => importPackFrom(false)),
-      mi('Sample-Pack-Ordner importieren …', () => importPackFrom(true), { disabled: isNativeApp() }),
-      '-',
+      { header: true, label: 'Projekt' },
       mi('Neues leeres Projekt', newEmptyProject),
       mi('Werkseinstellung laden', factoryReset),
-      '-',
       mi('Projekt speichern', saveProjectSlot, { kbd: 'Strg+S' }),
-      mi('Projekte verwalten …', () => showView('file')),
-      mi('Projekt exportieren (.json)', exportProjectJSON),
-      mi('Projekt importieren …', importProjectJSON),
+      mi('Import / Export öffnen …', () => showView('file')),
       '-',
+      { header: true, label: 'Importieren' },
+      mi('Datei importieren … (erkennt alles)', async () => importAny(await pickAnyFiles())),
+      mi('+ Audio-Samples …', addSamplesFromPicker),
+      mi('Sample-Pack (ZIP) …', () => importPackFrom(false)),
+      mi('Sample-Pack-Ordner …', () => importPackFrom(true), { disabled: isNativeApp() }),
+      mi(`Datei auf Pad ${padLabel(p.cur.pad)} …`, loadFileToCurrentPad),
+      mi('Aufnahme (Mikrofon)', recordNewSample),
+      '-',
+      { header: true, label: 'Exportieren' },
       mi('Pattern als WAV', () => exportWavPattern(1)),
       mi('Pattern ×4 als WAV', () => exportWavPattern(4)),
       mi('Song als WAV', exportWavSong),
+      mi('Stems (Spuren einzeln, ZIP)', exportStems),
+      mi(`Bank ${BANK_NAMES[p.cur.bank]} als ZIP`, () => exportBankZip(p.cur.bank)),
+      mi('Eigene Samples als ZIP', () => exportUserSamplesZip()),
+      mi('Komplett-Backup (.bap50.zip)', exportFullBackup),
+      mi('Projekt als JSON', exportProjectJSON),
       mi('Resample → gewähltes Pad', resampleToPad),
-      '-',
-      mi('Audio laden / Chop …', () => showView('chop')),
     ] },
     { id: 'edit', label: 'Bearbeiten', short: 'Edit', items: [
       mi('Rückgängig', undo, { kbd: 'Strg+Z', disabled: () => !S.history.stack.length }),
@@ -825,6 +837,7 @@ function menus() {
     { id: 'view', label: 'Ansicht', short: 'Ansicht', items: [
       ...TABS.map(([id, label]) => mi(VIEW_NAMES[id] || label, () => showView(id), { checked: S.view === id, radio: true })),
       '-',
+      mi('Bänke-Übersicht (A–P)', () => { S.bankTab = 'banks'; showView('samples'); }),
       mi('Pad-Bereich anzeigen', togglePadsPanel, { checked: !S.hidePads }),
       mi('Vollbild', toggleFullscreen),
     ] },
@@ -844,8 +857,8 @@ function menus() {
 }
 
 // ---------- Untere Navigation (Handy/Tablet) ----------
-const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'PAD', '◉'], ['mix', 'MIX', '☰'], ['samples', 'SOUND', '♪'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'PROJ', '⚙']];
-const VIEW_NAMES = { synth: 'Synth-Sampler (SYNTH)', seq: 'Sequencer (SEQ)', pad: 'Pad-Editor (PAD)', mix: 'Mixer (MIX)', samples: 'Samples (SAMPLES)', chop: 'Chop & Aufnahme (CHOP)', song: 'Song (SONG)', file: 'Projekt (PROJEKT)' };
+const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'EDIT', '◉'], ['mix', 'MIX', '☰'], ['samples', 'BANK', '▥'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'DATEI', '⇅']];
+const VIEW_NAMES = { synth: 'Synth-Sampler', seq: 'Sequencer', pad: 'Pad-Editor', mix: 'Mixer', samples: 'Sample-Bank', chop: 'Chop & Aufnahme', song: 'Song', file: 'Import / Export' };
 
 function buildBottomNav() {
   const nav = $('#botnav');
@@ -1414,100 +1427,252 @@ function updateMeters() {
 // =====================================================================
 BUILDERS.samples = (root) => {
   root.replaceChildren();
-  const search = el('input', { class: 'txt-in', type: 'search', placeholder: 'Suchen: kick, dusty, rim, lofi, piano, siren, organ, timbale …', value: S.sampleQuery, 'aria-label': 'Samples durchsuchen', style: { flex: '1 1 220px' } });
-  const target = el('div', { class: 'muted', id: 'sampleTarget' });
-  const addB = el('button', { class: 'btn pri', type: 'button', text: '+ Samples hinzufügen', title: 'Audiodateien laden (mehrere möglich) – oder einfach ins Fenster ziehen' });
+  const list = S.catalog.list;
+  const own = list.filter((m) => !m.builtin).length;
+  const packsN = new Set(list.map((m) => (m.group ? 'g:' + m.group : m.pack))).size;
+  const addB = el('button', { class: 'btn pri', type: 'button', text: '+ Samples' });
   addB.addEventListener('click', addSamplesFromPicker);
-  const recB = el('button', { class: 'btn', type: 'button', text: '● Aufnehmen' });
-  recB.addEventListener('click', recordNewSample);
-  const packB = el('button', { class: 'btn', type: 'button', text: '📦 Pack importieren (ZIP)', title: 'Heruntergeladenes Sample-Pack lokal choppen, nachmastern und auf Bänke legen' });
+  const packB = el('button', { class: 'btn', type: 'button', text: '📦 Pack (ZIP)' });
   packB.addEventListener('click', () => importPackFrom(false));
-  root.append(el('div', { class: 'row' }, addB, packB, recB, el('span', { class: 'muted', style: { fontSize: '12px' }, text: 'WAV, MP3, AIFF, FLAC, OGG, M4A · bis 60 s · Dateien auch per Drag & Drop, direkt auf ein Pad' })));
-  root.append(el('div', { class: 'row' }, search, target));
-  const packs = el('div', { class: 'chips', role: 'group', 'aria-label': 'Packs' });
-  const packList = [['all', 'Alle Packs'], ...Object.entries(PACKS)];
-  for (const [k, label] of packList) {
-    const n = k === 'all' ? S.catalog.list.length : S.catalog.list.filter((m) => (m.pack || 'user') === k).length;
-    if (!n) continue;
-    const c = el('button', { type: 'button', class: 'chip pack' + ((S.samplePack || 'all') === k ? ' on' : ''), 'aria-pressed': String((S.samplePack || 'all') === k), text: `${label} ${n}` });
-    c.addEventListener('click', () => { S.samplePack = k; renderView('samples'); });
-    packs.append(c);
-  }
-  const groups = {};
-  for (const m of S.catalog.list) if (m.group) groups[m.group] = (groups[m.group] || 0) + 1;
-  for (const [g, n] of Object.entries(groups)) {
-    const key = 'grp:' + g;
-    const c = el('button', { type: 'button', class: 'chip pack' + (S.samplePack === key ? ' on' : ''), 'aria-pressed': String(S.samplePack === key), text: `📦 ${g} ${n}` });
-    c.addEventListener('click', () => { S.samplePack = key; renderView('samples'); });
-    packs.append(c);
-  }
-  root.append(el('div', { class: 'row' }, packs));
-  const inPack = (m) => !S.samplePack || S.samplePack === 'all' || (S.samplePack.startsWith('grp:') ? m.group === S.samplePack.slice(4) : (m.pack || 'user') === S.samplePack);
-  const chips = el('div', { class: 'chips', role: 'group', 'aria-label': 'Kategorien' });
-  const cats = [['all', 'Alle'], ...Object.entries(CATS)];
-  for (const [k, label] of cats) {
-    const n = S.catalog.list.filter((m) => inPack(m) && (k === 'all' || m.cat === k)).length;
-    if (!n && k !== 'all') continue;
-    if (k === 'user' && !n) continue;
-    const c = el('button', { type: 'button', class: 'chip' + (S.sampleCat === k ? ' on' : ''), 'aria-pressed': String(S.sampleCat === k), text: `${label} ${n}` });
-    c.addEventListener('click', () => { S.sampleCat = k; renderView('samples'); });
-    chips.append(c);
-  }
-  root.append(el('div', { class: 'row' }, chips));
-  const list = el('div', { class: 'slist', role: 'list' });
-  root.append(list);
-  const fill = () => {
-    list.replaceChildren();
-    const q = S.sampleQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    const items = S.catalog.list.filter((m) => {
-      if (S.sampleCat !== 'all' && m.cat !== S.sampleCat) return false;
-      if (!inPack(m)) return false;
-      const hay = `${m.name} ${m.tags || ''} ${CATS[m.cat] || ''} ${PACKS[m.pack] || ''} ${m.id}`.toLowerCase();
-      return q.every((w) => hay.includes(w));
-    });
-    if (!items.length) list.append(el('p', { class: 'muted', text: 'Keine Treffer.' }));
-    for (const m of items) {
-      const pl = el('button', { type: 'button', class: 'pl', 'aria-label': 'Vorhören ' + m.name, text: '▶' });
-      const load = el('button', { type: 'button', class: 'btn pri', text: '→ Pad' });
-      const row = el('div', { class: 'srow' + (curPad().s === m.id ? ' cur' : ''), role: 'listitem' }, pl,
-        el('div', { style: { minWidth: '0' } }, el('div', { class: 'nm', text: m.name }), el('div', { class: 'tg', text: `${PACKS[m.pack] || 'Eigene'} · ${CATS[m.cat] || m.cat} · ${m.tags || ''}` })),
-        el('span', { class: 'du', text: m.dur.toFixed(2) + ' s' }), load);
-      row.style.setProperty('--c', `var(--c-${m.cat})`);
-      pl.addEventListener('click', () => S.engine.preview(m.id));
-      row.addEventListener('dblclick', () => assignSample(m.id));
-      load.addEventListener('click', () => assignSample(m.id));
-      if (!m.builtin) {
-        const del = el('button', { type: 'button', class: 'btn warn', 'aria-label': 'Löschen ' + m.name, text: '✕' });
-        del.addEventListener('click', async () => {
-          if (P().pads.some((pp) => pp.s === m.id) && !confirm('Sample wird auf Pads benutzt. Trotzdem löschen?')) return;
-          await S.catalog.removeUser(m.id);
-          renderView('samples');
-          updatePads();
-        });
-        const ren = el('button', { type: 'button', class: 'btn', 'aria-label': 'Umbenennen ' + m.name, text: '✎' });
-        ren.addEventListener('click', async () => {
-          const n = prompt('Neuer Name', m.name);
-          if (n == null || !n.trim()) return;
-          await S.catalog.updateUser(m.id, { name: n.trim() });
-          renderView('samples');
-          updatePads();
-        });
-        row.append(ren, del);
-        row.style.gridTemplateColumns = '36px minmax(0,1fr) auto auto auto auto';
-      }
-      list.append(row);
-    }
-  };
-  search.addEventListener('input', () => { S.sampleQuery = search.value; fill(); list.scrollTop = 0; });
-  list.addEventListener('scroll', () => { S.sampleScroll = list.scrollTop; });
-  fill();
-  list.scrollTop = S.sampleScroll || 0;
-  updateSampleTarget();
+  const recB = el('button', { class: 'btn', type: 'button', text: '● Aufnahme' });
+  recB.addEventListener('click', recordNewSample);
+  const expB = el('button', { class: 'btn', type: 'button', text: '⇩ Eigene als ZIP', disabled: !own });
+  expB.addEventListener('click', () => exportUserSamplesZip());
+  root.append(el('div', { class: 'sb-head' },
+    el('div', {}, el('h2', { class: 'vh', text: 'Sample-Bank' }),
+      el('p', { class: 'muted vsub', text: `${list.length} Klänge · ${packsN} Packs · ${own} eigene · Ziel-Pad ${padLabel(P().cur.pad)}` })),
+    el('div', { class: 'row', style: { marginBottom: '0' } }, addB, packB, recB, expB)));
+  const tabs = seg([['sounds', 'KLÄNGE'], ['banks', 'BÄNKE A–P']], S.bankTab || 'sounds', (v) => { S.bankTab = v; renderView('samples'); }, 'teal sb-tabs');
+  root.append(el('div', { class: 'row' }, tabs));
+  if ((S.bankTab || 'sounds') === 'banks') buildBankCards(root); else buildSoundBrowser(root);
 };
 
+function buildSoundBrowser(root) {
+  const list = S.catalog.list;
+  const packKey = (m) => (m.group ? 'grp:' + m.group : m.pack || 'user');
+  const packName = (k) => (k.startsWith('grp:') ? '📦 ' + k.slice(4) : PACKS[k] || k);
+  const inPack = (m) => !S.samplePack || S.samplePack === 'all' || packKey(m) === S.samplePack || (S.samplePack === 'user' && !m.builtin);
+  const side = el('aside', { class: 'sb-side', 'aria-label': 'Filter' });
+  const counts = {};
+  for (const m of list) counts[packKey(m)] = (counts[packKey(m)] || 0) + 1;
+  const filterBtn = (key, label, n, cur, onPick, color) => {
+    const b = el('button', { type: 'button', class: 'sb-f' + (cur ? ' on' : ''), 'aria-pressed': String(cur) },
+      el('span', { class: 'dot', style: { background: color || 'var(--line2)' } }), el('span', { class: 'fl', text: label }), el('span', { class: 'fn', text: String(n) }));
+    b.addEventListener('click', onPick);
+    return b;
+  };
+  side.append(el('div', { class: 'label', text: 'Packs' }));
+  side.append(filterBtn('all', 'Alle Packs', list.length, !S.samplePack || S.samplePack === 'all', () => { S.samplePack = 'all'; renderView('samples'); }, 'var(--text)'));
+  const packOrder = ['core', 'db', 'dh', 'cd', 'synth'];
+  const keys = Object.keys(counts).sort((a, b) => (packOrder.indexOf(a) + 1 || 99) - (packOrder.indexOf(b) + 1 || 99) || a.localeCompare(b));
+  for (const k of keys) side.append(filterBtn(k, packName(k), counts[k], S.samplePack === k, () => { S.samplePack = k; renderView('samples'); }, k === 'user' || k.startsWith('grp:') ? 'var(--c-user)' : 'var(--amber)'));
+  side.append(el('div', { class: 'label', style: { marginTop: '10px' }, text: 'Kategorien' }));
+  side.append(filterBtn('all', 'Alle', list.filter(inPack).length, S.sampleCat === 'all', () => { S.sampleCat = 'all'; renderView('samples'); }, 'var(--text)'));
+  for (const [c, label] of Object.entries(CATS)) {
+    const n = list.filter((m) => inPack(m) && m.cat === c).length;
+    if (!n) continue;
+    side.append(filterBtn(c, label, n, S.sampleCat === c, () => { S.sampleCat = c; renderView('samples'); }, `var(--c-${c})`));
+  }
+
+  const search = el('input', { class: 'txt-in', type: 'search', placeholder: 'Suchen: kick, dusty, 808, siren, bass, guitar …', value: S.sampleQuery, 'aria-label': 'Samples durchsuchen', style: { flex: '1 1 200px' } });
+  const sortSel = el('select', { class: 'sel-in', 'aria-label': 'Sortierung' },
+    ...[['name', 'Name'], ['dur', 'Länge'], ['new', 'Neueste zuerst']].map(([v, l]) => el('option', { value: v, text: 'Sortieren: ' + l, selected: (S.sampleSort || 'name') === v })));
+  sortSel.addEventListener('change', () => { S.sampleSort = sortSel.value; fill(); });
+  const listBox = el('div', { class: 'sb-list', role: 'list' });
+  const main = el('section', { class: 'sb-main' }, el('div', { class: 'row' }, search, sortSel),
+    el('p', { class: 'hint sb-help', html: '<b>1.</b> Klang antippen (hören &amp; auswählen) · <b>2.</b> Ziel-Pad rechts antippen – oder direkt „→ Pad“.' }), listBox);
+  const target = el('aside', { class: 'sb-target', 'aria-label': 'Ziel-Pads' });
+  root.append(el('div', { class: 'sb-grid' }, side, main, target));
+  buildTargetPads(target);
+
+  const io = 'IntersectionObserver' in window ? new IntersectionObserver((ents) => {
+    for (const e of ents) if (e.isIntersecting) { drawMini(e.target); io.unobserve(e.target); }
+  }, { root: null, rootMargin: '200px' }) : null;
+  function drawMini(cv) {
+    const pk = S.catalog.peaksFor(cv.dataset.id, 80);
+    if (!pk) return;
+    const g = cv.getContext('2d');
+    const h = cv.height;
+    g.fillStyle = cv.dataset.c || '#f2a33a';
+    for (let x = 0; x < 80; x++) { const v = Math.max(1, pk[x] * (h / 2 - 1)); g.fillRect(x, h / 2 - v, 1, v * 2); }
+  }
+  const catOrder = ['kick', 'snare', 'clap', 'hat', 'cymbal', 'tom', 'perc', 'bass', 'keys', 'fx', 'user'];
+  function fill() {
+    listBox.replaceChildren();
+    const q = S.sampleQuery.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let items = list.filter((m) => {
+      if (S.sampleCat !== 'all' && m.cat !== S.sampleCat) return false;
+      if (!inPack(m)) return false;
+      const hay = `${m.name} ${m.tags || ''} ${CATS[m.cat] || ''} ${PACKS[m.pack] || ''} ${m.group || ''} ${m.id}`.toLowerCase();
+      return q.every((w) => hay.includes(w));
+    });
+    const sort = S.sampleSort || 'name';
+    items = items.slice().sort((a, b) => (sort === 'dur' ? a.dur - b.dur : sort === 'new' ? (b.builtin ? 0 : 1) - (a.builtin ? 0 : 1) || String(b.id).localeCompare(String(a.id)) : a.name.localeCompare(b.name, 'de')));
+    if (!items.length) { listBox.append(el('p', { class: 'muted', text: 'Keine Treffer.' })); return; }
+    const groups = {};
+    for (const m of items) (groups[m.cat] = groups[m.cat] || []).push(m);
+    for (const c of catOrder.concat(Object.keys(groups).filter((k) => !catOrder.includes(k)))) {
+      const g = groups[c];
+      if (!g) continue;
+      listBox.append(el('div', { class: 'sb-cat', style: { '--c': `var(--c-${c})` } }, el('span', { text: (CATS[c] || c).toUpperCase() }), el('span', { class: 'fn', text: String(g.length) })));
+      for (const m of g) {
+        const color = getComputedStyle(document.documentElement).getPropertyValue('--c-' + m.cat).trim();
+        const pl = el('button', { type: 'button', class: 'pl', 'aria-label': 'Vorhören ' + m.name, text: '▶' });
+        const cv = el('canvas', { class: 'mini', width: '80', height: '26', 'data-id': m.id, 'data-c': color, 'aria-hidden': 'true' });
+        const load = el('button', { type: 'button', class: 'btn pri', title: 'Auf das Ziel-Pad legen', text: '→ ' + padLabel(P().cur.pad) });
+        const row = el('div', { class: 'sb-row' + (S.armed === m.id ? ' armed' : '') + (curPad().s === m.id ? ' cur' : ''), role: 'listitem', tabindex: '0', 'data-id': m.id },
+          pl, cv, el('div', { class: 'info' }, el('div', { class: 'nm', text: m.name }), el('div', { class: 'tg', text: `${m.group || PACKS[m.pack] || 'Eigene'} · ${m.tags || ''}` })),
+          el('span', { class: 'du', text: m.dur.toFixed(2) + ' s' }), load);
+        row.style.setProperty('--c', `var(--c-${m.cat})`);
+        pl.addEventListener('click', (e) => { e.stopPropagation(); S.engine.preview(m.id); });
+        load.addEventListener('click', (e) => { e.stopPropagation(); S.armed = null; assignSample(m.id); });
+        const arm = () => {
+          S.engine.preview(m.id);
+          S.armed = S.armed === m.id ? null : m.id;
+          for (const r of listBox.querySelectorAll('.sb-row.armed')) r.classList.remove('armed');
+          if (S.armed) row.classList.add('armed');
+          updateTargetHint();
+        };
+        row.addEventListener('click', arm);
+        row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); arm(); } });
+        row.draggable = true;
+        row.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/x-bap-sample', m.id); e.dataTransfer.effectAllowed = 'copy'; });
+        if (!m.builtin) {
+          const ren = el('button', { type: 'button', class: 'btn', 'aria-label': 'Umbenennen ' + m.name, text: '✎' });
+          ren.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            const n = prompt('Neuer Name', m.name);
+            if (n == null || !n.trim()) return;
+            await S.catalog.updateUser(m.id, { name: n.trim() });
+            fill();
+            updatePads();
+          });
+          const del = el('button', { type: 'button', class: 'btn warn', 'aria-label': 'Löschen ' + m.name, text: '✕' });
+          del.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            if (P().pads.some((pp) => pp.s === m.id) && !confirm('Sample wird auf Pads benutzt. Trotzdem löschen?')) return;
+            await S.catalog.removeUser(m.id);
+            renderView('samples');
+            updatePads();
+          });
+          row.append(ren, del);
+          row.classList.add('own');
+        }
+        listBox.append(row);
+        if (io) io.observe(cv); else drawMini(cv);
+      }
+    }
+  }
+  search.addEventListener('input', () => { S.sampleQuery = search.value; fill(); listBox.scrollTop = 0; });
+  listBox.addEventListener('scroll', () => { S.sampleScroll = listBox.scrollTop; });
+  fill();
+  listBox.scrollTop = S.sampleScroll || 0;
+}
+
+function buildTargetPads(box) {
+  box.replaceChildren();
+  const b = P().cur.bank;
+  const prev = el('button', { type: 'button', class: 'btn', 'aria-label': 'Vorherige Bank', text: '◀' });
+  const next = el('button', { type: 'button', class: 'btn', 'aria-label': 'Nächste Bank', text: '▶' });
+  prev.addEventListener('click', () => { setBank((b + NUM_BANKS - 1) % NUM_BANKS); buildTargetPads(box); });
+  next.addEventListener('click', () => { setBank((b + 1) % NUM_BANKS); buildTargetPads(box); });
+  box.append(el('div', { class: 'tp-head' }, prev, el('div', { class: 'tp-title' }, el('b', { text: 'Bank ' + BANK_NAMES[b] }), el('span', { text: bankTitle(b) })), next));
+  const grid = el('div', { class: 'tp-grid' });
+  for (const local of [12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3]) {
+    const i = b * 16 + local;
+    const pad = P().pads[i];
+    const c = el('button', { type: 'button', class: 'tp' + (i === P().cur.pad ? ' sel' : '') + (pad.s ? '' : ' empty'), 'aria-label': `Pad ${padLabel(i)} ${padTitle(i)}` },
+      el('span', { class: 'tn', text: String(local + 1) }), el('span', { class: 'tl', text: pad.s ? padTitle(i) : '+' }));
+    c.style.setProperty('--c', colorOf(pad));
+    c.addEventListener('click', () => {
+      if (S.armed) {
+        assignSampleTo(i, S.armed);
+        S.armed = null;
+        P().cur.pad = i;
+        renderView('samples');
+      } else {
+        P().cur.pad = i;
+        S.engine.trigger(i, 110);
+        updatePads();
+        updateLCD();
+        buildTargetPads(box);
+        for (const btn of document.querySelectorAll('.sb-row .btn.pri')) btn.textContent = '→ ' + padLabel(i);
+      }
+    });
+    c.addEventListener('dragover', (e) => { if (Array.from(e.dataTransfer.types).includes('text/x-bap-sample')) { e.preventDefault(); c.classList.add('drop-target'); } });
+    c.addEventListener('dragleave', () => c.classList.remove('drop-target'));
+    c.addEventListener('drop', (e) => {
+      const id = e.dataTransfer.getData('text/x-bap-sample');
+      if (!id) return;
+      e.preventDefault();
+      e.stopPropagation();
+      assignSampleTo(i, id);
+      P().cur.pad = i;
+      renderView('samples');
+    });
+    grid.append(c);
+  }
+  box.append(grid, el('p', { class: 'hint', id: 'tpHint' }));
+  updateTargetHint();
+}
+
+function updateTargetHint() {
+  const h = $('#tpHint');
+  if (!h) return;
+  const m = S.armed && S.catalog.meta(S.armed);
+  h.innerHTML = m ? `<b>„${m.name}“</b> ausgewählt – jetzt ein Pad antippen.` : 'Pad antippen = Ziel wählen. Klänge lassen sich auch auf ein Pad ziehen.';
+  document.querySelector('.sb-target') && document.querySelector('.sb-target').classList.toggle('armed', !!m);
+}
+
+function buildBankCards(root) {
+  const grid = el('div', { class: 'bk-grid' });
+  for (let b = 0; b < NUM_BANKS; b++) {
+    const used = P().pads.slice(b * 16, b * 16 + 16).filter((p) => p.s).length;
+    const ren = el('button', { type: 'button', class: 'btn', 'aria-label': 'Bank umbenennen', text: '✎' });
+    ren.addEventListener('click', () => {
+      const n = prompt(`Name für Bank ${BANK_NAMES[b]}`, bankTitle(b));
+      if (n == null) return;
+      if (!P().bankNames) P().bankNames = {};
+      if (n.trim()) P().bankNames[b] = n.trim().slice(0, 40); else delete P().bankNames[b];
+      dirty();
+      renderView('samples');
+    });
+    const open = el('button', { type: 'button', class: 'btn pri', text: 'Öffnen' });
+    open.addEventListener('click', () => { setBank(b); S.bankTab = 'sounds'; renderView('samples'); });
+    const exp = el('button', { type: 'button', class: 'btn', text: '⇩ ZIP', disabled: !used });
+    exp.addEventListener('click', () => exportBankZip(b));
+    const clr = el('button', { type: 'button', class: 'btn warn', text: 'Leeren', disabled: !used });
+    clr.addEventListener('click', () => {
+      if (!confirm(`Bank ${BANK_NAMES[b]} leeren? (Rückgängig möglich)`)) return;
+      pushUndo(true);
+      for (let k = 0; k < 16; k++) P().pads[b * 16 + k] = defaultPad(null);
+      updatePads();
+      dirty();
+      renderView('samples');
+    });
+    const cells = el('div', { class: 'bk-pads' });
+    for (const local of [12, 13, 14, 15, 8, 9, 10, 11, 4, 5, 6, 7, 0, 1, 2, 3]) {
+      const i = b * 16 + local;
+      const pad = P().pads[i];
+      const c = el('button', { type: 'button', class: 'bk-c' + (pad.s ? '' : ' empty') + (i === P().cur.pad ? ' sel' : ''), title: `${padLabel(i)} ${padTitle(i)}`, text: pad.s ? padTitle(i) : '·' });
+      c.style.setProperty('--c', colorOf(pad));
+      c.addEventListener('click', () => { setBank(b); P().cur.pad = i; S.engine.trigger(i, 110); updatePads(); updateLCD(); renderView('samples'); });
+      c.addEventListener('dblclick', () => { setBank(b); P().cur.pad = i; showView('pad'); });
+      cells.append(c);
+    }
+    grid.append(el('div', { class: 'bk-card' + (b === P().cur.bank ? ' cur' : '') },
+      el('div', { class: 'bk-head' }, el('b', { class: 'bk-l', text: BANK_NAMES[b] }), el('div', { class: 'bk-t' }, el('div', { text: bankTitle(b) }), el('small', { text: `${used}/16 Pads belegt` })), ren),
+      cells, el('div', { class: 'row', style: { marginBottom: '0', marginTop: '8px' } }, open, exp, clr)));
+  }
+  root.append(el('p', { class: 'hint', text: 'Pad antippen = auswählen und hören, doppelt tippen = im Pad-Editor öffnen. Bänke M–P füllt der Pack-Import automatisch.' }), grid);
+}
+
 function updateSampleTarget() {
-  const t = $('#sampleTarget');
-  if (t) t.textContent = `Ziel: ${padLabel(P().cur.pad)} (${padTitle(P().cur.pad)}) – Pad antippen zum Wechseln`;
+  const box = document.querySelector('.sb-target');
+  if (box && S.view === 'samples') {
+    buildTargetPads(box);
+    for (const btn of document.querySelectorAll('.sb-row .btn.pri')) btn.textContent = '→ ' + padLabel(P().cur.pad);
+  }
 }
 
 function assignSample(id) { assignSampleTo(P().cur.pad, id); }
@@ -1680,7 +1845,7 @@ function bindDrop() {
     clearMarks();
     const files = e.dataTransfer.files;
     if (padEl) importSampleFiles(files, bankBase() + +padEl.dataset.i);
-    else importSampleFiles(files);
+    else importAny(files);
   });
 }
 
@@ -1732,9 +1897,14 @@ function showPackDialog(pack) {
   const chop = el('input', { type: 'checkbox', checked: true, id: 'pk-chop' });
   const keep = el('input', { type: 'checkbox', id: 'pk-keep' });
   const fill = el('input', { type: 'checkbox', checked: true, id: 'pk-fill' });
-  const firstFree = (() => { for (let b = IMPORT_BANK0; b < NUM_BANKS; b++) if (!P().pads.slice(b * 16, b * 16 + 16).some((p) => p.s)) return b; return IMPORT_BANK0; })();
+  const used = (b) => P().pads.slice(b * 16, b * 16 + 16).some((p) => p.s);
+  const firstFree = (() => { for (let b = IMPORT_BANK0; b < NUM_BANKS; b++) if (!used(b)) return b; return NUM_BANKS - 2; })();
   const bankSel = el('select', { class: 'sel-in', 'aria-label': 'Ab Bank' }, ...Array.from({ length: NUM_BANKS }, (_, b) => el('option', { value: String(b), text: `ab Bank ${BANK_NAMES[b]} · ${bankTitle(b)}`, selected: b === firstFree })));
   const go = el('button', { class: 'btn pri', type: 'button', text: `${pack.items.length} Dateien importieren` });
+  const warn = el('p', { class: 'hint', style: { color: 'var(--amber2)' } });
+  const updWarn = () => { const b = +bankSel.value; warn.textContent = used(b) ? `Achtung: Bank ${BANK_NAMES[b]} („${bankTitle(b)}“) ist belegt und wird überschrieben (rückgängig möglich).` : ''; };
+  bankSel.addEventListener('change', updWarn);
+  updWarn();
   const bar = el('div', { class: 'boot-bar', style: { margin: '12px 0 6px' } }, el('i'));
   const status = el('p', { class: 'muted', style: { fontSize: '12px', minHeight: '1.3em' } });
   const lab = (inp, txt) => el('label', { class: 'chk', for: inp.id }, inp, ' ', txt);
@@ -1745,7 +1915,7 @@ function showPackDialog(pack) {
       lab(chop, 'Loops in einzelne Samples choppen (Transienten bzw. Beat-Raster aus BPM im Dateinamen)'),
       lab(keep, 'Loops zusätzlich ganz behalten'),
       lab(fill, 'Bänke automatisch füllen (sortiert: Kick, Snare, Clap, Hats, Becken, Perc, 808/Bass, Melodie, FX)')),
-    el('div', { class: 'row' }, bankSel),
+    el('div', { class: 'row' }, bankSel), warn,
     el('p', { class: 'hint', text: 'Nachmastern: DC und Rumpeln entfernen, Stille an Anfang/Ende trimmen, Fades, Lautheit je Kategorie angleichen, Soft-Limiter bis −1 dBFS.' }),
     bar, status, el('div', { class: 'row', style: { marginBottom: '0' } }, go));
   const close = openDialog('Sample-Pack importieren', body);
@@ -2267,15 +2437,195 @@ BUILDERS.song = (root) => {
 // =====================================================================
 // PROJEKT
 // =====================================================================
+// =====================================================================
+// IMPORT / EXPORT
+// =====================================================================
+const safeName = (s) => String(s).replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, ' ').trim().slice(0, 60) || 'sample';
+async function wavBytes(buf) { return new Uint8Array(await encodeWav(buf).arrayBuffer()); }
+
+function sliceBuffer(buf, a, b) {
+  const n = Math.max(1, b - a);
+  const out = new AudioBuffer({ length: n, numberOfChannels: buf.numberOfChannels, sampleRate: buf.sampleRate });
+  for (let c = 0; c < buf.numberOfChannels; c++) out.copyToChannel(buf.getChannelData(c).subarray(a, b), c);
+  return out;
+}
+
+function licenseText() {
+  const libs = Object.values(S.catalog.libraries).map((l) => `- ${l.name} – ${l.license} – ${l.url}`).join('\n');
+  return `Erstellt mit BAP-50 (Boom-Bap-Sampler).\n\nEingebaute Samples stammen aus diesen Bibliotheken (alle CC0 1.0, frei nutzbar):\n${libs}\n\nEigene/importierte Samples unterliegen den Rechten ihrer Quelle.\n`;
+}
+
+async function exportBankZip(b = P().cur.bank) {
+  return runBusy('Bank exportieren', async () => {
+    const folder = safeName(`BAP-50 Bank ${BANK_NAMES[b]} - ${bankTitle(b)}`);
+    const entries = [];
+    const lines = [];
+    for (let k = 0; k < 16; k++) {
+      const i = b * 16 + k;
+      const pad = P().pads[i];
+      const buf = pad.s && S.catalog.get(pad.s, pad.vint, pad.rev);
+      if (!buf) continue;
+      const a = Math.floor(clamp(pad.start, 0, 1) * buf.length);
+      const e = Math.max(a + 1, Math.floor(clamp(pad.end, 0, 1) * buf.length));
+      const name = `${padLabel(i)} ${safeName(padTitle(i))}.wav`;
+      entries.push({ name: `${folder}/${name}`, data: await wavBytes(sliceBuffer(buf, a, e)) });
+      lines.push(`${name}  (${(S.catalog.meta(pad.s) || {}).name || ''})`);
+    }
+    if (!entries.length) { toast('Bank ist leer'); return; }
+    entries.push({ name: `${folder}/LIESMICH.txt`, data: `Bank ${BANK_NAMES[b]} · ${bankTitle(b)}\n\n${lines.join('\n')}\n\n${licenseText()}` });
+    await download(`${folder}.zip`, makeZip(entries));
+    toast(`Bank ${BANK_NAMES[b]}: ${entries.length - 1} WAVs exportiert`);
+  });
+}
+
+function sampleManifestEntry(m, file) {
+  const rec = S.catalog.userRecord(m.id) || {};
+  return { id: m.id, name: m.name, cat: m.cat, group: m.group || '', tags: m.tags || '', root: m.root || rec.root, synth: m.synth || rec.synth || null, file };
+}
+
+async function userSampleEntries(filter = () => true, prefix = 'samples') {
+  const entries = [];
+  const manifest = [];
+  for (const m of S.catalog.list.filter((x) => !x.builtin && filter(x))) {
+    const buf = S.catalog.get(m.id);
+    if (!buf) continue;
+    const file = `${prefix}/${safeName(m.group || 'Eigene')}/${safeName(CATS[m.cat] || m.cat)}/${safeName(m.name)} [${m.id}].wav`;
+    entries.push({ name: file, data: await wavBytes(buf) });
+    manifest.push(sampleManifestEntry(m, file));
+  }
+  return { entries, manifest };
+}
+
+async function exportUserSamplesZip(group = null) {
+  return runBusy('Eigene Samples exportieren', async () => {
+    const { entries, manifest } = await userSampleEntries((m) => !group || m.group === group);
+    if (!entries.length) { toast('Keine eigenen Samples vorhanden'); return; }
+    entries.push({ name: 'bap50-samples.json', data: JSON.stringify(manifest, null, 1) });
+    entries.push({ name: 'bap50-backup.json', data: JSON.stringify({ type: 'samples', app: 'BAP-50', version: 1, created: new Date().toISOString(), count: manifest.length }) });
+    entries.push({ name: 'LIESMICH.txt', data: `Sample-Bank-Export aus BAP-50: ${manifest.length} eigene Samples als WAV.\nIn BAP-50 über Import / Export → „Backup / Projekt“ wieder einlesen.\n` });
+    await download(`BAP-50 Eigene Samples${group ? ' - ' + safeName(group) : ''}.zip`, makeZip(entries));
+    toast(`${manifest.length} eigene Samples exportiert`);
+  });
+}
+
+async function exportFullBackup() {
+  return runBusy('Backup erstellen', async () => {
+    const { entries, manifest } = await userSampleEntries();
+    entries.push({ name: 'project.json', data: JSON.stringify(P()) });
+    entries.push({ name: 'bap50-samples.json', data: JSON.stringify(manifest, null, 1) });
+    entries.push({ name: 'bap50-backup.json', data: JSON.stringify({ type: 'full', app: 'BAP-50', version: 1, created: new Date().toISOString(), project: P().name, count: manifest.length }) });
+    await download(`${safeName(P().name || 'BAP-50')}.bap50.zip`, makeZip(entries));
+    toast(`Backup: Projekt + ${manifest.length} eigene Samples`);
+  });
+}
+
+async function exportStems() {
+  return runBusy('Stems rendern', async () => {
+    const p = P();
+    const pi = p.cur.ptn;
+    const ptn = p.patterns[pi];
+    const lanes = Object.keys(ptn.steps).filter((k) => ptn.steps[k].slice(0, ptn.len).some((v) => v > 0) && p.pads[k] && p.pads[k].s);
+    if (!lanes.length) { toast('Pattern ist leer'); return; }
+    const folder = safeName(`${p.name || 'BAP-50'} Stems P${pi + 1} ${p.bpm} BPM`);
+    const entries = [];
+    for (const k of lanes) {
+      const proj = clone(p);
+      const one = (lane) => (lane && lane[k] ? { [k]: lane[k] } : {});
+      proj.patterns[pi] = { len: ptn.len, steps: one(ptn.steps), tune: one(ptn.tune), roll: one(ptn.roll) };
+      const { buffer } = await renderPatterns(proj, S.catalog, [pi], { tail: 1.5, sampleRate: 44100, dust: false });
+      entries.push({ name: `${folder}/${padLabel(+k)} ${safeName(padTitle(+k))}.wav`, data: await wavBytes(buffer) });
+    }
+    const { buffer } = await renderPatterns(p, S.catalog, [pi], { tail: 1.5, sampleRate: 44100, dust: false });
+    entries.push({ name: `${folder}/00 Mix.wav`, data: await wavBytes(buffer) });
+    entries.push({ name: `${folder}/LIESMICH.txt`, data: `Stems von Pattern ${pi + 1}, ${p.bpm} BPM, Swing ${p.swing} %. Jede Spur einzeln über die Master-Kette gerendert, alle Dateien gleich lang und bei 0 synchron.\n\n${licenseText()}` });
+    await download(`${folder}.zip`, makeZip(entries));
+    toast(`${lanes.length} Stems + Mix exportiert`);
+  });
+}
+
+function pickAnyFiles() {
+  return new Promise((resolve) => {
+    const inp = el('input', { type: 'file', multiple: true, hidden: true, accept: '.zip,.json,application/zip,application/json,' + AUDIO_ACCEPT });
+    inp.addEventListener('change', () => { const f = Array.from(inp.files || []); inp.remove(); resolve(f); });
+    document.body.append(inp);
+    inp.click();
+  });
+}
+
+// Erkennt automatisch: Backup-ZIP, Sample-Pack-ZIP, Projekt-JSON oder Audiodateien.
+async function importAny(fileList) {
+  const files = Array.from(fileList || []);
+  if (!files.length) return;
+  const zip = files.find((f) => /\.zip$/i.test(f.name));
+  const json = files.find((f) => /\.json$/i.test(f.name));
+  const audio = files.filter((f) => AUDIO_EXT.test(f.name) || /^audio\//.test(f.type));
+  try {
+    if (zip) {
+      const entries = await readZip(zip);
+      if (entries.some((e) => /(^|\/)bap50-backup\.json$/.test(e.name))) { await restoreBackup(zip.name, entries); return; }
+      const pack = await packItems([zip]);
+      if (!pack.items.length) { toast('Keine Audiodateien im ZIP gefunden'); return; }
+      showPackDialog(pack);
+      return;
+    }
+    if (json) { loadProject(JSON.parse(await json.text()), 'Projekt importiert: ' + json.name); return; }
+    if (audio.length) { await importSampleFiles(audio); return; }
+    toast('Dateityp nicht erkannt (ZIP, JSON oder Audio)');
+  } catch (e) {
+    console.error(e);
+    toast('Import fehlgeschlagen: ' + (e.message || e));
+  }
+}
+
+async function restoreBackup(name, entries) {
+  const byName = new Map(entries.map((e) => [e.name.replace(/^.*?(?=bap50-|project\.json)/, ''), e]));
+  const find = (n) => entries.find((e) => e.name === n || e.name.endsWith('/' + n));
+  const mEntry = find('bap50-samples.json');
+  const manifest = mEntry ? JSON.parse(new TextDecoder().decode(await mEntry.data())) : [];
+  let restored = 0;
+  let existed = 0;
+  let failed = 0;
+  toast(`Backup wird eingelesen (${manifest.length} Samples) …`);
+  for (const s of manifest) {
+    try {
+      const e = entries.find((x) => x.name === s.file || x.name.endsWith('/' + s.file));
+      if (!e) { failed++; continue; }
+      const buf = await S.ctx.decodeAudioData(await e.data());
+      const r = await S.catalog.restoreUser({ id: s.id, name: s.name, sr: buf.sampleRate, data: toMono(buf), tags: s.tags, cat: s.cat, synth: s.synth || null, root: s.root, group: s.group || '' });
+      if (r.existed) existed++; else restored++;
+    } catch (_) { failed++; }
+  }
+  void byName;
+  const proj = find('project.json');
+  if (proj && confirm(`Backup „${name}“: ${restored} Samples eingelesen${existed ? `, ${existed} schon vorhanden` : ''}.\n\nAuch das Projekt aus dem Backup laden? (ersetzt das aktuelle, rückgängig möglich)`)) {
+    loadProject(JSON.parse(new TextDecoder().decode(await proj.data())), 'Backup geladen: ' + name);
+  } else {
+    toast(`${restored} Samples eingelesen${existed ? `, ${existed} vorhanden` : ''}${failed ? `, ${failed} fehlerhaft` : ''}`);
+  }
+  if (S.view === 'samples' || S.view === 'file') renderView(S.view);
+  updatePads();
+}
+
+function ioItem(icon, title, desc, act, opts = {}) {
+  const b = el('button', { type: 'button', class: 'io-item' + (opts.pri ? ' pri' : ''), disabled: !!opts.disabled },
+    el('span', { class: 'io-i', 'aria-hidden': 'true', text: icon }),
+    el('span', { class: 'io-t' }, el('b', { text: title }), el('small', { text: desc })));
+  b.addEventListener('click', act);
+  return b;
+}
+
 BUILDERS.file = (root) => {
   root.replaceChildren();
   const p = P();
-  const name = el('input', { class: 'txt-in', type: 'text', value: p.name, 'aria-label': 'Projektname', maxlength: '60', style: { flex: '1 1 200px' } });
-  name.addEventListener('input', () => { p.name = name.value || 'Projekt'; dirty(); });
-  const save = el('button', { class: 'btn pri', type: 'button', text: 'Im Browser speichern' });
-  save.addEventListener('click', saveProjectSlot);
-  root.append(el('div', { class: 'card' }, el('h3', { text: 'Projekt' }), el('div', { class: 'row' }, name, save)));
+  const own = S.catalog.list.filter((m) => !m.builtin).length;
+  root.append(el('div', { class: 'sb-head' }, el('div', {}, el('h2', { class: 'vh', text: 'Import / Export' }),
+    el('p', { class: 'muted vsub', text: 'Alles, was rein- oder rausgeht, an einem Ort. Dateien kannst du auch einfach ins Fenster ziehen.' }))));
 
+  // Projekt
+  const name = el('input', { class: 'txt-in', type: 'text', value: p.name, 'aria-label': 'Projektname', maxlength: '60', style: { flex: '1 1 160px' } });
+  name.addEventListener('input', () => { p.name = name.value || 'Projekt'; dirty(); });
+  const save = el('button', { class: 'btn pri', type: 'button', text: 'Speichern' });
+  save.addEventListener('click', saveProjectSlot);
   const slots = listSlots();
   const slotBox = el('div', { class: 'slots' });
   const names = Object.keys(slots).sort((a, b) => slots[b].at - slots[a].at);
@@ -2287,51 +2637,52 @@ BUILDERS.file = (root) => {
     del.addEventListener('click', () => { if (confirm(`„${n}“ löschen?`)) { deleteSlot(n); renderView('file'); } });
     slotBox.append(el('div', { class: 'slot' }, el('span', { text: `${n} · ${new Date(slots[n].at).toLocaleString('de-DE')}` }), el('div', { class: 'row', style: { marginBottom: '0' } }, load, del)));
   }
+  const newB = el('button', { class: 'btn', type: 'button', text: 'Neues leeres Projekt' });
+  newB.addEventListener('click', newEmptyProject);
+  const facB = el('button', { class: 'btn warn', type: 'button', text: 'Werkseinstellung' });
+  facB.addEventListener('click', factoryReset);
+  const projCard = el('div', { class: 'card io-card' }, el('h3', { text: '① Projekt' }), el('div', { class: 'row' }, name, save), slotBox,
+    el('div', { class: 'row', style: { marginTop: '10px', marginBottom: '0' } }, newB, facB));
 
-  const exp = el('button', { class: 'btn', type: 'button', text: 'Projekt exportieren (.json)' });
-  exp.addEventListener('click', exportProjectJSON);
-  const imp = el('button', { class: 'btn', type: 'button', text: 'Projekt importieren' });
-  imp.addEventListener('click', importProjectJSON);
-  const fresh = el('button', { class: 'btn warn', type: 'button', text: 'Werkseinstellung' });
-  fresh.addEventListener('click', factoryReset);
-  const empty = el('button', { class: 'btn', type: 'button', text: 'Neues leeres Projekt' });
-  empty.addEventListener('click', newEmptyProject);
-  root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Gespeicherte Projekte' }), slotBox, el('div', { class: 'row', style: { marginTop: '10px', marginBottom: '0' } }, exp, imp, empty, fresh)));
+  // Import
+  const drop = el('button', { type: 'button', class: 'io-drop' }, el('b', { text: '⇪ Dateien hier ablegen oder antippen' }),
+    el('small', { text: 'Erkennt automatisch: Audio-Samples · Sample-Pack (ZIP) · BAP-50-Backup (.bap50.zip) · Projekt (.json)' }));
+  drop.addEventListener('click', async () => importAny(await pickAnyFiles()));
+  const impCard = el('div', { class: 'card io-card' }, el('h3', { text: '② Importieren' }), drop,
+    ioItem('+', 'Audio-Samples', 'WAV, MP3, AIFF, FLAC, OGG, M4A – mehrere auf einmal', addSamplesFromPicker),
+    ioItem('📦', 'Sample-Pack (ZIP)', 'Loops choppen, nachmastern, auf Bänke M–P legen', () => importPackFrom(false)),
+    ioItem('📁', 'Pack-Ordner', 'Entpackten Ordner wählen (Computer)', () => importPackFrom(true), { disabled: isNativeApp() }),
+    ioItem('⟲', 'Backup / Projekt', '.bap50.zip (mit eigenen Samples) oder .json', async () => importAny(await pickAnyFiles())),
+    ioItem('●', 'Aufnahme', 'Mikrofon aufnehmen und choppen', recordNewSample),
+    ioItem('∿', 'Synth-Klang', 'Eigenen Klang im Synth-Sampler bauen', () => showView('synth')));
 
-  const wav1 = el('button', { class: 'btn pri', type: 'button', text: 'Pattern als WAV' });
-  const wav4 = el('button', { class: 'btn', type: 'button', text: 'Pattern ×4 als WAV' });
-  const wavS = el('button', { class: 'btn', type: 'button', text: 'Song als WAV' });
-  const resample = el('button', { class: 'btn', type: 'button', text: 'Resample → gewähltes Pad' });
-  const busy = (b, fn) => async () => {
-    b.disabled = true;
-    const old = b.textContent;
-    b.textContent = 'Rendern …';
-    await fn();
-    b.disabled = false;
-    b.textContent = old;
-  };
-  wav1.addEventListener('click', busy(wav1, () => exportWavPattern(1)));
-  wav4.addEventListener('click', busy(wav4, () => exportWavPattern(4)));
-  wavS.addEventListener('click', busy(wavS, exportWavSong));
-  resample.addEventListener('click', busy(resample, resampleToPad));
-  root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'Export' }),
-    el('div', { class: 'row' }, wav1, wav4, wavS, resample),
-    el('p', { class: 'hint', text: 'WAV: 44,1 kHz, 16 Bit, Stereo, mit 2 s Ausklang. Resample rendert das Pattern ohne Vinyl-Rauschen als Loop und legt es auf das gewählte Pad.' })));
+  // Export
+  const b = p.cur.bank;
+  const expCard = el('div', { class: 'card io-card' }, el('h3', { text: '③ Exportieren' }),
+    ioItem('♪', `Pattern ${p.cur.ptn + 1} als WAV`, '44,1 kHz · 16 Bit · Stereo · mit Ausklang', () => exportWavPattern(1), { pri: true }),
+    ioItem('♫', `Pattern ${p.cur.ptn + 1} ×4 als WAV`, 'Viermal hintereinander, z. B. als Loop zum Rappen', () => exportWavPattern(4)),
+    ioItem('≡', 'Song als WAV', 'Die Song-Liste komplett', exportWavSong),
+    ioItem('▤', `Stems von Pattern ${p.cur.ptn + 1} (ZIP)`, 'Jede Spur als eigene WAV + Mix, synchron', exportStems),
+    ioItem('▦', `Bank ${BANK_NAMES[b]} als ZIP`, `${bankTitle(b)} – 16 WAVs, wie auf den Pads geschnitten`, () => exportBankZip(b)),
+    ioItem('📚', 'Eigene Samples als ZIP', `${own} Samples (Importe, Aufnahmen, Synth) – wieder importierbar`, () => exportUserSamplesZip(), { disabled: !own }),
+    ioItem('💾', 'Komplett-Backup (.bap50.zip)', 'Projekt + alle eigenen Samples – für Umzug auf ein anderes Gerät', exportFullBackup),
+    ioItem('{ }', 'Projekt als JSON', 'Nur Pattern/Pads/Einstellungen, ohne eigene Samples', exportProjectJSON),
+    ioItem('⟳', 'Resample → Pad', `Pattern als Loop auf Pad ${padLabel(p.cur.pad)} legen`, resampleToPad));
+  root.append(el('div', { class: 'io-grid' }, projCard, impCard, expCard));
 
   // MIDI
   const midiBtn = el('button', { class: 'btn', type: 'button', text: S.midi ? 'MIDI aktiv' : 'MIDI aktivieren', disabled: !!S.midi });
   midiBtn.addEventListener('click', enableMidi);
-  const base = el('select', { class: 'sel-in', 'aria-label': 'MIDI-Startnote' },
+  const base = el('select', { class: 'sel-in', 'aria-label': 'MIDI-Startnote', id: 'midiBase' },
     ...[[36, 'Note 36 (Standard-Pads)'], [0, 'Note 0 (Grid-Controller)'], [24, 'Note 24'], [48, 'Note 48'], [60, 'Note 60']].map(([v, l]) => el('option', { value: String(v), text: l, selected: p.midi.base === v })));
   base.addEventListener('change', () => { p.midi.base = +base.value; dirty(); });
-  root.append(el('div', { class: 'card', style: { marginTop: '10px' } }, el('h3', { text: 'MIDI-Eingang' }),
-    el('div', { class: 'row' }, midiBtn, base, el('span', { class: 'muted', id: 'midiState', text: S.midiStatus })),
-    el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, ab +16 die Pads ab B01 direkt (bis Note 127). MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System. Nicht mit jeder Hardware getestet.' })));
-
-  // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
-  root.append(el('div', { class: 'card', id: 'about', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.5.0.apk" style="color:var(--teal)">BAP-50-1.5.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 16 Bänke × 16 Pads, eingebauter Synth-Sampler, Pack-Import mit Auto-Chop, Step-Rolls, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+  root.append(el('div', { class: 'io-grid', style: { marginTop: '10px' } },
+    el('div', { class: 'card' }, el('h3', { text: 'MIDI-Eingang' }),
+      el('div', { class: 'row' }, midiBtn, base, el('span', { class: 'muted', id: 'midiState', text: S.midiStatus })),
+      el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, ab +16 die Pads ab B01 direkt (bis Note 127). MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System.' })),
+    el('div', { class: 'card', id: 'about' }, el('h3', { text: 'Über BAP-50' }),
+      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && m.pack !== 'synth').length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.6.0.apk" style="color:var(--teal)">BAP-50-1.6.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` }))));
 };
 
 function loadProject(raw, msg) {

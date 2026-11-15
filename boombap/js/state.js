@@ -25,7 +25,12 @@ const PRESET_KITS = {
   synth: [['sy-808-dist'], ['sy-808-slide'], ['sy-808-clean'], ['sy-reese'], ['sy-phonk-bass'], ['sy-kick-trap'], ['sy-kick-clip'], ['sy-clap'],
     ['sy-snare'], ['sy-hat-closed'], ['sy-hat-open'], ['sy-cowbell'], ['sy-bell-dark'], ['sy-musicbox'], ['sy-phonk-lead'], ['sy-horror-pad']],
 };
-export const PRESET_BANKS = { grey: 8, memphis: 9, coffin: 10, synth: 11 };
+PRESET_KITS.crate_m = [['cd01'], ['cd03'], ['cd10'], ['cd22'], ['cd30'], ['cd32'], ['cd34'], ['cd24'],
+  ['cd14'], ['cd16'], ['cd56'], ['cd28'], ['cd38'], ['cd39'], ['cd44'], ['cd42']];
+PRESET_KITS.crate_n = [['cd59'], ['cd61'], ['cd62'], ['cd63'], ['cd64'], ['cd76'], ['cd77'], ['cd80'],
+  ['cd81'], ['cd70'], ['cd71'], ['cd87'], ['cd84'], ['cd91'], ['cd68'], ['cd94']];
+export function presetKitIds(name) { return (PRESET_KITS[name] || []).map(([id]) => id); }
+export const PRESET_BANKS = { grey: 8, memphis: 9, coffin: 10, synth: 11, crate_m: 12, crate_n: 13 };
 
 // [Sample-ID, Halbtöne] je Pad. A = Boom-Bap-Kern, B = Drums 2, C = Hats/Becken/Toms/Perc, D = Keys,
 // E = Dusty Bap Drums, F = Dusty Bap Chops, G = Dark Hill Drums/Latin, H = Dark Hill Keys/FX.
@@ -47,6 +52,8 @@ const KIT = [
   ['dh40'], ['dh41'], ['dh43'], ['dh44'], ['dh45'], ['dh46'], ['dh47'], ['dh48'],
   ['dh49'], ['dh29'], ['dh32'], ['dh31'], ['dh34'], ['dh37'], ['dh42'], ['dh50'],
   ...PRESET_KITS.grey, ...PRESET_KITS.memphis, ...PRESET_KITS.coffin, ...PRESET_KITS.synth,
+  // M: Crate Diggers Drums, N: Crate Diggers Bass & Keys (O, P frei für Importe)
+  ...PRESET_KITS.crate_m, ...PRESET_KITS.crate_n,
 ];
 
 function padFor(id, tune, catOf) {
@@ -273,6 +280,26 @@ export const GROOVES = [
       [171, '................|................|g...............|................'],
       [172, 'g...............|................|................|................'],
       [175, '................|................|................|o...............'],
+    ],
+  },
+  {
+    name: 'Crate Diggers (Bank M/N)', bpm: 88, swing: 58, len: 64, preset: 'crate_m', bank: 12, kits: [['crate_m', 12], ['crate_n', 13]],
+    lanes: [
+      [192, 'X......X..X.....|X......X..X.....|X......X..X.....|X......X.X....x.'],
+      [194, '....X.......X...|....X.......X...|....X.......X...|....X.......X...'],
+      [201, '..........g.....|.......g......g.|..........g.....|.......g........'],
+      [196, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x...'],
+      [198, '................|................|................|..............o.'],
+      [202, '....o.......o...|....o.......o...|....o.......o...|....o.......o...'],
+      [208, 'x.........x.....|................|................|................'],
+      [209, '................|x.........x.....|................|................'],
+      [210, '................|................|x.........x.....|................'],
+      [211, '................|................|................|x...............'],
+      [212, '................|................|................|..........x.....'],
+      [217, 'o...............|................|................|................'],
+      [218, '................|................|o...............|................'],
+      [216, '................|................|................|o...............'],
+      [219, '................|............o...|................|............o...'],
     ],
   },
 ];

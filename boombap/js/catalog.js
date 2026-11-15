@@ -13,7 +13,7 @@ export const CATS = {
   tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', bass: 'Bass', fx: 'FX', user: 'Eigene',
 };
 
-export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', synth: 'Synth', user: 'Eigene' };
+export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', cd: 'Crate Diggers', synth: 'Synth', user: 'Eigene' };
 
 const DB_NAME = 'bap50';
 const STORE = 'samples';
@@ -142,6 +142,16 @@ export class Catalog {
     return { id, stored };
   }
 
+  // Eigenes Sample mit fester ID wiederherstellen (Backup-Import). Vorhandene IDs bleiben unverändert.
+  async restoreUser(rec) {
+    if (this.byId.has(rec.id)) return { id: rec.id, stored: true, existed: true };
+    this.addUserRecord(rec);
+    const stored = await dbPut(rec);
+    return { id: rec.id, stored, existed: false };
+  }
+
+  userRecord(id) { return this.userRecs.get(id) || null; }
+
   // Name oder Kategorie eines eigenen Samples ändern (auch in IndexedDB).
   async updateUser(id, changes) {
     const rec = this.userRecs.get(id);
@@ -149,6 +159,7 @@ export class Catalog {
     if (!rec || !m || m.builtin) return false;
     if (changes.name != null) { rec.name = m.name = String(changes.name).slice(0, 60) || m.name; }
     if (changes.cat != null && (CATS[changes.cat] || changes.cat === 'user')) { rec.cat = m.cat = changes.cat; }
+    if (changes.group != null) { rec.group = m.group = String(changes.group).slice(0, 40); }
     return dbPut(rec);
   }
 

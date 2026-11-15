@@ -1,12 +1,23 @@
 # Samples – Quellen und Lizenz
 
-Alle 150 Samples beruhen auf **echten Aufnahmen** (nichts von Grund auf synthetisiert) aus zwei Bibliotheken unter **CC0 1.0 Universal**:
+Alle 250 Samples beruhen auf **echten Aufnahmen** (nichts von Grund auf synthetisiert). Alle Quellen stehen unter **CC0 1.0 Universal**:
 
-- **Virtuosity Drums** – Versilian Studios / sfzinstruments, https://github.com/sfzinstruments/virtuosity_drums (Jazz-Kit mit Kick-, Snare-, Mid-, Overhead-, Raum- und Lofi-Mikrofon; Percussion aus VSCO 2 Pro)
-- **VCSL – Versilian Community Sample Library**, https://github.com/sgossner/VCSL
+- **Virtuosity Drums (Versilian Studios / sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/virtuosity_drums
+- **VCSL - Versilian Community Sample Library** – CC0-1.0 – https://github.com/sgossner/VCSL
+- **Karoryfer Big Rusty Drums (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.big-rusty-drums
+- **Karoryfer Swirly Drums (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.swirly-drums
+- **Karoryfer Unruly Drums (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.unruly-drums
+- **Karoryfer Frankensnare (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.frankensnare
+- **Karoryfer The Hat With The Phat (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/Karoryfer.TheHatWithThePhat
+- **dsmolken Double Bass (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/dsmolken.double-bass
+- **Body Percussion (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/body_percussion
+- **Karoryfer Scary Piano (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.scarypiano
+- **Karoryfer Emily Guitar (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.emilyguitar
+- **Karoryfer Bear Sax (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.bear-sax
+- **Karoryfer War Tuba (sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/karoryfer.war-tuba
 
 - **Core 50** (`../tools/build_samples.py`): Mikrofone derselben Aufnahme summiert, getrimmt, Fade-out, DC entfernt, −1 dBFS.
-- **Dusty Bap** und **Dark Hill** (`../tools/build_packs.py`): zusätzlich wie an einem Sampler bearbeitet – Layer, Tonhöhe per Resampling, Filter, Sättigung, 12-Bit-Wandlung (26,04 kHz / 40 kHz), kurzer Raumhall; Akkorde aus aufgenommenen Einzeltönen geschichtet. „Dark Hill“ ist ein eigener Stil im Sinne des dunklen Westcoast-Boom-Baps der 90er; es werden keine Originalsamples fremder Platten verwendet.
+- **Dusty Bap**, **Dark Hill** (`../tools/build_packs.py`) und **Crate Diggers** (`../tools/build_pack_cd.py`): zusätzlich wie an einem Sampler bearbeitet – Layer, Tonhöhe per Resampling, Filter, Sättigung, 12-Bit-Wandlung, kurzer Raumhall; Akkorde aus aufgenommenen Einzeltönen geschichtet. „Dark Hill“ ist ein eigener Stil im Sinne des dunklen Westcoast-Boom-Baps der 90er; es werden keine Originalsamples fremder Platten verwendet.
 
 Alle Dateien: 44,1 kHz, 16 Bit, Mono. Die bearbeiteten Dateien stehen ebenfalls unter CC0 1.0.
 
@@ -174,3 +185,108 @@ Alle Dateien: 44,1 kHz, 16 Bit, Mono. Die bearbeiteten Dateien stehen ebenfalls 
 | dh48 | Sax Dark Long | keys | 2.50 s | vcsl: `BrettTenor_Vib_Main_C3_var1.wav` × 1.0 | lp 4000, verb 0.15 |
 | dh49 | Horns Minor Low | keys | 0.55 s | vcsl: `BrettTenor_Staccato_Main_C2_vl2_rr1.wav` × 0.75<br>vcsl: `BrettTenor_Staccato_Main_D2_vl2_rr4.wav` × 0.75 (+1 st)<br>vcsl: `BrettTenor_Staccato_Main_F#2_vl2_rr7.wav` × 0.75 (+1 st) | drive 0.3 |
 | dh50 | Saxello Squeal | fx | 0.30 s | vcsl: `BrettSaxello_Stcts_MainSpirit_A#4_vl2_rr5.wav` × 1.0 (+4 st) | pitch 5, crush v26 |
+
+## Crate Diggers
+
+| ID | Name | Kategorie | Dauer | Quelle (Bibliothek: Datei × Pegel, Tonhöhe) | Bearbeitung |
+|---|---|---|---|---|---|
+| cd01 | Kick Rusty | kick | 0.90 s | rusty: `k_vl14_rr1.flac` × 1.0<br>rusty: `k_vl14_rr1.flac` × 0.5 | drive 0.3 |
+| cd02 | Kick Rusty Open | kick | 1.20 s | rusty: `k_nodamp_vl6_rr1.flac` × 1.0 | – |
+| cd03 | Kick Dirty | kick | 0.89 s | unruly: `kick_dirty_vl8_rr1.flac` × 1.0 | – |
+| cd04 | Kick Dirtiest | kick | 0.81 s | unruly: `kick_dirtiest_vl8_rr1.flac` × 1.0 | crush v26 |
+| cd05 | Kick Clean Jazz | kick | 0.80 s | unruly: `kick_clean_vl7_rr1.flac` × 1.0 | – |
+| cd06 | Kick Marching Boom | kick | 0.87 s | swirly: `marching_kick_vl22_rr1_beater.wav` × 1.0<br>swirly: `marching_kick_vl22_rr1_reso.wav` × 0.6 | pitch -2 |
+| cd07 | Kick Cajon Deep | kick | 0.58 s | swirly: `cajon_kick_vl13_rr1_front.wav` × 1.0<br>swirly: `cajon_kick_vl13_rr1_rear.wav` × 0.5 | pitch -2 |
+| cd08 | Kick + Snare Buzz | kick | 0.90 s | swirly: `buzz_kick_with_snare_buzz_vl11_rr1.wav` × 1.0 | – |
+| cd09 | Kick Rusty Soft | kick | 0.80 s | rusty: `k_vl8_rr2.flac` × 1.0 | drive 0.2 |
+| cd10 | Snare Franken 16 | snare | 0.64 s | fsnare: `sn_vl11_rr1.flac` × 1.0<br>fsnare: `sn_vl11_rr1.flac` × 0.5 | – |
+| cd11 | Snare Franken 22 Deep | snare | 0.92 s | fsnare: `sn_vl8_rr1.flac` × 1.0<br>fsnare: `sn_vl8_rr1.flac` × 0.5 | – |
+| cd12 | Snare Franken 14S | snare | 0.79 s | fsnare: `sn_vl9_rr1.flac` × 1.0<br>fsnare: `sn_vl9_rr1.flac` × 0.4 | – |
+| cd13 | Snare Franken 14P | snare | 0.57 s | fsnare: `sn_vl11_rr1.flac` × 1.0<br>fsnare: `sn_vl11_rr1.flac` × 0.4 | – |
+| cd14 | Rimshot Franken | snare | 0.77 s | fsnare: `sr_vl3_rr1.flac` × 1.0 | – |
+| cd15 | Snare Franken Muted | snare | 0.41 s | fsnare: `sm_vl7_rr1.flac` × 1.0 | – |
+| cd16 | Snare Franken Ghost | snare | 0.50 s | fsnare: `sn_vl3_rr2.flac` × 1.0 | – |
+| cd17 | Snare Rusty | snare | 0.78 s | rusty: `sn_center_vl10_rr4.flac` × 1.0<br>rusty: `sn_center_vl10_rr4.flac` × 0.6 | – |
+| cd18 | Snare Rusty Rims | snare | 0.51 s | rusty: `sn_rims_vl6_rr4.flac` × 1.0 | – |
+| cd19 | Snare Prepared | snare | 0.53 s | rusty: `sn_prep_vl7_rr1.flac` × 1.0 | crush v26 |
+| cd20 | Rimshot Unruly 13 | snare | 0.80 s | unruly: `s13_rimshot_vl6_rr1.flac` × 1.0 | – |
+| cd21 | Sidestick Unruly | snare | 0.40 s | unruly: `s14_sstick_vl6_rr1.flac` × 1.0 | – |
+| cd22 | Snare Unruly 22 Fat | snare | 0.69 s | unruly: `s22_center_vl8_rr1.flac` × 1.0<br>unruly: `s22_center_vl8_rr1.flac` × 0.5 | – |
+| cd23 | Snare Swirly Wet | snare | 1.00 s | swirly: `snare_hit_vl12_rr1_top.wav` × 1.0 | – |
+| cd24 | Clap Stack | clap | 0.56 s | fsnare: `clap_stack_rr1.flac` × 1.0 | – |
+| cd25 | Clap Person | clap | 0.50 s | fsnare: `clap_person1_rr1.flac` × 1.0 | – |
+| cd26 | Handclap Body | clap | 0.50 s | body: `handclap_vl2_rr1.wav` × 1.0 | – |
+| cd27 | Fingerclap | clap | 0.40 s | body: `fingerclap_vl2_rr1.wav` × 1.0 | – |
+| cd28 | Finger Snap | clap | 0.40 s | body: `snap_r_rr1.wav` × 1.0 | – |
+| cd29 | Pinky Snap | clap | 0.40 s | body: `pinkysnap_r_rr1.wav` × 1.0 | – |
+| cd30 | Hat Closed Edge | hat | 0.40 s | hat: `hat_20_closed_edge_vl4_rr1.wav` × 1.0 | – |
+| cd31 | Hat X-Tight | hat | 0.30 s | hat: `hat_20_xtight_bow_vl4_rr1.wav` × 1.0 | – |
+| cd32 | Hat Foot Chik | hat | 0.35 s | hat: `hat_20_chik_vl4_rr1.wav` × 1.0 | – |
+| cd33 | Hat Loose | hat | 0.80 s | hat: `hat_20_loose_bow_vl4_rr1.wav` × 1.0 | – |
+| cd34 | Hat Open Phat | hat | 1.60 s | hat: `hat_20_open_bow_vl4_rr1.wav` × 1.0 | – |
+| cd35 | Hat Sizzle | hat | 1.50 s | hat: `hat_20_sizz_bow_vl4_rr1.wav` × 1.0 | – |
+| cd36 | Hat Squash | hat | 0.60 s | hat: `hat_20_squash_edge_vl4_rr1.wav` × 1.0 | – |
+| cd37 | Hat Splash | hat | 1.50 s | hat: `hat_20_splash_vl2_rr1.wav` × 1.0 | – |
+| cd38 | Ride Swirly | cymbal | 2.50 s | swirly: `ride_vl15_rr1.wav` × 1.0 | – |
+| cd39 | Crash Swirly | cymbal | 3.00 s | swirly: `crash_vl12_rr1.wav` × 1.0 | – |
+| cd40 | China Swirly | cymbal | 2.50 s | swirly: `china_vl12_rr1.wav` × 1.0 | – |
+| cd41 | Tom Rusty 14 | tom | 1.00 s | rusty: `t14_vl6_rr4.flac` × 1.0<br>rusty: `t14_vl6_rr4.flac` × 0.5 | – |
+| cd42 | Tom Rusty 18 Floor | tom | 1.20 s | rusty: `t18_vl8_rr4.flac` × 1.0<br>rusty: `t18_vl8_rr4.flac` × 0.5 | – |
+| cd43 | Tom Unruly Dirty | tom | 0.85 s | unruly: `s22_tom_dirty_vl7_rr1.flac` × 1.0 | – |
+| cd44 | Stomp | kick | 0.50 s | body: `stomp_l_vl2_rr1.wav` × 1.0 | – |
+| cd45 | Half Stomp | kick | 0.40 s | body: `halfstomp_l_vl2_rr1.wav` × 1.0 | – |
+| cd46 | Chest Thump | perc | 0.40 s | body: `chestthump_l_vl2_rr1.wav` × 1.0 | – |
+| cd47 | Chest Side | perc | 0.40 s | body: `chestside_l_vl2_rr1.wav` × 1.0 | – |
+| cd48 | Belly Slap | perc | 0.40 s | body: `bellycenter_l_vl2_rr1.wav` × 1.0 | – |
+| cd49 | Heel Tap | perc | 0.30 s | body: `heel_l_vl2_rr1.wav` × 1.0 | – |
+| cd50 | Head Knock | perc | 0.30 s | body: `head_vl2_rr1.wav` × 1.0 | – |
+| cd51 | Shoulder Slap | perc | 0.40 s | body: `shoulderout_l_vl2_rr1.wav` × 1.0 | – |
+| cd52 | Cheek Pop | perc | 0.39 s | body: `cheek_lout_rr1.wav` × 1.0 | – |
+| cd53 | Djembe | perc | 0.80 s | swirly: `djembe_vl12_rr1.wav` × 1.0 | – |
+| cd54 | Darbouka | perc | 0.54 s | swirly: `darbouka_vl12_rr1.wav` × 1.0 | – |
+| cd55 | Bongo High | perc | 0.48 s | swirly: `hbongo_vl10_rr1.wav` × 1.0 | – |
+| cd56 | Tambourine Franken | perc | 0.55 s | fsnare: `tamb_vl5_rr1.flac` × 1.0 | – |
+| cd57 | Snare Wire Scrape | fx | 1.00 s | swirly: `snare_dig_release_1_top.wav` × 1.0 | – |
+| cd58 | Upright Bass A | bass | 1.80 s | dbass: `pizz_bb1_fa.wav` × 1.0 (-1 st) | lp 3500, drive 0.15 |
+| cd59 | Upright Bass C | bass | 1.80 s | dbass: `pizz_bb1_fa.wav` × 1.0 (+2 st) | lp 3500, drive 0.15 |
+| cd60 | Upright Bass D | bass | 1.80 s | dbass: `pizz_d2_fa.wav` × 1.0 | lp 3500, drive 0.15 |
+| cd61 | Upright Bass Eb | bass | 1.80 s | dbass: `pizz_d2_fa.wav` × 1.0 (+1 st) | lp 3500, drive 0.15 |
+| cd62 | Upright Bass F | bass | 1.80 s | dbass: `pizz_f2_fa.wav` × 1.0 | lp 3500, drive 0.15 |
+| cd63 | Upright Bass G | bass | 1.80 s | dbass: `pizz_f2_fa.wav` × 1.0 (+2 st) | lp 3500, drive 0.15 |
+| cd64 | Upright Bass Bb | bass | 1.80 s | dbass: `pizz_a2_fa.wav` × 1.0 (+1 st) | lp 3500, drive 0.15 |
+| cd65 | Upright Bass C hoch | bass | 1.80 s | dbass: `pizz_c3_fa.wav` × 1.0 | lp 3500, drive 0.15 |
+| cd66 | Upright Bass Arco C | bass | 2.50 s | dbass: `arco_c2_f_down.wav` × 1.0 | lp 3000 |
+| cd67 | Upright Bass Arco G | bass | 2.50 s | dbass: `arco_f2_f_down.wav` × 1.0 (+2 st) | lp 3000 |
+| cd68 | Scary Piano C | keys | 3.00 s | scary: `C3-97-127_Dehumanised.wav` × 1.0 | – |
+| cd69 | Scary Piano Low C | keys | 3.00 s | scary: `C2-97-127_Dehumanised.wav` × 1.0 | – |
+| cd70 | Scary Chord Cm | keys | 3.00 s | scary: `C3-97-127_Dehumanised.wav` × 0.7<br>scary: `Eb3-97-127_Dehumanised.wav` × 0.7<br>scary: `G3-97-127_Dehumanised.wav` × 0.7<br>scary: `C4-97-127_Dehumanised.wav` × 0.7 | – |
+| cd71 | Scary Chord Fm | keys | 3.00 s | scary: `F2-97-127_Dehumanised.wav` × 0.7<br>scary: `C3-97-127_Dehumanised.wav` × 0.7<br>scary: `F3-97-127_Dehumanised.wav` × 0.7<br>scary: `Ab3-97-127_Dehumanised.wav` × 0.7 | – |
+| cd72 | Scary Chord Bbm Low | keys | 3.00 s | scary: `Bb1-97-127_Dehumanised.wav` × 0.7<br>scary: `Bb2-97-127_Dehumanised.wav` × 0.7<br>scary: `Db3-97-127_Dehumanised.wav` × 0.7<br>scary: `F3-97-127_Dehumanised.wav` × 0.7 | – |
+| cd73 | Scary Cluster | keys | 3.00 s | scary: `C3-97-127_Dehumanised.wav` × 0.7<br>scary: `Db3-97-127_Dehumanised.wav` × 0.7<br>scary: `Eb3-97-127_Dehumanised.wav` × 0.7<br>scary: `Gb3-97-127_Dehumanised.wav` × 0.7 | – |
+| cd74 | Dehumanised C | keys | 3.00 s | scary: `C3-97-127_Dehumanised.wav` × 1.0 | – |
+| cd75 | Dehumanised Cm | keys | 3.00 s | scary: `C2-97-127_Dehumanised.wav` × 0.7<br>scary: `C3-97-127_Dehumanised.wav` × 0.7<br>scary: `Eb3-97-127_Dehumanised.wav` × 0.7<br>scary: `G3-97-127_Dehumanised.wav` × 0.7 | – |
+| cd76 | Guitar Am7 | keys | 2.50 s | emily: `a2_f_rr1.wav` × 0.7<br>emily: `eb3_f_rr1.wav` × 0.7 (+1 st)<br>emily: `gb3_f_rr1.wav` × 0.7 (+1 st)<br>emily: `c4_f_rr1.wav` × 0.7 | – |
+| cd77 | Guitar Dm9 | keys | 2.50 s | emily: `eb3_f_rr1.wav` × 0.65 (-1 st)<br>emily: `gb3_f_rr1.wav` × 0.65 (-1 st)<br>emily: `a3_f_rr1.wav` × 0.65<br>emily: `c4_f_rr1.wav` × 0.65<br>emily: `eb4_f_rr1.wav` × 0.65 (+1 st) | – |
+| cd78 | Guitar Fmaj7 | keys | 2.50 s | emily: `e2_f_rr1.wav` × 0.7 (+1 st)<br>emily: `c3_f_rr1.wav` × 0.7<br>emily: `eb3_f_rr1.wav` × 0.7 (+1 st)<br>emily: `a3_f_rr1.wav` × 0.7 | – |
+| cd79 | Guitar E7#9 | keys | 2.50 s | emily: `e2_f_rr1.wav` × 0.7<br>emily: `a3_f_rr1.wav` × 0.7 (-1 st)<br>emily: `eb4_f_rr1.wav` × 0.7 (-1 st)<br>emily: `gb4_f_rr1.wav` × 0.7 (+1 st) | – |
+| cd80 | Guitar Cmaj9 | keys | 2.50 s | emily: `c3_f_rr1.wav` × 0.65<br>emily: `eb3_f_rr1.wav` × 0.65 (+1 st)<br>emily: `gb3_f_rr1.wav` × 0.65 (+1 st)<br>emily: `c4_f_rr1.wav` × 0.65 (-1 st)<br>emily: `eb4_f_rr1.wav` × 0.65 (-1 st) | – |
+| cd81 | Guitar Gm11 | keys | 2.50 s | emily: `gb2_f_rr1.wav` × 0.65 (+1 st)<br>emily: `eb3_f_rr1.wav` × 0.65 (-1 st)<br>emily: `gb3_f_rr1.wav` × 0.65 (-1 st)<br>emily: `a3_f_rr1.wav` × 0.65 (+1 st)<br>emily: `c4_f_rr1.wav` × 0.65 | – |
+| cd82 | Guitar Note C | keys | 2.00 s | emily: `c3_f_rr1.wav` × 1.0 | – |
+| cd83 | Guitar Note G | keys | 2.00 s | emily: `gb3_f_rr1.wav` × 1.0 (+1 st) | – |
+| cd84 | Sax Hit C | keys | 0.47 s | bsax: `c3_vl4_rr1.wav` × 1.0 | – |
+| cd85 | Sax Hit G | keys | 0.48 s | bsax: `g2_vl4_rr1.wav` × 1.0 | – |
+| cd86 | Sax Hit Eb | keys | 0.48 s | bsax: `eb3_vl4_rr1.wav` × 1.0 | – |
+| cd87 | Sax Section Cm | keys | 0.50 s | bsax: `c2_vl4_rr1.wav` × 0.7<br>bsax: `g2_vl4_rr1.wav` × 0.7<br>bsax: `c3_vl4_rr1.wav` × 0.7<br>bsax: `eb3_vl4_rr1.wav` × 0.7 | drive 0.2 |
+| cd88 | Sax Section Fm | keys | 0.49 s | bsax: `f2_vl4_rr1.wav` × 0.7<br>bsax: `c3_vl4_rr1.wav` × 0.7<br>bsax: `f3_vl4_rr1.wav` × 0.7<br>bsax: `ab3_vl4_rr1.wav` × 0.7 | drive 0.2 |
+| cd89 | Sax Key Click | perc | 0.30 s | bsax: `c2_close_rr1.wav` × 1.0 | – |
+| cd90 | Sax Key Pop | perc | 0.30 s | bsax: `c2_open_rr1.wav` × 1.0 | – |
+| cd91 | Tuba Hit C | bass | 1.20 s | tuba: `c2_s_vl4_rr1_dyn.wav` × 1.0 | – |
+| cd92 | Tuba Hit F | bass | 1.20 s | tuba: `f2_s_vl4_rr1_dyn.wav` × 1.0 | – |
+| cd93 | Tuba Hit Bb Low | bass | 1.20 s | tuba: `bb1_s_vl4_rr1_dyn.wav` × 1.0 | – |
+| cd94 | Tuba Stab G | bass | 1.00 s | tuba: `g1_s_vl4_rr1_dyn.wav` × 0.8<br>tuba: `g2_s_vl4_rr1_dyn.wav` × 0.8 | drive 0.3 |
+| cd95 | Tuba Woo | fx | 1.09 s | tuba: `woo_vl5_rr1_dyn.wav` × 1.0 | – |
+| cd96 | Tuba Breath | fx | 1.50 s | tuba: `breath_rr1_dyn.wav` × 1.0 | – |
+| cd97 | Tuba Valve Click | perc | 0.40 s | tuba: `valve_close_rr1_dyn.wav` × 1.0 | – |
+| cd98 | Guitar Mute Chuck | perc | 0.13 s | emily: `muted1_rr1.wav` × 1.0 | – |
+| cd99 | Guitar Fret Squeak | fx | 0.47 s | emily: `fingering1_rr1.wav` × 1.0 | – |
+| cd100 | Bass String Slap | perc | 0.60 s | dbass: `pizz_noise_mute_g.wav` × 1.0 | – |

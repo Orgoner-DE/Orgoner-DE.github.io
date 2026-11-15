@@ -1,9 +1,12 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **1.5.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **1.6.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
 
 ## Funktionen
 
+- **Übersichtliche Bereiche:** Tabs gruppiert in *Spielen* (Sequencer, Pad-Edit, Mixer, Song), *Klänge* (Sample-Bank, Synth, Chop) und *Daten* (Import / Export); am Handy dieselben Bereiche unten in der Leiste.
+- **Sample-Bank:** alle Klänge mit Filterspalte (Packs, importierte Packs, Kategorien), Suche, Sortierung, Mini-Wellenform, Gruppierung nach Kategorie. Klang antippen (hören & auswählen) → Ziel-Pad antippen; Klänge lassen sich auch auf Pads ziehen. Reiter „Bänke A–P“ zeigt alle 16 Bänke mit Inhalt, Umbenennen, ZIP-Export und Leeren.
+- **Import / Export:** eine Seite für alles. Import erkennt automatisch Audio, Sample-Pack-ZIP, BAP-50-Backup (.bap50.zip) und Projekt-JSON. Export: Pattern/Song als WAV, **Stems** (jede Spur einzeln + Mix als ZIP), **Bank als ZIP** (16 WAVs), **eigene Samples als ZIP**, **Komplett-Backup** (Projekt + eigene Samples, auf anderem Gerät wieder einlesbar), Projekt-JSON, Resample.
 - **Menüleiste** oben mit allen Funktionen: Datei (Projekt neu/speichern/import/export, WAV-Export, Resample), Bearbeiten (Undo/Redo, Pad kopieren/einfügen/zurücksetzen), Pattern (Wechsel, Länge, Verdoppeln, Kopieren, Spur verschieben, Grooves), Pads (Bänke A–H, Full Level, 16 Levels, Note Repeat), Transport (Play, Aufnahme, Metronom, Song-Modus, Tempo, Swing), Ansicht, MIDI und Hilfe. Bedienbar mit Maus, Touch und Tastatur (Alt, Pfeiltasten, Esc).
 - **Synth-Sampler (SYNTH):** zwei Oszillatoren (Sinus/Dreieck/Säge/Rechteck), Sub, Rauschen, Metallic-Cluster, Unison 1/3/5, Akkorde, Pitch-Hüllkurve, Glide für 808-Slides, ADSR, LP/HP/BP-Filter mit Hüllkurve, LFO auf Tonhöhe/Filter/Pegel, Drive, 12-Bit/8-Bit, Clap-Bursts, Tape-Stop. Auto-Play, Zufall, Keyboard zum Vorhören, „→ Pad“ speichert den Klang samt Einstellungen; über PAD → „Im Synth bearbeiten“ wieder änderbar. 20 Werks-Klänge (808s, Reese, Trap-Kicks, Clap, Hats, Memphis-Cowbell, Glocken, Spieluhr, Horror-Pad, Choir, Drone, Riser, Tape-Drop) werden beim Start berechnet (Pack „Synth“, Bank L).
 - **Style-Presets (dunkler Phonk/Trap):** „Grey Fog“ (145 BPM), „Memphis Grave“ (130 BPM, Cowbell-Melodie), „Coffin Choir“ (150 BPM) – jeweils Kit (Bank I/J/K), Groove mit 808-Melodie und Hi-Hat-Rolls sowie Master-Einstellung. Laden über Pattern → Style-Presets; vorbelegt in Pattern 9–11. Eigene Namen, keine Samples fremder Songs.
@@ -12,11 +15,12 @@ Version **1.5.0** · läuft unter `/boombap/` dieser Seite, als PWA installierba
 - **Eigene Samples hinzufügen:** „+ Samples hinzufügen“ (SAMPLES, Menü Datei) lädt mehrere Audiodateien auf einmal (WAV, MP3, AIFF, FLAC, OGG, M4A, bis 60 s), erkennt die Kategorie am Dateinamen (kick, snare, hat, 808 …) und legt sie auf Wunsch der Reihe nach auf Pads. Dateien lassen sich auch ins Fenster oder direkt auf ein Pad ziehen; „+ Datei“ im Pad-Editor lädt direkt aufs Pad. Eigene Samples bleiben im Browser gespeichert (IndexedDB) und sind umbenennbar.
 - **Handy/Tablet:** feste Navigationsleiste unten (PADS, SEQ, PAD, MIX, SOUNDS, CHOP, SONG, PROJEKT); jede Ansicht bekommt den ganzen Bildschirm.
 
-- **150 echte Samples** (CC0) in drei Packs, Quellen und Bearbeitung je Datei in `samples/LICENSE.md`:
+- **250 echte Samples** (CC0) in vier Packs, Quellen und Bearbeitung je Datei in `samples/LICENSE.md`:
   - **Core 50**: akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Claps, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon.
   - **Dusty Bap** (50): gealterte Boom-Bap-Drums (12 Bit, gepitcht, Snare+Clap-Layer), Piano-, Vibes- und E-Piano-Akkorde, Bläser-Stabs, Piano-Bass.
+  - **Crate Diggers** (100): weitere echte Drumkits (Karoryfer Big Rusty, Swirly, Unruly, Frankensnare, The Hat With The Phat), Body-Percussion (Claps, Snaps, Stomps, Brust/Bauch), gezupfter und gestrichener Kontrabass, Horror-Piano einzeln und als Akkorde, Jazzgitarren-Akkorde, Saxophon-Stabs, Tuba-Stöße. Vorbelegt auf Bank M (Drums) und N (Bass & Keys), Groove „Crate Diggers“ in Pattern 12.
   - **Dark Hill** (50): dunkler Westcoast-Boom-Bap – schwere Drums mit Raum, Timbales, Congas, Guiro, Cuica, Sirenen-/Pfeifen-Quietscher, Flexaton, Gong, Orgel, düsteres Piano, Mundharmonika, Saxophon.
-- **256 Pads** in 16 Bänken (A Boom-Bap-Kern, B Drums 2, C Hats/Becken/Toms/Perc, D Keys, E Dusty-Bap-Drums, F Dusty-Bap-Chops, G Dark-Hill-Drums & Latin, H Dark-Hill-Keys & FX, I–K Style-Presets, L Synth, M–P Import), anschlagdynamisch (Tipp-Höhe im Pad), Full Level.
+- **256 Pads** in 16 Bänken (A Boom-Bap-Kern, B Drums 2, C Hats/Becken/Toms/Perc, D Keys, E Dusty-Bap-Drums, F Dusty-Bap-Chops, G Dark-Hill-Drums & Latin, H Dark-Hill-Keys & FX, I–K Style-Presets, L Synth, M–N Crate Diggers, O–P Import), anschlagdynamisch (Tipp-Höhe im Pad), Full Level.
 - **16 Levels** (Tune / Velocity) und **Note Repeat** (1/8, 1/16, 1/16T, 1/32), beide auch in der Aufnahme.
 - **Step-Sequencer**: 16 Patterns, 1–4 Takte, Swing 50–75 %, Velocity und Tonhöhe pro Step, Live-Aufnahme quantisiert, Pattern-Wechsel am Pattern-Ende, Spur verschieben, Verdoppeln, Kopieren, Undo/Redo, 8 eigene Grooves (u. a. „Dusty Crate“, „Dark Hill“, „Hill Latin Smoke“).
 - **Song-Modus**: Pattern-Kette mit Wiederholungen.
@@ -44,6 +48,7 @@ python3 -m http.server 8000   # im Repo-Wurzelordner
 ```bash
 python3 boombap/tools/build_samples.py --cache /tmp/bap-cache   # Core 50
 python3 boombap/tools/build_packs.py --cache /tmp/bap-cache     # Dusty Bap + Dark Hill
+python3 boombap/tools/build_pack_cd.py --cache /tmp/bap-cache   # Crate Diggers
 ```
 
 Das Skript lädt die Originale von raw.githubusercontent.com, braucht `ffmpeg` und `numpy`.

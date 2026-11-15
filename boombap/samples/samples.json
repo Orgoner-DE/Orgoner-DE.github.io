@@ -12,6 +12,61 @@
    "name": "VCSL - Versilian Community Sample Library",
    "url": "https://github.com/sgossner/VCSL",
    "license": "CC0-1.0"
+  },
+  "rusty": {
+   "name": "Karoryfer Big Rusty Drums (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.big-rusty-drums",
+   "license": "CC0-1.0"
+  },
+  "swirly": {
+   "name": "Karoryfer Swirly Drums (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.swirly-drums",
+   "license": "CC0-1.0"
+  },
+  "unruly": {
+   "name": "Karoryfer Unruly Drums (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.unruly-drums",
+   "license": "CC0-1.0"
+  },
+  "fsnare": {
+   "name": "Karoryfer Frankensnare (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.frankensnare",
+   "license": "CC0-1.0"
+  },
+  "hat": {
+   "name": "Karoryfer The Hat With The Phat (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/Karoryfer.TheHatWithThePhat",
+   "license": "CC0-1.0"
+  },
+  "dbass": {
+   "name": "dsmolken Double Bass (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/dsmolken.double-bass",
+   "license": "CC0-1.0"
+  },
+  "body": {
+   "name": "Body Percussion (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/body_percussion",
+   "license": "CC0-1.0"
+  },
+  "scary": {
+   "name": "Karoryfer Scary Piano (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.scarypiano",
+   "license": "CC0-1.0"
+  },
+  "emily": {
+   "name": "Karoryfer Emily Guitar (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.emilyguitar",
+   "license": "CC0-1.0"
+  },
+  "bsax": {
+   "name": "Karoryfer Bear Sax (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.bear-sax",
+   "license": "CC0-1.0"
+  },
+  "tuba": {
+   "name": "Karoryfer War Tuba (sfzinstruments)",
+   "url": "https://github.com/sfzinstruments/karoryfer.war-tuba",
+   "license": "CC0-1.0"
   }
  },
  "categories": {
@@ -3454,11 +3509,2225 @@
     "pitch": 5,
     "crush": "v26"
    }
+  },
+  {
+   "id": "cd01",
+   "name": "Kick Rusty",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd01-kick-rusty.wav",
+   "dur": 0.9,
+   "tags": "crate diggers drive",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/kick_24/kick/kick/k_vl14_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "rusty",
+     "file": "Samples/kick_24/kick/oh/k_vl14_rr1.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "drive": 0.3
+   }
+  },
+  {
+   "id": "cd02",
+   "name": "Kick Rusty Open",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd02-kick-rusty-open.wav",
+   "dur": 1.2,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/kick_24_nodamp/kick/kick/k_nodamp_vl6_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd03",
+   "name": "Kick Dirty",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd03-kick-dirty.wav",
+   "dur": 0.889,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/k20/in/rr1/kick_dirty_vl8_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd04",
+   "name": "Kick Dirtiest",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd04-kick-dirtiest.wav",
+   "dur": 0.806,
+   "tags": "crate diggers crush",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/k20/in/rr1/kick_dirtiest_vl8_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "cd05",
+   "name": "Kick Clean Jazz",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd05-kick-clean-jazz.wav",
+   "dur": 0.795,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/k20/in/rr1/kick_clean_vl7_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd06",
+   "name": "Kick Marching Boom",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd06-kick-marching-boom.wav",
+   "dur": 0.869,
+   "tags": "crate diggers pitch",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/marching_kick/marching_kick_vl22_rr1_beater.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "swirly",
+     "file": "Samples/marching_kick/marching_kick_vl22_rr1_reso.wav",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2
+   }
+  },
+  {
+   "id": "cd07",
+   "name": "Kick Cajon Deep",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd07-kick-cajon-deep.wav",
+   "dur": 0.584,
+   "tags": "crate diggers pitch",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/cajon_kick/cajon_kick_vl13_rr1_front.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "swirly",
+     "file": "Samples/cajon_kick/cajon_kick_vl13_rr1_rear.wav",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "pitch": -2
+   }
+  },
+  {
+   "id": "cd08",
+   "name": "Kick + Snare Buzz",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd08-kick-snare-buzz.wav",
+   "dur": 0.9,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/wetter/kick_buzz/buzz_kick_with_snare_buzz_vl11_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd09",
+   "name": "Kick Rusty Soft",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd09-kick-rusty-soft.wav",
+   "dur": 0.8,
+   "tags": "crate diggers drive",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/kick_24/kick/kick/k_vl8_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "drive": 0.2
+   }
+  },
+  {
+   "id": "cd10",
+   "name": "Snare Franken 16",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd10-snare-franken-16.wav",
+   "dur": 0.638,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/16_basic/top/sn_vl11_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "fsnare",
+     "file": "Samples/16_basic/oh/sn_vl11_rr1.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd11",
+   "name": "Snare Franken 22 Deep",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd11-snare-franken-22-deep.wav",
+   "dur": 0.918,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/22_basic/top/sn_vl8_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "fsnare",
+     "file": "Samples/22_basic/oh/sn_vl8_rr1.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd12",
+   "name": "Snare Franken 14S",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd12-snare-franken-14s.wav",
+   "dur": 0.794,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/14s_basic/top/sn_vl9_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "fsnare",
+     "file": "Samples/14s_basic/oh/sn_vl9_rr1.flac",
+     "gain": 0.4,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd13",
+   "name": "Snare Franken 14P",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd13-snare-franken-14p.wav",
+   "dur": 0.567,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/14p_basic/top/sn_vl11_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "fsnare",
+     "file": "Samples/14p_basic/oh/sn_vl11_rr1.flac",
+     "gain": 0.4,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd14",
+   "name": "Rimshot Franken",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd14-rimshot-franken.wav",
+   "dur": 0.772,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/14a_rimshot/top/sr_vl3_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd15",
+   "name": "Snare Franken Muted",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd15-snare-franken-muted.wav",
+   "dur": 0.411,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/14p_muted/top/sm_vl7_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd16",
+   "name": "Snare Franken Ghost",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd16-snare-franken-ghost.wav",
+   "dur": 0.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/16_basic/top/sn_vl3_rr2.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd17",
+   "name": "Snare Rusty",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd17-snare-rusty.wav",
+   "dur": 0.78,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/snare_14/center/top/sn_center_vl10_rr4.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "rusty",
+     "file": "Samples/snare_14/center/oh/sn_center_vl10_rr4.flac",
+     "gain": 0.6,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd18",
+   "name": "Snare Rusty Rims",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd18-snare-rusty-rims.wav",
+   "dur": 0.51,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/snare_14/rimshot/top/sn_rims_vl6_rr4.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd19",
+   "name": "Snare Prepared",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd19-snare-prepared.wav",
+   "dur": 0.532,
+   "tags": "crate diggers crush",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/snare_14/pcenter/top/sn_prep_vl7_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {
+    "crush": "v26"
+   }
+  },
+  {
+   "id": "cd20",
+   "name": "Rimshot Unruly 13",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd20-rimshot-unruly-13.wav",
+   "dur": 0.8,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/s13/top/rr1/s13_rimshot_vl6_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd21",
+   "name": "Sidestick Unruly",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd21-sidestick-unruly.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/s14/top/rr1/s14_sstick_vl6_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd22",
+   "name": "Snare Unruly 22 Fat",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd22-snare-unruly-22-fat.wav",
+   "dur": 0.687,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/s22/top/rr1/s22_center_vl8_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "unruly",
+     "file": "Samples/s22/ohl/rr1/s22_center_vl8_rr1.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd23",
+   "name": "Snare Swirly Wet",
+   "cat": "snare",
+   "pack": "cd",
+   "file": "samples/cd23-snare-swirly-wet.wav",
+   "dur": 1.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/wet/snare_main/snare_hit_vl12_rr1_top.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd24",
+   "name": "Clap Stack",
+   "cat": "clap",
+   "pack": "cd",
+   "file": "samples/cd24-clap-stack.wav",
+   "dur": 0.565,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/xtra_claps/clap_stack_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd25",
+   "name": "Clap Person",
+   "cat": "clap",
+   "pack": "cd",
+   "file": "samples/cd25-clap-person.wav",
+   "dur": 0.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/xtra_claps/clap_person1_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd26",
+   "name": "Handclap Body",
+   "cat": "clap",
+   "pack": "cd",
+   "file": "samples/cd26-handclap-body.wav",
+   "dur": 0.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/handclap_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd27",
+   "name": "Fingerclap",
+   "cat": "clap",
+   "pack": "cd",
+   "file": "samples/cd27-fingerclap.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/fingerclap_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd28",
+   "name": "Finger Snap",
+   "cat": "clap",
+   "pack": "cd",
+   "file": "samples/cd28-finger-snap.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/snap_r_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd29",
+   "name": "Pinky Snap",
+   "cat": "clap",
+   "pack": "cd",
+   "file": "samples/cd29-pinky-snap.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/pinkysnap_r_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd30",
+   "name": "Hat Closed Edge",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd30-hat-closed-edge.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/closed/hat_20_closed_edge_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd31",
+   "name": "Hat X-Tight",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd31-hat-x-tight.wav",
+   "dur": 0.3,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/xtight/hat_20_xtight_bow_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd32",
+   "name": "Hat Foot Chik",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd32-hat-foot-chik.wav",
+   "dur": 0.35,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/chik/hat_20_chik_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd33",
+   "name": "Hat Loose",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd33-hat-loose.wav",
+   "dur": 0.8,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/loose/hat_20_loose_bow_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd34",
+   "name": "Hat Open Phat",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd34-hat-open-phat.wav",
+   "dur": 1.6,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/open/hat_20_open_bow_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd35",
+   "name": "Hat Sizzle",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd35-hat-sizzle.wav",
+   "dur": 1.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/sizz/hat_20_sizz_bow_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd36",
+   "name": "Hat Squash",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd36-hat-squash.wav",
+   "dur": 0.6,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/squash/hat_20_squash_edge_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd37",
+   "name": "Hat Splash",
+   "cat": "hat",
+   "pack": "cd",
+   "file": "samples/cd37-hat-splash.wav",
+   "dur": 1.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "hat",
+     "file": "Samples/splash/hat_20_splash_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {},
+   "choke": 1
+  },
+  {
+   "id": "cd38",
+   "name": "Ride Swirly",
+   "cat": "cymbal",
+   "pack": "cd",
+   "file": "samples/cd38-ride-swirly.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/ride/ride_vl15_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd39",
+   "name": "Crash Swirly",
+   "cat": "cymbal",
+   "pack": "cd",
+   "file": "samples/cd39-crash-swirly.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/crash/crash_vl12_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd40",
+   "name": "China Swirly",
+   "cat": "cymbal",
+   "pack": "cd",
+   "file": "samples/cd40-china-swirly.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/china/china_vl12_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd41",
+   "name": "Tom Rusty 14",
+   "cat": "tom",
+   "pack": "cd",
+   "file": "samples/cd41-tom-rusty-14.wav",
+   "dur": 1.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/tom_14/center/cl/t14_vl6_rr4.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "rusty",
+     "file": "Samples/tom_14/center/oh/t14_vl6_rr4.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd42",
+   "name": "Tom Rusty 18 Floor",
+   "cat": "tom",
+   "pack": "cd",
+   "file": "samples/cd42-tom-rusty-18-floor.wav",
+   "dur": 1.2,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "rusty",
+     "file": "Samples/tom_18/center/cl/t18_vl8_rr4.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    },
+    {
+     "lib": "rusty",
+     "file": "Samples/tom_18/center/oh/t18_vl8_rr4.flac",
+     "gain": 0.5,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd43",
+   "name": "Tom Unruly Dirty",
+   "cat": "tom",
+   "pack": "cd",
+   "file": "samples/cd43-tom-unruly-dirty.wav",
+   "dur": 0.851,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "unruly",
+     "file": "Samples/s22/top/rr1/s22_tom_dirty_vl7_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd44",
+   "name": "Stomp",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd44-stomp.wav",
+   "dur": 0.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/stomp_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd45",
+   "name": "Half Stomp",
+   "cat": "kick",
+   "pack": "cd",
+   "file": "samples/cd45-half-stomp.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/halfstomp_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd46",
+   "name": "Chest Thump",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd46-chest-thump.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/chestthump_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd47",
+   "name": "Chest Side",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd47-chest-side.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/chestside_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd48",
+   "name": "Belly Slap",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd48-belly-slap.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/bellycenter_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd49",
+   "name": "Heel Tap",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd49-heel-tap.wav",
+   "dur": 0.3,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/heel_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd50",
+   "name": "Head Knock",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd50-head-knock.wav",
+   "dur": 0.3,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/head_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd51",
+   "name": "Shoulder Slap",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd51-shoulder-slap.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/shoulderout_l_vl2_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd52",
+   "name": "Cheek Pop",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd52-cheek-pop.wav",
+   "dur": 0.393,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "body",
+     "file": "Samples/body/cheek_lout_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd53",
+   "name": "Djembe",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd53-djembe.wav",
+   "dur": 0.8,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/djembe/djembe_vl12_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd54",
+   "name": "Darbouka",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd54-darbouka.wav",
+   "dur": 0.542,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/darbouka/darbouka_vl12_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd55",
+   "name": "Bongo High",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd55-bongo-high.wav",
+   "dur": 0.479,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/hbongo/hbongo_vl10_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd56",
+   "name": "Tambourine Franken",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd56-tambourine-franken.wav",
+   "dur": 0.552,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "fsnare",
+     "file": "Samples/xtra_tamb/tamb_vl5_rr1.flac",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd57",
+   "name": "Snare Wire Scrape",
+   "cat": "fx",
+   "pack": "cd",
+   "file": "samples/cd57-snare-wire-scrape.wav",
+   "dur": 1.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "swirly",
+     "file": "Samples/wetter/mech_noises/snare_dig_release_1_top.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd58",
+   "name": "Upright Bass A",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd58-upright-bass-a.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_bb1_fa.wav",
+     "gain": 1.0,
+     "pitch": -1
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "A"
+  },
+  {
+   "id": "cd59",
+   "name": "Upright Bass C",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd59-upright-bass-c.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_bb1_fa.wav",
+     "gain": 1.0,
+     "pitch": 2
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "C"
+  },
+  {
+   "id": "cd60",
+   "name": "Upright Bass D",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd60-upright-bass-d.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_d2_fa.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "D"
+  },
+  {
+   "id": "cd61",
+   "name": "Upright Bass Eb",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd61-upright-bass-eb.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_d2_fa.wav",
+     "gain": 1.0,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "D#"
+  },
+  {
+   "id": "cd62",
+   "name": "Upright Bass F",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd62-upright-bass-f.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_f2_fa.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "F"
+  },
+  {
+   "id": "cd63",
+   "name": "Upright Bass G",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd63-upright-bass-g.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_f2_fa.wav",
+     "gain": 1.0,
+     "pitch": 2
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "G"
+  },
+  {
+   "id": "cd64",
+   "name": "Upright Bass Bb",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd64-upright-bass-bb.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_a2_fa.wav",
+     "gain": 1.0,
+     "pitch": 1
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "A#"
+  },
+  {
+   "id": "cd65",
+   "name": "Upright Bass C hoch",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd65-upright-bass-c-hoch.wav",
+   "dur": 1.8,
+   "tags": "crate diggers lp drive",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/pizz_c3_fa.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 3500,
+    "drive": 0.15
+   },
+   "root": "C"
+  },
+  {
+   "id": "cd66",
+   "name": "Upright Bass Arco C",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd66-upright-bass-arco-c.wav",
+   "dur": 2.5,
+   "tags": "crate diggers lp",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "arco/arco_c2_f_down.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "lp": 3000
+   },
+   "root": "C"
+  },
+  {
+   "id": "cd67",
+   "name": "Upright Bass Arco G",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd67-upright-bass-arco-g.wav",
+   "dur": 2.5,
+   "tags": "crate diggers lp",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "arco/arco_f2_f_down.wav",
+     "gain": 1.0,
+     "pitch": 2
+    }
+   ],
+   "fx": {
+    "lp": 3000
+   },
+   "root": "G"
+  },
+  {
+   "id": "cd68",
+   "name": "Scary Piano C",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd68-scary-piano-c.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/C3-97-127_Dehumanised.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd69",
+   "name": "Scary Piano Low C",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd69-scary-piano-low-c.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/C2-97-127_Dehumanised.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd70",
+   "name": "Scary Chord Cm",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd70-scary-chord-cm.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/C3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Eb3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/G3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/C4-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd71",
+   "name": "Scary Chord Fm",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd71-scary-chord-fm.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/F2-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/C3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/F3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Ab3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "F"
+  },
+  {
+   "id": "cd72",
+   "name": "Scary Chord Bbm Low",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd72-scary-chord-bbm-low.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Bb1-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Bb2-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Db3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/F3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "A#"
+  },
+  {
+   "id": "cd73",
+   "name": "Scary Cluster",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd73-scary-cluster.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/C3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Db3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Eb3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/piano loud/Gb3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd74",
+   "name": "Dehumanised C",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd74-dehumanised-c.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/alt loud/C3-97-127_Dehumanised.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd75",
+   "name": "Dehumanised Cm",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd75-dehumanised-cm.wav",
+   "dur": 3.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "scary",
+     "file": "Samples/horror/alt loud/C2-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/alt loud/C3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/alt loud/Eb3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "scary",
+     "file": "Samples/horror/alt loud/G3-97-127_Dehumanised.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd76",
+   "name": "Guitar Am7",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd76-guitar-am7.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/a2_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb3_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/gb3_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/c4_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "A"
+  },
+  {
+   "id": "cd77",
+   "name": "Guitar Dm9",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd77-guitar-dm9.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/eb3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/gb3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/a3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 0
+    },
+    {
+     "lib": "emily",
+     "file": "notes/c4_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 0
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb4_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 1
+    }
+   ],
+   "fx": {},
+   "root": "D"
+  },
+  {
+   "id": "cd78",
+   "name": "Guitar Fmaj7",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd78-guitar-fmaj7.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/e2_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/c3_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb3_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/a3_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "F"
+  },
+  {
+   "id": "cd79",
+   "name": "Guitar E7#9",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd79-guitar-e7-9.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/e2_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "emily",
+     "file": "notes/a3_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb4_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/gb4_f_rr1.wav",
+     "gain": 0.7,
+     "pitch": 1
+    }
+   ],
+   "fx": {},
+   "root": "E"
+  },
+  {
+   "id": "cd80",
+   "name": "Guitar Cmaj9",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd80-guitar-cmaj9.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/c3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 0
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/gb3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/c4_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb4_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": -1
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd81",
+   "name": "Guitar Gm11",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd81-guitar-gm11.wav",
+   "dur": 2.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/gb2_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/eb3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/gb3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": -1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/a3_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 1
+    },
+    {
+     "lib": "emily",
+     "file": "notes/c4_f_rr1.wav",
+     "gain": 0.65,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "G"
+  },
+  {
+   "id": "cd82",
+   "name": "Guitar Note C",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd82-guitar-note-c.wav",
+   "dur": 2.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/c3_f_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd83",
+   "name": "Guitar Note G",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd83-guitar-note-g.wav",
+   "dur": 2.0,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "notes/gb3_f_rr1.wav",
+     "gain": 1.0,
+     "pitch": 1
+    }
+   ],
+   "fx": {},
+   "root": "G"
+  },
+  {
+   "id": "cd84",
+   "name": "Sax Hit C",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd84-sax-hit-c.wav",
+   "dur": 0.469,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/c3_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd85",
+   "name": "Sax Hit G",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd85-sax-hit-g.wav",
+   "dur": 0.483,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/g2_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "G"
+  },
+  {
+   "id": "cd86",
+   "name": "Sax Hit Eb",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd86-sax-hit-eb.wav",
+   "dur": 0.478,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/eb3_vl4_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "D#"
+  },
+  {
+   "id": "cd87",
+   "name": "Sax Section Cm",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd87-sax-section-cm.wav",
+   "dur": 0.498,
+   "tags": "crate diggers drive",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/c2_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "bsax",
+     "file": "Samples/g2_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "bsax",
+     "file": "Samples/c3_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "bsax",
+     "file": "Samples/eb3_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "drive": 0.2
+   },
+   "root": "C"
+  },
+  {
+   "id": "cd88",
+   "name": "Sax Section Fm",
+   "cat": "keys",
+   "pack": "cd",
+   "file": "samples/cd88-sax-section-fm.wav",
+   "dur": 0.492,
+   "tags": "crate diggers drive",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/f2_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "bsax",
+     "file": "Samples/c3_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "bsax",
+     "file": "Samples/f3_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    },
+    {
+     "lib": "bsax",
+     "file": "Samples/ab3_vl4_rr1.wav",
+     "gain": 0.7,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "drive": 0.2
+   },
+   "root": "F"
+  },
+  {
+   "id": "cd89",
+   "name": "Sax Key Click",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd89-sax-key-click.wav",
+   "dur": 0.3,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/c2_close_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd90",
+   "name": "Sax Key Pop",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd90-sax-key-pop.wav",
+   "dur": 0.3,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "bsax",
+     "file": "Samples/c2_open_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd91",
+   "name": "Tuba Hit C",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd91-tuba-hit-c.wav",
+   "dur": 1.2,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/c2_s_vl4_rr1_dyn.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "C"
+  },
+  {
+   "id": "cd92",
+   "name": "Tuba Hit F",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd92-tuba-hit-f.wav",
+   "dur": 1.2,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/f2_s_vl4_rr1_dyn.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "F"
+  },
+  {
+   "id": "cd93",
+   "name": "Tuba Hit Bb Low",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd93-tuba-hit-bb-low.wav",
+   "dur": 1.2,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/bb1_s_vl4_rr1_dyn.wav",
+     "gain": 1.0,
+     "pitch": 0
+    }
+   ],
+   "fx": {},
+   "root": "A#"
+  },
+  {
+   "id": "cd94",
+   "name": "Tuba Stab G",
+   "cat": "bass",
+   "pack": "cd",
+   "file": "samples/cd94-tuba-stab-g.wav",
+   "dur": 1.0,
+   "tags": "crate diggers drive",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/g1_s_vl4_rr1_dyn.wav",
+     "gain": 0.8,
+     "pitch": 0
+    },
+    {
+     "lib": "tuba",
+     "file": "Samples/g2_s_vl4_rr1_dyn.wav",
+     "gain": 0.8,
+     "pitch": 0
+    }
+   ],
+   "fx": {
+    "drive": 0.3
+   },
+   "root": "G"
+  },
+  {
+   "id": "cd95",
+   "name": "Tuba Woo",
+   "cat": "fx",
+   "pack": "cd",
+   "file": "samples/cd95-tuba-woo.wav",
+   "dur": 1.09,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/woo_vl5_rr1_dyn.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd96",
+   "name": "Tuba Breath",
+   "cat": "fx",
+   "pack": "cd",
+   "file": "samples/cd96-tuba-breath.wav",
+   "dur": 1.5,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/breath_rr1_dyn.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd97",
+   "name": "Tuba Valve Click",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd97-tuba-valve-click.wav",
+   "dur": 0.4,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "tuba",
+     "file": "Samples/valve_close_rr1_dyn.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd98",
+   "name": "Guitar Mute Chuck",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd98-guitar-mute-chuck.wav",
+   "dur": 0.127,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "noises/muted1_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd99",
+   "name": "Guitar Fret Squeak",
+   "cat": "fx",
+   "pack": "cd",
+   "file": "samples/cd99-guitar-fret-squeak.wav",
+   "dur": 0.469,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "emily",
+     "file": "noises/fingering1_rr1.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
+  },
+  {
+   "id": "cd100",
+   "name": "Bass String Slap",
+   "cat": "perc",
+   "pack": "cd",
+   "file": "samples/cd100-bass-string-slap.wav",
+   "dur": 0.6,
+   "tags": "crate diggers",
+   "src": [
+    {
+     "lib": "dbass",
+     "file": "pizz/noises/pizz_noise_mute_g.wav",
+     "gain": 1.0,
+     "pitch": 0.0
+    }
+   ],
+   "fx": {}
   }
  ],
  "packs": {
   "core": "Core 50",
   "db": "Dusty Bap",
-  "dh": "Dark Hill"
+  "dh": "Dark Hill",
+  "cd": "Crate Diggers"
  }
 }
