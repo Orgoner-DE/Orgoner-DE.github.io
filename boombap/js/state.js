@@ -1,8 +1,8 @@
 // Projektmodell, Standard-Kit, Grooves, Speichern/Laden, Undo.
 import { clamp, safeStorage } from './util.js';
 
-export const NUM_PADS = 192;
-export const NUM_BANKS = 12;
+export const NUM_PADS = 256;
+export const NUM_BANKS = 16;
 export const NUM_PATTERNS = 16;
 export const MAX_STEPS = 64;
 export const LENGTHS = [16, 32, 48, 64];
@@ -79,6 +79,8 @@ function padFor(id, tune, catOf) {
   if (/^d[bh]/.test(id) && ['kick', 'snare', 'clap', 'hat', 'perc', 'cymbal'].includes(cat)) p.vol = +(p.vol * 0.8).toFixed(2);
   return p;
 }
+
+export function padForSample(id, cat) { return padFor(id, 0, () => cat); }
 
 export function presetKitPads(name, catOf) {
   return (PRESET_KITS[name] || []).map(([id, tune]) => padFor(id, tune, catOf));
@@ -304,6 +306,7 @@ export function defaultProject(catOf = () => '') {
     cur: { ptn: 0, bank: 0, pad: 0 },
     song: { on: false, list: [{ p: 0, n: 2 }, { p: 1, n: 2 }, { p: 3, n: 2 }, { p: 4, n: 1 }] },
     midi: { base: 36 },
+    bankNames: {},
   };
 }
 
@@ -343,6 +346,7 @@ export function normalizeProject(raw, catOf) {
   p.cur.pad = clamp(p.cur.pad | 0, 0, NUM_PADS - 1);
   p.song = { on: !!(raw.song && raw.song.on), list: ((raw.song && raw.song.list) || d.song.list).map((e) => ({ p: clamp(e.p | 0, 0, NUM_PATTERNS - 1), n: clamp(e.n | 0 || 1, 1, 16) })) };
   p.midi = { ...d.midi, ...(raw.midi || {}) };
+  p.bankNames = { ...(raw.bankNames || {}) };
   return p;
 }
 

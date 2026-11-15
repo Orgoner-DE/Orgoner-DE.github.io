@@ -6,10 +6,12 @@ import { Engine, DELAY_TIMES } from './engine.js';
 import { Sequencer, REPEAT_DIVS, stepDur } from './seq.js';
 import {
   NUM_PATTERNS, NUM_PADS, NUM_BANKS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
-  saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads,
+  saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads, padForSample,
 } from './state.js';
 import { renderPatterns, songOrder, encodeWav, toMono } from './render.js';
 import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
+import { readZip } from './zip.js';
+import { detectBpm, decideLoop, isMelodic, chopLoop, master, classifyDrum } from './chopper.js';
 import { renderSynth, randomize, SYNTH_PRESETS, SYNTH_DEFAULT, WAVES, CHORDS, CHORD_NAMES } from './synth.js';
 
 const S = {
@@ -277,11 +279,11 @@ function updateLCD() {
 
 // ---------- Pad-Leiste ----------
 const PB = {};
-const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth'];
+const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth', 'Import 1', 'Import 2', 'Import 3', 'Import 4'];
 function buildPadbar() {
   const bar = $('#padbar');
   PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b), 'banks');
-  PB.bank.prepend(el('span', { class: 'lab', text: 'BANK' }));
+  PB.bank.setAttribute('aria-label', 'Bank');
   PB.full = el('button', { type: 'button', text: 'FULL', title: 'Volle Anschlagstärke' });
   PB.full.addEventListener('click', () => setFull(!S.fullLevel));
   const fullSeg = el('div', { class: 'seg' }, PB.full);
@@ -311,6 +313,7 @@ function setLevels(m) {
 
 function setBank(b) {
   P().cur.bank = clamp(b, 0, NUM_BANKS - 1);
+  if (PB.bank) Array.from(PB.bank.querySelectorAll('button')).forEach((x, i) => { x.title = bankTitle(i); });
   const btns = Array.from(PB.bank.querySelectorAll('button'));
   btns.forEach((x, i) => { x.classList.toggle('on', i === b); x.setAttribute('aria-pressed', String(i === b)); });
   updatePads();
@@ -740,6 +743,8 @@ function menus() {
       mi(`Datei auf Pad ${padLabel(p.cur.pad)} laden …`, loadFileToCurrentPad),
       mi('Sample aufnehmen (Mikrofon)', recordNewSample),
       mi('Synth-Klang erstellen …', () => showView('synth')),
+      mi('Sample-Pack importieren (ZIP) …', () => importPackFrom(false)),
+      mi('Sample-Pack-Ordner importieren …', () => importPackFrom(true), { disabled: isNativeApp() }),
       '-',
       mi('Neues leeres Projekt', newEmptyProject),
       mi('Werkseinstellung laden', factoryReset),
@@ -793,7 +798,7 @@ function menus() {
       ...GROOVES.map((g, i) => (g.preset ? mi(`${g.name.replace(/ \(.*\)$/, '')} · ${g.bpm} BPM`, () => loadGroove(i)) : null)).filter(Boolean),
     ] },
     { id: 'pads', label: 'Pads', items: [
-      ...Array.from(BANK_NAMES, (n, i) => mi(`Bank ${n} · ${BANK_TITLES[i]}`, () => setBank(i), { checked: p.cur.bank === i, radio: true, kbd: i === 0 ? ', .' : '' })),
+      ...Array.from(BANK_NAMES, (n, i) => mi(`Bank ${n} · ${bankTitle(i)}`, () => setBank(i), { checked: p.cur.bank === i, radio: true, kbd: i === 0 ? ', .' : '' })),
       '-',
       mi('Full Level (volle Anschlagstärke)', () => setFull(!S.fullLevel), { checked: S.fullLevel }),
       '-',
@@ -1372,7 +1377,7 @@ BUILDERS.mix = (root) => {
   const mm = el('div', { class: 'meter', 'aria-hidden': 'true' }, el('i'));
   S.masterMeter = { bar: mm.firstChild, peak: 0 };
   mixer.append(el('div', { class: 'strip master' }, el('div', { class: 'sn', text: 'MASTER' }), el('div', { class: 'fw' }, mm, mf.node), el('div', { class: 'label', text: 'OUT' })));
-  root.append(el('div', { class: 'row sp' }, el('div', { class: 'label', text: `Bank ${BANK_NAMES[p.cur.bank]} · 16 Kanäle` }), el('div', { class: 'muted', style: { fontSize: '12px' }, text: 'Bank links wechseln. Doppelklick auf Regler = Standardwert.' })), mixer);
+  root.append(el('div', { class: 'row sp' }, el('div', { class: 'label', text: `Bank ${BANK_NAMES[p.cur.bank]} · ${bankTitle(p.cur.bank)} · 16 Kanäle` }), el('div', { class: 'muted', style: { fontSize: '12px' }, text: 'Bank links wechseln. Doppelklick auf Regler = Standardwert.' })), mixer);
 
   const mk = (field, label, fmt, def = 0) => knob({ label, min: 0, max: 1, step: 0.01, def, value: m[field], format: fmt || ((v) => Math.round(v * 100) + '%'), onInput: (v) => { m[field] = v; S.engine.applyMaster(); dirty(); } });
   const dlySeg = seg(Object.keys(DELAY_TIMES).map((k) => [k, k]), m.dlyTime, (v) => { m.dlyTime = v; S.engine.applyMaster(); dirty(); });
@@ -1415,7 +1420,9 @@ BUILDERS.samples = (root) => {
   addB.addEventListener('click', addSamplesFromPicker);
   const recB = el('button', { class: 'btn', type: 'button', text: '● Aufnehmen' });
   recB.addEventListener('click', recordNewSample);
-  root.append(el('div', { class: 'row' }, addB, recB, el('span', { class: 'muted', style: { fontSize: '12px' }, text: 'WAV, MP3, AIFF, FLAC, OGG, M4A · bis 60 s · Dateien auch per Drag & Drop, direkt auf ein Pad' })));
+  const packB = el('button', { class: 'btn', type: 'button', text: '📦 Pack importieren (ZIP)', title: 'Heruntergeladenes Sample-Pack lokal choppen, nachmastern und auf Bänke legen' });
+  packB.addEventListener('click', () => importPackFrom(false));
+  root.append(el('div', { class: 'row' }, addB, packB, recB, el('span', { class: 'muted', style: { fontSize: '12px' }, text: 'WAV, MP3, AIFF, FLAC, OGG, M4A · bis 60 s · Dateien auch per Drag & Drop, direkt auf ein Pad' })));
   root.append(el('div', { class: 'row' }, search, target));
   const packs = el('div', { class: 'chips', role: 'group', 'aria-label': 'Packs' });
   const packList = [['all', 'Alle Packs'], ...Object.entries(PACKS)];
@@ -1426,8 +1433,16 @@ BUILDERS.samples = (root) => {
     c.addEventListener('click', () => { S.samplePack = k; renderView('samples'); });
     packs.append(c);
   }
+  const groups = {};
+  for (const m of S.catalog.list) if (m.group) groups[m.group] = (groups[m.group] || 0) + 1;
+  for (const [g, n] of Object.entries(groups)) {
+    const key = 'grp:' + g;
+    const c = el('button', { type: 'button', class: 'chip pack' + (S.samplePack === key ? ' on' : ''), 'aria-pressed': String(S.samplePack === key), text: `📦 ${g} ${n}` });
+    c.addEventListener('click', () => { S.samplePack = key; renderView('samples'); });
+    packs.append(c);
+  }
   root.append(el('div', { class: 'row' }, packs));
-  const inPack = (m) => !S.samplePack || S.samplePack === 'all' || (m.pack || 'user') === S.samplePack;
+  const inPack = (m) => !S.samplePack || S.samplePack === 'all' || (S.samplePack.startsWith('grp:') ? m.group === S.samplePack.slice(4) : (m.pack || 'user') === S.samplePack);
   const chips = el('div', { class: 'chips', role: 'group', 'aria-label': 'Kategorien' });
   const cats = [['all', 'Alle'], ...Object.entries(CATS)];
   for (const [k, label] of cats) {
@@ -1669,6 +1684,173 @@ function bindDrop() {
   });
 }
 
+
+// =====================================================================
+// SAMPLE-PACK IMPORT (ZIP oder Ordner) – lokal choppen, nachmastern, Bänke füllen
+// =====================================================================
+const IMPORT_BANK0 = 12; // Bank M
+const CAT_ORDER = ['kick', 'snare', 'clap', 'hat', 'cymbal', 'tom', 'perc', 'bass', 'keys', 'fx', 'user'];
+const bankTitle = (i) => (P().bankNames && P().bankNames[i]) || BANK_TITLES[i] || 'Bank ' + BANK_NAMES[i];
+
+function pickPackSource(folder = false) {
+  return new Promise((resolve) => {
+    const inp = el('input', folder
+      ? { type: 'file', webkitdirectory: true, multiple: true, hidden: true }
+      : { type: 'file', accept: '.zip,application/zip,application/x-zip-compressed,' + AUDIO_ACCEPT, multiple: true, hidden: true });
+    inp.addEventListener('change', () => { const f = Array.from(inp.files || []); inp.remove(); resolve(f); });
+    document.body.append(inp);
+    inp.click();
+  });
+}
+
+async function packItems(files) {
+  const skip = (p) => /(^|\/)(__MACOSX|\._)/.test(p) || /(^|\/)\./.test(p.split('/').pop());
+  if (files.length === 1 && /\.zip$/i.test(files[0].name)) {
+    const entries = await readZip(files[0]);
+    return {
+      name: files[0].name.replace(/\.zip$/i, ''),
+      items: entries.filter((e) => AUDIO_EXT.test(e.name) && !skip(e.name) && !e.encrypted).map((e) => ({ path: e.name, size: e.size, load: () => e.data() })),
+      total: entries.length,
+    };
+  }
+  const audio = files.filter((f) => AUDIO_EXT.test(f.name) && !skip(f.webkitRelativePath || f.name));
+  const root = ((files[0] && files[0].webkitRelativePath) || '').split('/')[0];
+  return { name: root || 'Import', items: audio.map((f) => ({ path: f.webkitRelativePath || f.name, size: f.size, load: () => f.arrayBuffer() })), total: files.length };
+}
+
+async function importPackFrom(folder = false) {
+  const files = await pickPackSource(folder);
+  if (!files.length) return;
+  let pack;
+  try { pack = await packItems(files); } catch (e) { toast('Pack nicht lesbar: ' + (e.message || e)); return; }
+  if (!pack.items.length) { toast('Keine Audiodateien im Pack gefunden'); return; }
+  showPackDialog(pack);
+}
+
+function showPackDialog(pack) {
+  const name = el('input', { class: 'txt-in', type: 'text', value: pack.name.slice(0, 40), maxlength: '40', 'aria-label': 'Pack-Name', style: { flex: '1 1 200px' } });
+  const chop = el('input', { type: 'checkbox', checked: true, id: 'pk-chop' });
+  const keep = el('input', { type: 'checkbox', id: 'pk-keep' });
+  const fill = el('input', { type: 'checkbox', checked: true, id: 'pk-fill' });
+  const firstFree = (() => { for (let b = IMPORT_BANK0; b < NUM_BANKS; b++) if (!P().pads.slice(b * 16, b * 16 + 16).some((p) => p.s)) return b; return IMPORT_BANK0; })();
+  const bankSel = el('select', { class: 'sel-in', 'aria-label': 'Ab Bank' }, ...Array.from({ length: NUM_BANKS }, (_, b) => el('option', { value: String(b), text: `ab Bank ${BANK_NAMES[b]} · ${bankTitle(b)}`, selected: b === firstFree })));
+  const go = el('button', { class: 'btn pri', type: 'button', text: `${pack.items.length} Dateien importieren` });
+  const bar = el('div', { class: 'boot-bar', style: { margin: '12px 0 6px' } }, el('i'));
+  const status = el('p', { class: 'muted', style: { fontSize: '12px', minHeight: '1.3em' } });
+  const lab = (inp, txt) => el('label', { class: 'chk', for: inp.id }, inp, ' ', txt);
+  const body = el('div', {},
+    el('p', { class: 'prose', html: `<b>${pack.items.length}</b> Audiodateien gefunden${pack.total > pack.items.length ? ` (von ${pack.total} Dateien im Pack)` : ''}. Alles wird <b>lokal auf diesem Gerät</b> verarbeitet und als eigene Samples gespeichert – nichts wird hochgeladen.` }),
+    el('div', { class: 'row' }, name),
+    el('div', { class: 'opts' },
+      lab(chop, 'Loops in einzelne Samples choppen (Transienten bzw. Beat-Raster aus BPM im Dateinamen)'),
+      lab(keep, 'Loops zusätzlich ganz behalten'),
+      lab(fill, 'Bänke automatisch füllen (sortiert: Kick, Snare, Clap, Hats, Becken, Perc, 808/Bass, Melodie, FX)')),
+    el('div', { class: 'row' }, bankSel),
+    el('p', { class: 'hint', text: 'Nachmastern: DC und Rumpeln entfernen, Stille an Anfang/Ende trimmen, Fades, Lautheit je Kategorie angleichen, Soft-Limiter bis −1 dBFS.' }),
+    bar, status, el('div', { class: 'row', style: { marginBottom: '0' } }, go));
+  const close = openDialog('Sample-Pack importieren', body);
+  go.addEventListener('click', async () => {
+    go.disabled = true;
+    chop.disabled = keep.disabled = fill.disabled = bankSel.disabled = name.disabled = true;
+    const res = await runPackImport(pack, { name: name.value.trim() || pack.name, chop: chop.checked, keep: keep.checked, fill: fill.checked, bank: +bankSel.value },
+      (k, n, msg) => { bar.firstChild.style.width = Math.round((k / n) * 100) + '%'; status.textContent = msg; });
+    close();
+    showPackSummary(res);
+  });
+}
+
+async function runPackImport(pack, opt, progress) {
+  const sr = S.ctx.sampleRate;
+  const out = [];
+  let failed = 0;
+  let loops = 0;
+  let slices = 0;
+  let notStored = false;
+  const MAX = 512;
+  const items = pack.items.slice(0, 600);
+  for (let k = 0; k < items.length && out.length < MAX; k++) {
+    const it = items[k];
+    const file = it.path.split('/').pop();
+    const base = file.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').trim().slice(0, 44) || 'Sample';
+    progress(k, items.length, `${k + 1}/${items.length} · ${file}`);
+    let mono;
+    try {
+      if (it.size > 120 * 1024 * 1024) throw new Error('zu groß');
+      const buf = await S.ctx.decodeAudioData(await it.load());
+      mono = toMono(buf, 0, Math.min(buf.length, Math.floor(buf.sampleRate * 120)));
+    } catch (e) {
+      failed++;
+      continue;
+    }
+    const dur = mono.length / sr;
+    let cat = guessCat(it.path.replace(/loops?/gi, ' '));
+    const drumLoop = /drum|perc|break|top|hats? ?loop|groove/i.test(it.path);
+    const loop = decideLoop(it.path, dur, cat);
+    const store = async (nm, data, c) => {
+      if (!data) return;
+      const r = await S.catalog.addUser(nm, data, sr, `import ${opt.name} ${c}`, c, null, undefined, opt.name);
+      if (!r.stored) notStored = true;
+      out.push({ id: r.id, cat: c, name: nm });
+    };
+    if (loop && opt.chop) {
+      loops++;
+      const melodic = !drumLoop && isMelodic(it.path, cat);
+      const ranges = chopLoop(mono, sr, { bpm: detectBpm(it.path), melodic, max: 16 });
+      let n = 0;
+      for (const [a, b] of ranges) {
+        if (out.length >= MAX) break;
+        const part = mono.subarray(a, b);
+        const c = melodic ? (cat === 'user' ? 'keys' : cat) : classifyDrum(part, sr);
+        const data = master(part, sr, c, { trimStart: true });
+        if (data && data.length > sr * 0.03) { await store(`${base} ${++n}`, data, c); slices++; }
+      }
+      if (opt.keep && out.length < MAX) await store(`${base} (Loop)`, master(mono, sr, melodic ? 'keys' : 'perc', { trimStart: false }), melodic ? 'keys' : 'perc');
+    } else {
+      if (cat === 'user' && dur < 1.2) cat = classifyDrum(mono, sr);
+      await store(base, master(mono, sr, cat), cat);
+    }
+  }
+  progress(1, 1, 'Fertig');
+  let banks = [];
+  if (opt.fill && out.length) {
+    pushUndo(true);
+    const sorted = out.slice().sort((a, b) => CAT_ORDER.indexOf(a.cat) - CAT_ORDER.indexOf(b.cat));
+    const start = opt.bank * 16;
+    const n = Math.min(sorted.length, NUM_PADS - start);
+    for (let k = 0; k < n; k++) {
+      const i = start + k;
+      P().pads[i] = padForSample(sorted[k].id, sorted[k].cat);
+      S.engine.strip(i);
+      S.engine.updatePad(i);
+    }
+    if (!P().bankNames) P().bankNames = {};
+    const nb = Math.ceil(n / 16);
+    for (let b = 0; b < nb; b++) {
+      P().bankNames[opt.bank + b] = `${opt.name}${nb > 1 ? ' ' + (b + 1) : ''}`.slice(0, 40);
+      banks.push(opt.bank + b);
+    }
+    setBank(opt.bank);
+    updatePads();
+    dirty();
+  }
+  if (S.view === 'samples') renderView('samples');
+  return { name: opt.name, count: out.length, failed, loops, slices, banks, notStored, leftover: Math.max(0, out.length - (NUM_PADS - opt.bank * 16)) };
+}
+
+function showPackSummary(r) {
+  const lines = [`<b>${r.count}</b> Samples aus „${r.name}“ gechoppt, nachgemastert und gespeichert.`];
+  if (r.loops) lines.push(`${r.loops} Loops in ${r.slices} Einzel-Samples geschnitten.`);
+  if (r.banks.length) lines.push(`Bänke ${r.banks.map((b) => BANK_NAMES[b]).join(', ')} belegt.`);
+  if (r.leftover) lines.push(`${r.leftover} weitere Samples liegen im Sample-Browser (Pack-Filter „${r.name}“).`);
+  if (r.failed) lines.push(`${r.failed} Dateien konnten nicht gelesen werden (z. B. AIFF in Chrome).`);
+  if (r.notStored) lines.push('Achtung: Browser-Speicher nicht verfügbar – die Samples gelten nur für diese Sitzung.');
+  const toPads = el('button', { class: 'btn pri', type: 'button', text: r.banks.length ? `Zu Bank ${BANK_NAMES[r.banks[0]]}` : 'OK' });
+  const toBrowser = el('button', { class: 'btn', type: 'button', text: 'Im Sample-Browser ansehen' });
+  const close = openDialog('Pack importiert', el('div', {}, el('p', { class: 'prose', html: lines.join('<br>') }),
+    el('div', { class: 'row', style: { marginBottom: '0' } }, toPads, toBrowser)));
+  toPads.addEventListener('click', () => { close(); if (r.banks.length) { setBank(r.banks[0]); showPadsScreen(); showView('seq'); } });
+  toBrowser.addEventListener('click', () => { close(); S.samplePack = 'grp:' + r.name; S.sampleCat = 'all'; showView('samples'); });
+}
 // =====================================================================
 // SYNTH-SAMPLER
 // =====================================================================
@@ -2149,7 +2331,7 @@ BUILDERS.file = (root) => {
   // Info
   const libs = Object.values(S.catalog.libraries).map((l) => `<li><b>${l.name}</b> – ${l.license}, <a href="${l.url}" target="_blank" rel="noopener" style="color:var(--teal)">${l.url.replace('https://', '')}</a></li>`).join('');
   root.append(el('div', { class: 'card', id: 'about', style: { marginTop: '10px' } }, el('h3', { text: 'Über BAP-50' }),
-    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.4.0.apk" style="color:var(--teal)">BAP-50-1.4.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 12 Bänke × 16 Pads, eingebauter Synth-Sampler, Step-Rolls, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
+    el('div', { class: 'prose', html: `<p>150 echte Aufnahmen in drei Packs: <b>Core 50</b> (akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon), <b>Dusty Bap</b> (gealterte Boom-Bap-Drums, Piano-/Vibes-/E-Piano-Akkorde, Bläser-Stabs, Piano-Bass) und <b>Dark Hill</b> (dunkler Westcoast-Boom-Bap: schwere Drums mit Raum, Latin-Percussion, Sirenen- und Pfeifen-Quietscher, Orgel, düsteres Piano, Mundharmonika, Saxophon). Akkorde sind aus aufgenommenen Einzeltönen geschichtet. Alle unter <b>CC0 1.0</b>; Quellen und Mikrofonmischung je Sample stehen in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.5.0.apk" style="color:var(--teal)">BAP-50-1.5.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Workflow angelehnt an klassische Pad-Sampler: 16 Bänke × 16 Pads, eingebauter Synth-Sampler, Pack-Import mit Auto-Chop, Step-Rolls, 16 Levels, Note Repeat, Swing 50–75 %, 12-Bit-Wandler. Eigene Gestaltung, keine Herstellerlogos oder Produktnamen.</p>` })));
 };
 
 function loadProject(raw, msg) {

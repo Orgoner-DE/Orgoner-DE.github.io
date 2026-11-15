@@ -120,7 +120,7 @@ export class Catalog {
     buf.copyToChannel(data, 0);
     this.buffers.set(rec.id, buf);
     this.userRecs.set(rec.id, rec);
-    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false, synth: rec.synth || null, root: rec.root || undefined });
+    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', group: rec.group || '', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false, synth: rec.synth || null, root: rec.root || undefined });
   }
 
   // Im Browser berechneter Werks-Klang (Synth), nicht gespeichert, bei jedem Start neu.
@@ -134,9 +134,9 @@ export class Catalog {
   }
 
   // Speichert ein eigenes Sample (mono Float32) und gibt die ID zurück.
-  async addUser(name, data, sr, tags = 'eigene', cat = 'user', synth = null, root = undefined) {
+  async addUser(name, data, sr, tags = 'eigene', cat = 'user', synth = null, root = undefined, group = '') {
     const id = 'u' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36);
-    const rec = { id, name, sr, data, tags, cat, synth, root };
+    const rec = { id, name, sr, data, tags, cat, synth, root, group };
     this.addUserRecord(rec);
     const stored = await dbPut(rec);
     return { id, stored };

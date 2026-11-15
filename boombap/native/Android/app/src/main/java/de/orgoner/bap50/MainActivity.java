@@ -122,8 +122,13 @@ public final class MainActivity extends Activity {
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE);
                 if (intent.getType() == null || intent.getType().isEmpty()) {
                     boolean audio = false;
-                    for (String t : params.getAcceptTypes()) if (t != null && (t.startsWith("audio") || t.startsWith(".wav") || t.startsWith(".mp3"))) audio = true;
-                    intent.setType(audio ? "audio/*" : "*/*");
+                    boolean zip = false;
+                    for (String t : params.getAcceptTypes()) {
+                        if (t == null) continue;
+                        if (t.contains("zip")) zip = true;
+                        if (t.startsWith("audio") || t.startsWith(".wav") || t.startsWith(".mp3")) audio = true;
+                    }
+                    intent.setType(audio && !zip ? "audio/*" : "*/*");
                 }
                 try {
                     startActivityForResult(intent, PICK_FILE);

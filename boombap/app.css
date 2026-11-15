@@ -468,3 +468,13 @@ body.dropping::after {
 .sk:active { filter: brightness(.82); }
 @media (max-width: 640px) { .sk.outer { display: none; } .synth-kb { height: 64px; } }
 .k-val { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---------- Pack-Import ---------- */
+.opts { display: grid; gap: 8px; margin: 6px 0 10px; }
+.chk { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; color: var(--text); cursor: pointer; }
+.chk input { margin-top: 2px; accent-color: var(--amber); width: 16px; height: 16px; flex: 0 0 auto; }
+.seg.banks button { min-width: 24px; padding: 7px 6px; }
+@media (max-width: 640px) {
+  .seg.banks { flex-wrap: nowrap; display: flex; width: 100%; }
+  .seg.banks button { min-width: 0; padding: 7px 0; flex: 1 1 0; font-size: 11.5px; }
+}
