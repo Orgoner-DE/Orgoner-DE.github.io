@@ -41,7 +41,7 @@ button, select, input { font: inherit; color: inherit; }
 @keyframes glitch { 0%, 94%, 100% { transform: none; } 95% { transform: translate(-3px, 1px) skewX(-4deg); } 97% { transform: translate(3px, -1px); } }
 @media (prefers-reduced-motion: reduce) { .gwrap, .intro-fade { animation: none !important; } }
 #splash .sub { color: #a7ada6; font: 600 12px/1.7 "Courier New", Courier, monospace; text-transform: uppercase; letter-spacing: .08em; }
-#splash .start { font-size: 19px; padding: 13px 40px; margin: 16px 0 10px; background: #0b0c0b; color: #9cff00; border: 2px solid #9cff00; border-radius: 2px; font-family: "Courier New", Courier, monospace; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; box-shadow: 5px 5px 0 #000, 5px 5px 0 2px #9cff00; transform: rotate(-1.5deg); }
+#splash .start { font-size: 19px; padding: 13px 40px; margin: 16px 0 10px; background: linear-gradient(180deg, #2a2e33, #0b0c0d 52%, #1c1f23); color: #e9eef3; border: 2px solid #9cff00; border-radius: 2px; font-family: "Courier New", Courier, monospace; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; box-shadow: 5px 5px 0 #000, 5px 5px 0 2px #9cff00; transform: rotate(-1.5deg); }
 #splash .start:active { transform: rotate(-1.5deg) translate(3px, 3px); box-shadow: 2px 2px 0 #000, 2px 2px 0 2px #9cff00; }
 #splash .hint { color: #6f756e; font: 11px/1.5 "Courier New", Courier, monospace; }
 #splash a { color: var(--acc); }
@@ -102,7 +102,7 @@ body.nobrowser #app { grid-template-rows: auto auto minmax(0, 1fr) auto 0 auto; 
 #top::-webkit-scrollbar { display: none; }
 #top .logo { display: flex; flex-direction: column; line-height: .95; flex: none; }
 #top .logo span { font: 700 9px/1 "Courier New", Courier, monospace; letter-spacing: .3em; color: #b9c0c8; }
-#top .logo b { font-size: 15px; font-weight: 900; letter-spacing: .12em; background: linear-gradient(90deg, #efff7a, #9cff00 55%, #29c46a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+#top .logo b { font-size: 15px; font-weight: 900; letter-spacing: .12em; background: linear-gradient(180deg, #ffffff 0%, #dfe5eb 40%, #59616c 52%, #c9d0d8 75%, #ffffff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
 #top .clock { display: flex; align-items: center; gap: 4px; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 2px 6px; }
 #top .clock .lbl { font-size: 9px; color: var(--dim); letter-spacing: .1em; }
 #top .clock .cbpm { font-size: 16px; min-width: 56px; text-align: center; font-variant-numeric: tabular-nums; }
@@ -382,17 +382,19 @@ body.inapp a[href$='.apk'], body.inapp .apkline { display: none; }
         .gt { font-family: Impact, "Arial Black", "Helvetica Neue", Arial, sans-serif; font-weight: 900; font-size: 150px; letter-spacing: -2px; paint-order: stroke; stroke-linejoin: round; }
         .gt.big { font-size: 215px; letter-spacing: 2px; }
         .gt.ex { fill: #050605; stroke: #050605; stroke-width: 30px; }
-        .gt.ex2 { fill: #1d3a10; stroke: #1d3a10; stroke-width: 30px; }
+        .gt.ex2 { fill: #24520f; stroke: #24520f; stroke-width: 30px; }
         .gt.ol { fill: #000; stroke: #000; stroke-width: 30px; }
         .gt.wl { fill: #e9ece8; stroke: #e9ece8; stroke-width: 12px; }
+        .gt.wl.acid { fill: #9cff00; stroke: #9cff00; }
         .gt.fa { fill: url(#gA); } .gt.fb { fill: url(#gB); }
         .sten { font-family: "Courier New", Courier, monospace; font-weight: 700; font-size: 34px; letter-spacing: 14px; fill: #e9ece8; }
       </style>
       <defs>
-        <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".48" stop-color="#b9c0c8"/><stop offset=".52" stop-color="#5d6570"/><stop offset="1" stop-color="#d9dee3"/></linearGradient>
-        <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#efff7a"/><stop offset=".5" stop-color="#9cff00"/><stop offset="1" stop-color="#29c46a"/></linearGradient>
+        <linearGradient id="gA" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#e3e9ef"/><stop offset=".46" stop-color="#9aa4b0"/><stop offset=".5" stop-color="#2e343c"/><stop offset=".55" stop-color="#5f6874"/><stop offset=".78" stop-color="#cfd6de"/><stop offset=".92" stop-color="#ffffff"/><stop offset="1" stop-color="#aab3bd"/></linearGradient>
+        <linearGradient id="gB" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff"/><stop offset=".3" stop-color="#e3e9ef"/><stop offset=".46" stop-color="#9aa4b0"/><stop offset=".5" stop-color="#2e343c"/><stop offset=".55" stop-color="#5f6874"/><stop offset=".78" stop-color="#cfd6de"/><stop offset=".92" stop-color="#ffffff"/><stop offset="1" stop-color="#aab3bd"/></linearGradient>
         <filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="13"/><feDisplacementMap in="SourceGraphic" scale="8"/></filter>
         <filter id="worn" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="3" seed="4" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -18 12.2" result="holes"/><feComposite in="SourceGraphic" in2="holes" operator="out"/></filter>
+        <filter id="chrome" x="-5%" y="-10%" width="110%" height="120%"><feGaussianBlur in="SourceAlpha" stdDeviation="3.5" result="b"/><feSpecularLighting in="b" surfaceScale="7" specularConstant="1.3" specularExponent="30" lighting-color="#ffffff" result="sp"><feDistantLight azimuth="235" elevation="42"/></feSpecularLighting><feComposite in="sp" in2="SourceAlpha" operator="in" result="sp2"/><feComposite in="SourceGraphic" in2="sp2" operator="arithmetic" k1="0" k2="1" k3=".85" k4="0"/></filter>
         <filter id="haze" x="-20%" y="-40%" width="140%" height="180%"><feGaussianBlur stdDeviation="30"/></filter>
         <filter id="spk" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="1.3" numOctaves="1" seed="9" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 .6  0 0 0 0 1  0 0 0 0 0  0 0 0 -10 6.6"/><feComposite operator="in" in2="SourceGraphic"/></filter>
       </defs>
@@ -407,17 +409,18 @@ body.inapp a[href$='.apk'], body.inapp .apkline { display: none; }
         <text x="530" y="177" text-anchor="middle" rotate="-7 5 -4 7 -3 4" class="gt ex">1312er</text>
         <text x="520" y="168" text-anchor="middle" rotate="-7 5 -4 7 -3 4" class="gt ol">1312er</text>
         <text x="520" y="168" text-anchor="middle" rotate="-7 5 -4 7 -3 4" class="gt wl">1312er</text>
-        <g filter="url(#worn)"><text x="520" y="168" text-anchor="middle" rotate="-7 5 -4 7 -3 4" class="gt fa">1312er</text></g>
+        <g filter="url(#chrome)"><text x="520" y="168" text-anchor="middle" rotate="-7 5 -4 7 -3 4" class="gt fa">1312er</text></g>
       </g>
       <g class="gw g2" filter="url(#rough)" transform="rotate(-3 500 330) skewX(-8)">
         <text x="526" y="390" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big ex">BRETT</text>
         <text x="518" y="384" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big ex2">BRETT</text>
         <text x="510" y="378" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big ex2">BRETT</text>
         <text x="500" y="370" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big ol">BRETT</text>
-        <text x="500" y="370" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big wl">BRETT</text>
-        <g filter="url(#worn)"><text x="500" y="370" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big fb">BRETT</text></g>
-        <path d="M842 250 q70 -40 96 -120 l-26 4 l46 -44 l12 62 l-20 -14 q-30 92 -108 126 z" fill="#9cff00" stroke="#000" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
+        <text x="500" y="370" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big wl acid">BRETT</text>
+        <g filter="url(#chrome)"><text x="500" y="370" text-anchor="middle" rotate="-5 6 -3 5 -6" class="gt big fb">BRETT</text></g>
+        <path d="M842 250 q70 -40 96 -120 l-26 4 l46 -44 l12 62 l-20 -14 q-30 92 -108 126 z" fill="url(#gA)" stroke="#000" stroke-width="10" stroke-linejoin="round" paint-order="stroke"/>
       </g>
+      <g fill="#fff"><path d="M300 92l5 17 17 5-17 5-5 17-5-17-17-5 17-5z"/><path d="M640 250l7 24 24 7-24 7-7 24-7-24-24-7 24-7z"/><path d="M215 268l4 13 13 4-13 4-4 13-4-13-13-4 13-4z"/></g>
       <g class="gsparks" stroke="#e9ece8" stroke-width="6" stroke-linecap="square">
         <path d="M120 60l26 26M146 60l-26 26"/><path d="M880 380l20 20M900 380l-20 20"/><path d="M90 330l16 16M106 330l-16 16" stroke="#9cff00"/>
       </g>
