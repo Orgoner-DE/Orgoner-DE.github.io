@@ -26,7 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-/** DJ DECK PRO 4 – native Android-Hülle. Die Web-App liegt in den APK-Assets und wird über
+/** 1312er Brett – native Android-Hülle. Die Web-App liegt in den APK-Assets und wird über
  *  https://appassets.androidplatform.net geladen (sicherer Kontext für AudioWorklet und IndexedDB). */
 public final class MainActivity extends Activity {
     private static final int PICK_FILE = 2001;
@@ -141,8 +141,8 @@ public final class MainActivity extends Activity {
     /** Speichern von Aufnahmen/Exporten über den Android-Speicherdialog (Base64-Blöcke aus JS). */
     private final class ExportBridge {
         @JavascriptInterface public void beginExport(String name, String mime) {
-            String n = name == null ? "DJ-DECK-PRO-Export" : name.replaceAll("[^A-Za-z0-9._-]", "_");
-            if (n.isEmpty()) n = "DJ-DECK-PRO-Export";
+            String n = name == null ? "1312er-Brett-Export" : name.replaceAll("[^A-Za-z0-9._-]", "_");
+            if (n.isEmpty()) n = "1312er-Brett-Export";
             if (n.length() > 120) n = n.substring(0, 120);
             final String fn = n;
             final String type = mime != null && mime.matches("[a-zA-Z0-9.+_-]+/[a-zA-Z0-9.+_-]+") ? mime : "application/octet-stream";

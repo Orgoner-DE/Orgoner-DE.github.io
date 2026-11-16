@@ -1,4 +1,4 @@
-name: Build DJ DECK PRO 4 (Android APK)
+name: Build 1312er Brett (Android APK)
 on:
   push:
     branches: [main, ccr-2a31763f-1oek8m]
@@ -35,17 +35,17 @@ jobs:
         run: gradle -p dj4/android --no-daemon :app:assembleRelease
       - uses: actions/upload-artifact@v4
         with:
-          name: DJ-DECK-PRO-4-Android-APK
+          name: 1312er-Brett-Android-APK
           path: dj4/android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
       - name: Publish APK next to index.html
         run: |
-          cp dj4/android/app/build/outputs/apk/release/app-release.apk dj4/DJ-DECK-PRO-4.apk
+          cp dj4/android/app/build/outputs/apk/release/app-release.apk dj4/1312er-Brett.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add dj4/DJ-DECK-PRO-4.apk
+          git add dj4/1312er-Brett.apk
           if ! git diff --cached --quiet; then
-            git commit -m "Publish DJ DECK PRO 4 Android APK [skip ci]"
+            git commit -m "Publish 1312er Brett Android APK [skip ci]"
             git pull --rebase origin "$GITHUB_REF_NAME" || true
             git push origin HEAD:"$GITHUB_REF_NAME"
           fi
