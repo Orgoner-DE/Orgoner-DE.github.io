@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#0b0d11">
+<meta name="description" content="DJ DECK PRO 4 – 4-Deck-DJ-Software im Browser: Sync, Keylock, Hotcues, Loops, FX, Mixer, Recording, MIDI. Für Handy, Tablet und PC.">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DJ DECK PRO">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<title>DJ DECK PRO 4</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body class="view-decks d4">
+<div id="splash">
+  <div class="card">
+    <img src="icon.svg" alt="" width="84" height="84">
+    <h1>DJ DECK <span>PRO 4</span></h1>
+    <p class="sub">4 Track-Decks · Sync & Master-Clock · Keylock & Key-Shift · 8 Hotcues · Loops & Roll · Flux · 4 FX-Units · 4-Kanal-Mixer · Cue/Kopfhörer · Mix-Recorder · MIDI-Learn</p>
+    <button id="startBtn" class="b start">▶ Starten</button>
+    <p id="splashErr" class="err"></p>
+    <p class="hint">Deine Musik bleibt auf deinem Gerät (lokale Bibliothek). Unterstützt MP3, WAV, AAC/M4A, FLAC, OGG/Opus.</p>
+    <p id="iosHint" class="hint" hidden>iPhone/iPad: Stummschalter aus, für Vollbild in Safari „Teilen → Zum Home-Bildschirm“.</p>
+    <p class="hint"><a href="download/DJ-DECK-PRO-4.apk">Android-APK</a> · <button id="installBtn" class="b xs" hidden>App installieren</button></p>
+  </div>
+</div>
+<div id="app">
+  <header id="top"></header>
+  <section id="fx"></section>
+  <main id="stage"></main>
+  <div id="minimix"></div>
+  <section id="browser"></section>
+  <nav id="navbar"><div id="navpair"></div><div id="nav"></div></nav>
+</div>
+<script src="controls.js"></script>
+<script src="engine.js"></script>
+<script src="fx.js"></script>
+<script src="analysis.js"></script>
+<script src="library.js"></script>
+<script src="deck.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

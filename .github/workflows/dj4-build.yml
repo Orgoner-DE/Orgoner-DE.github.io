@@ -1,0 +1,56 @@
+name: Build DJ DECK PRO 4 (Android APK)
+on:
+  push:
+    branches: [main, ccr-2a31763f-1oek8m]
+    paths: ["dj4/**", ".github/workflows/dj4-build.yml", "!dj4/download/**"]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: dj4-apk-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install Android SDK packages
+        run: |
+          SDKMGR="$(find "$ANDROID_HOME/cmdline-tools" -type f -name sdkmanager | head -1)"
+          test -x "$SDKMGR"
+          yes | "$SDKMGR" --licenses >/dev/null || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0"
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+      - name: Copy web app into APK assets
+        run: |
+          D=dj4/native/Android/app/src/main/assets
+          mkdir -p "$D/icons"
+          cp dj4/{index.html,app.css,controls.js,engine.js,fx.js,analysis.js,library.js,deck.js,app.js,manifest.webmanifest,icon.svg} "$D/"
+          cp dj4/icons/*.png "$D/icons/"
+      - name: Build APK
+        run: gradle -p dj4/native/Android --no-daemon :app:assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DJ-DECK-PRO-4-Android-APK
+          path: dj4/native/Android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+      - name: Publish APK next to the web app
+        run: |
+          mkdir -p dj4/download
+          cp dj4/native/Android/app/build/outputs/apk/debug/app-debug.apk dj4/download/DJ-DECK-PRO-4.apk
+          SHA=$(sha256sum dj4/download/DJ-DECK-PRO-4.apk | cut -d' ' -f1); BYTES=$(stat -c%s dj4/download/DJ-DECK-PRO-4.apk)
+          printf '{\n  "name": "DJ DECK PRO 4",\n  "version": "4.0.0",\n  "versionCode": 400,\n  "file": "DJ-DECK-PRO-4.apk",\n  "bytes": %s,\n  "sha256": "%s"\n}\n' "$BYTES" "$SHA" > dj4/download/info.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add dj4/download/DJ-DECK-PRO-4.apk dj4/download/info.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Publish DJ DECK PRO 4 Android APK [skip ci]"
+            git pull --rebase origin "$GITHUB_REF_NAME" || true
+            git push origin HEAD:"$GITHUB_REF_NAME"
+          fi
