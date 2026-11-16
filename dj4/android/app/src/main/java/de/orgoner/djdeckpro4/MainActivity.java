@@ -22,6 +22,7 @@ import android.webkit.WebView;
 import android.widget.Toast;
 import androidx.webkit.WebViewAssetLoader;
 import androidx.webkit.WebViewClientCompat;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -43,6 +44,7 @@ public final class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(10, 12, 16));
         final WebViewAssetLoader loader = new WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this)).build();
+        WebView.setWebContentsDebuggingEnabled(false);
         web = new WebView(this);
         web.setBackgroundColor(Color.rgb(10, 12, 16));
         setContentView(web);
@@ -55,17 +57,26 @@ public final class MainActivity extends Activity {
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(true);
         s.setSupportMultipleWindows(false);
+        s.setJavaScriptCanOpenWindowsAutomatically(false);
+        s.setGeolocationEnabled(false);
+        s.setSaveFormData(false);
         s.setUserAgentString(s.getUserAgentString() + " DJDeckPro4App/4.0.0");
         web.addJavascriptInterface(new ExportBridge(), "AndroidExport");
         midiBridge = new MidiBridge(this, web);
         web.addJavascriptInterface(midiBridge, "AndroidMidi");
         web.setWebViewClient(new WebViewClientCompat() {
-            @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) { return loader.shouldInterceptRequest(r.getUrl()); }
+            @Override public WebResourceResponse shouldInterceptRequest(WebView v, WebResourceRequest r) {
+                Uri u = r.getUrl(); String sc = u.getScheme();
+                if ("blob".equals(sc) || "data".equals(sc)) return null; // lokal erzeugte Worklets/Worker
+                if ("https".equals(sc) && "appassets.androidplatform.net".equals(u.getHost()) && u.getPath() != null && u.getPath().startsWith("/assets/")) {
+                    WebResourceResponse res = loader.shouldInterceptRequest(u);
+                    if (res != null) return res;
+                }
+                return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", null, new ByteArrayInputStream(new byte[0]));
+            }
             @Override public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
-                Uri u = r.getUrl();
-                if ("appassets.androidplatform.net".equals(u.getHost())) return false;
-                if ("https".equals(u.getScheme())) { try { startActivity(new Intent(Intent.ACTION_VIEW, u)); } catch (Exception ignored) {} }
-                return true;
+                Uri u = r.getUrl(); // Navigation nur innerhalb der App
+                return !("https".equals(u.getScheme()) && "appassets.androidplatform.net".equals(u.getHost()));
             }
         });
         web.setWebChromeClient(new WebChromeClient() {
@@ -83,8 +94,7 @@ public final class MainActivity extends Activity {
                 catch (Exception e) { chooser.onReceiveValue(null); chooser = null; return false; }
             }
         });
-        if (state != null) web.restoreState(state);
-        else web.loadUrl("https://appassets.androidplatform.net/assets/index.html");
+        web.loadUrl("https://appassets.androidplatform.net/assets/index.html");
     }
 
     private void immersive() {
@@ -96,7 +106,6 @@ public final class MainActivity extends Activity {
         }
     }
     @Override public void onWindowFocusChanged(boolean f) { super.onWindowFocusChanged(f); if (f) immersive(); }
-    @Override protected void onSaveInstanceState(Bundle b) { super.onSaveInstanceState(b); if (web != null) web.saveState(b); }
 
     private synchronized void closeOutput() {
         receiving = false; waitingForSave = false;
