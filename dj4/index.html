@@ -39,7 +39,14 @@ button, select, input { font: inherit; color: inherit; }
 .intro-fade { animation: fadeUp .5s ease-out 1.05s both; }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 @keyframes glitch { 0%, 94%, 100% { transform: none; } 95% { transform: translate(-3px, 1px) skewX(-4deg); } 97% { transform: translate(3px, -1px); } }
-@media (prefers-reduced-motion: reduce) { .gwrap, .intro-fade { animation: none !important; } }
+.label5 { position: fixed; right: calc(14px + var(--safe-r)); bottom: calc(12px + var(--safe-b)); z-index: 2; text-align: right; line-height: 1.15; pointer-events: none;
+  font-family: "Courier New", Courier, monospace; text-transform: uppercase; padding: 6px 10px; border: 1px solid #9cff0066; border-radius: 2px; background: #0b0c0dcc;
+  box-shadow: 0 0 14px #9cff0033, inset 0 0 10px #9cff001a; animation: neon 2.6s steps(1) infinite, fadeUp .5s ease-out 1.3s both; }
+.label5 b { display: block; font-size: 13px; font-weight: 800; letter-spacing: .14em; background: linear-gradient(180deg, #fff 0%, #dfe5eb 40%, #59616c 52%, #c9d0d8 75%, #fff 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.label5 span { display: block; font-size: 9px; font-weight: 700; letter-spacing: .24em; color: #9cff00; text-shadow: 0 0 6px #9cff00aa; }
+@keyframes neon { 0%, 100% { opacity: 1; } 8% { opacity: .25; } 10% { opacity: 1; } 12% { opacity: .35; } 14%, 60% { opacity: 1; } 62% { opacity: .15; } 66% { opacity: 1; } }
+@media (max-width: 420px) { .label5 b { font-size: 11px; } .label5 span { font-size: 8px; letter-spacing: .16em; } }
+@media (prefers-reduced-motion: reduce) { .gwrap, .intro-fade, .label5 { animation: none !important; } }
 #splash .sub { color: #a7ada6; font: 600 12px/1.7 "Courier New", Courier, monospace; text-transform: uppercase; letter-spacing: .08em; }
 #splash .start { font-size: 19px; padding: 13px 40px; margin: 16px 0 10px; background: linear-gradient(180deg, #2a2e33, #0b0c0d 52%, #1c1f23); color: #e9eef3; border: 2px solid #9cff00; border-radius: 2px; font-family: "Courier New", Courier, monospace; font-weight: 800; letter-spacing: .22em; text-transform: uppercase; box-shadow: 5px 5px 0 #000, 5px 5px 0 2px #9cff00; transform: rotate(-1.5deg); }
 #splash .start:active { transform: rotate(-1.5deg) translate(3px, 3px); box-shadow: 2px 2px 0 #000, 2px 2px 0 2px #9cff00; }
@@ -433,6 +440,7 @@ body.inapp a[href$='.apk'], body.inapp .apkline { display: none; }
     <p id="iosHint" class="hint" hidden>iPhone/iPad: Stummschalter aus, für Vollbild in Safari „Teilen → Zum Home-Bildschirm“.</p>
     <p class="hint"><button id="installBtn" class="b xs" hidden>App installieren</button></p>
   </div>
+  <div class="label5" aria-label="5zehner Bagagge Independent Major Label"><b>5zehner Bagagge</b><span>Independent Major Label</span></div>
 </div>
 <div id="app">
   <header id="top"></header>
