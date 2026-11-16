@@ -416,7 +416,7 @@ table.keys td:first-child { white-space: nowrap; padding-right: 12px; }
   .menubar { padding: 4px 8px; }
   .mb-btn { padding: 7px 9px; font-size: 12.5px; }
   .botnav {
-    display: grid; grid-template-columns: repeat(9, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
     background: rgba(18, 17, 21, .97); border-top: 1px solid var(--line); padding: 4px 4px calc(4px + env(safe-area-inset-bottom));
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
   }
@@ -651,4 +651,59 @@ body.dropping::after {
 .tab { padding: 8px 7px; }
 .tab-g { font-size: 0; padding: 0; width: 1px; height: 22px; background: var(--line); border: 0; margin: 0 4px; }
 .tab-g:first-child { display: none; }
-@media (max-width: 1400px) and (min-width: 981px) { .tab .ti { display: none; } .tab { padding: 7px 7px; font-size: 11.5px; letter-spacing: .03em; } }
+@media (min-width: 981px) { .tab .ti { display: none; } .tab { padding: 7px 7px; font-size: 11.5px; letter-spacing: .03em; } .tab[aria-selected='true'] .ti { display: inline; } }
+
+/* ---------- 2.0: Step-Chance ---------- */
+.cell.ch i { outline: 2px dashed rgba(255,255,255,.75); outline-offset: -3px; }
+.cell.ch::after { content: attr(data-ch); position: absolute; bottom: 1px; left: 3px; font-family: var(--mono); font-size: 8px; color: #fff; text-shadow: 0 0 2px #000; z-index: 1; }
+.cell.t.ch::after { content: attr(data-t) ' ' attr(data-ch); top: 1px; bottom: auto; color: #000; text-shadow: none; }
+
+/* ---------- Beat-Generator ---------- */
+.gen { min-width: min(560px, 86vw); }
+.gen-grid { display: grid; grid-template-columns: 100px minmax(0, 1fr); gap: 8px 10px; align-items: center; margin-bottom: 10px; }
+.gen-grid .lab, .gen .lab { font-size: 11px; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; }
+.gen-grid .seg, .gen-grid select { justify-self: start; }
+.gen-chk { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.chk { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; cursor: pointer; }
+.chk input { width: 16px; height: 16px; accent-color: var(--amber); }
+.gen-roll { font-size: 15px; padding: 12px 18px; }
+.gen-info { font-size: 12.5px; min-height: 1.4em; }
+@media (max-width: 640px) { .gen-grid { grid-template-columns: minmax(0, 1fr); gap: 4px; } .gen-grid .lab { margin-top: 6px; } }
+
+/* ---------- Kits ---------- */
+.kit-card { margin-bottom: 12px; }
+.kit-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto auto; gap: 8px; align-items: center; padding: 7px 0; border-top: 1px solid var(--line); }
+.kit-n { min-width: 0; display: flex; flex-direction: column; }
+.kit-n b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kit-n small { color: var(--muted); font-size: 11.5px; }
+@media (max-width: 520px) { .kit-row { grid-template-columns: minmax(0, 1fr) auto auto; } .kit-row .kit-n { grid-column: 1 / -1; } }
+
+/* ---------- Vocals ---------- */
+.vx-card .row { align-items: center; }
+.vx-rec { background: #3a1512; border-color: #6b241d; color: #ffb4a8; font-weight: 800; padding: 11px 16px; }
+.vx-rec.on { background: var(--red); color: #fff; animation: vxRec 1s steps(1) infinite; }
+@keyframes vxRec { 50% { background: #a8321f; } }
+.vx-meter { flex: 1 1 140px; max-width: 320px; height: 12px; border-radius: 6px; background: #111013; border: 1px solid #000; overflow: hidden; }
+.vx-meter i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #3fbf6a 0%, #3fbf6a 70%, #f6d55c 85%, #e5533d 100%); background-size: 320px 100%; transition: width .05s; }
+.vx-meter.hot { box-shadow: 0 0 0 1px var(--red); }
+.vx-time { font-family: var(--mono); color: var(--red); min-width: 92px; font-size: 13px; }
+.vx-list { display: grid; gap: 10px; margin-top: 12px; }
+.vx-row { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; display: grid; gap: 8px; }
+.vx-row.arm { border-color: #6b241d; box-shadow: inset 3px 0 0 var(--red); }
+.vx-row.rec { box-shadow: inset 3px 0 0 var(--red), 0 0 0 1px var(--red); }
+.vx-head { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.vx-n { font-family: var(--mono); color: var(--amber); width: 22px; text-align: center; }
+.vx-name { flex: 1 1 140px; max-width: 220px; }
+.vx-head .gms { width: 30px; height: 30px; }
+.vx-lane { position: relative; height: 58px; border-radius: 6px; background: #111013; border: 1px solid #000; overflow: hidden; }
+.vx-cv { display: block; width: 100%; height: 100%; touch-action: none; cursor: ew-resize; }
+.vx-ph { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--amber); box-shadow: 0 0 6px var(--amber); pointer-events: none; display: none; }
+.vx-ctl { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.vx-ctl .knobs { gap: 6px; }
+.vx-at { font-family: var(--mono); font-size: 11.5px; color: var(--muted); min-width: 62px; text-align: center; }
+.btn.sm { padding: 6px 9px; font-size: 12px; }
+
+/* ---------- Mobile „Mehr“ ---------- */
+.more-grid { display: grid; gap: 8px; min-width: min(420px, 84vw); }
+@media (max-width: 640px) { .gen, .more-grid { min-width: 0; } }
+@media (max-width: 1300px) and (min-width: 981px) { .tab { padding: 7px 5px; font-size: 11px; letter-spacing: .02em; } .tab[aria-selected='true'] .ti { display: none; } .tab-g { margin: 0 2px; } }

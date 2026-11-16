@@ -350,6 +350,7 @@ export class Apc {
     }
     if (row === 1) {
       if (col < 4) A.setLength([16, 32, 48, 64][col]);
+      else if (col === 4 && this.shift) A.generate();
       else if (col === 5 && !this.shift) A.toast('APC: Shift halten + Taste = Spuren der Bank leeren');
       else [() => A.double(), () => A.clearBank(), () => A.undo(), () => A.redo()][col - 4]();
       return;
@@ -436,11 +437,11 @@ export class Apc {
       set(4, 'IJKLMNOP'.split('').map((c) => 'BK ' + c));
       set(3, ['NR AUS', 'NR 8', 'NR 16', 'NR 16T', 'NR 32', 'FULL', 'TUNE', 'VELO']);
       set(2, ['PLAY', 'STOP', 'REC', 'METRO', 'SONG', 'TAP', 'BPM −', 'BPM +']);
-      set(1, ['1 TAKT', '2 TAKTE', '3 TAKTE', '4 TAKTE', '× 2', '⇧ LEER', 'UNDO', 'REDO']);
+      set(1, ['1 TAKT', '2 TAKTE', '3 TAKTE', '4 TAKTE', '×2 ⇧🎲', '⇧ LEER', 'UNDO', 'REDO']);
       set(0, ['SW 50', 'SW 54', 'SW 58', 'SW 62', 'SW 66', 'VINYL', 'CRUNCH', 'PANIK']);
       track = Array.from({ length: 8 }, (_, k) => 'MUTE ' + L(laneBase + k));
       help = [['Reihe 1–2', 'Pattern 1–16 (weiß = aktuell, grün = belegt, blinkend = folgt)'], ['Reihe 3–4', 'Bank A–P'], ['Reihe 5', 'Note Repeat, Full Level, 16 Levels'],
-        ['Reihe 6', 'Transport: Play, Stop, Rec, Metronom, Song, Tap, BPM ∓'], ['Reihe 7', 'Länge, verdoppeln, Bank-Spuren leeren (mit Shift), Undo, Redo'], ['Reihe 8', 'Swing, Vinyl, Crunch, Panik (alle Stimmen aus)']];
+        ['Reihe 6', 'Transport: Play, Stop, Rec, Metronom, Song, Tap, BPM ∓'], ['Reihe 7', 'Länge, verdoppeln (mit Shift: Beat würfeln), Bank-Spuren leeren (mit Shift), Undo, Redo'], ['Reihe 8', 'Swing, Vinyl, Crunch, Panik (alle Stimmen aus)']];
     }
     const fx = { vol: 'Level', pan: 'Pan', sa: 'Hall', sb: 'Delay', fq: 'Filter', tune: 'Tune' }[this.fader];
     help.push(['Fader 1–8 / 9', `${fx} der Pads ${L(laneBase)}–${L(laneBase + 7)} · Fader 9 = Master`], ['Scene 1–5', 'Modus: PADS, SEQ, LANE, MIX, MENÜ'], ['Scene 7 / 8', 'Play/Stop · Aufnahme']);

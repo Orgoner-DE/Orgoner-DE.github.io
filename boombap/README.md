@@ -1,6 +1,17 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **1.7.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **2.0.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+
+## Neu in 2.0
+
+- **Vocals (VOCALS / VOX):** Rap und Gesang über den Beat aufnehmen. 4 Spuren mit Takes, Vorzähler (aus/1/2 Takte), Mithören mit Effekten (Kopfhörer), Latenz-Ausgleich. Nach dem Vorzähler startet der Beat von vorn und die Stimme wird sample-genau mitgeschnitten (AudioWorklet). Je Spur Level, Pan, Press (Kompressor), Hall, Delay, Telefon-Sound, Mute/Solo, Take-Auswahl, Take per Ziehen oder in 10-ms-Schritten verschieben, Take an Chop schicken. Takes landen in der Sample-Bank (Gruppe „Vocals“) und im Komplett-Backup.
+- **Mixdown Beat + Vocals:** Pattern oder Song läuft weiter, bis alle Takes zu Ende sind. Vocals auch in Pattern-/Song-WAV (abschaltbar) und als eigene Stems.
+- **Beat-Generator 🎲:** würfelt aus den Klängen einer Bank ein Pattern im Stil Boom Bap, Dark Hill, Phonk oder Lo-Fi (Dichte, 1/2/4 Takte, optional Tempo & Swing des Stils). Regeln je Stil: Kick-Figuren, Backbeat, Ghost-Notes, Hat-Akzente und -Rolls, Fills, Bass folgt der Kick, Akkordfolgen bzw. Cowbell-Melodie. Am APC: MENÜ-Modus, Shift + „×2“.
+- **Step-Chance:** jeder Step spielt mit 100/75/50/25 % Wahrscheinlichkeit (gestrichelt im Raster) – auch im Export, dort reproduzierbar.
+- **Feel (Humanize):** leichte Zeit- und Anschlagsschwankungen für weniger starre Beats.
+- **Pump (Sidechain):** jede Kick duckt Bass und Keys; Stärke im Mixer (Master → Pump), je Pad im Pad-Editor umschaltbar. Wirkt auch in Export und Stems.
+- **Kit-Speicher:** Bank als Kit sichern (alle 16 Pads mit Einstellungen) und in jedes Projekt/jede Bank laden; Kits wandern im Komplett-Backup mit.
+- **Handy:** untere Leiste PADS · SEQ · EDIT · MIX · BANK · VOX · SONG · MEHR (Synth, Chop, Import/Export, APC, Beat-Generator, Hilfe).
 
 ## Funktionen
 
@@ -13,7 +24,7 @@ Version **1.7.0** · läuft unter `/boombap/` dieser Seite, als PWA installierba
 - **Sample-Pack-Import (ZIP oder Ordner):** heruntergeladene Packs werden lokal entpackt (ZIP gespeichert/Deflate, ohne ZIP64), Loops sauber gechoppt (Drum-Loops an Transienten, Melodie-Loops im Beat-Raster aus der BPM-Angabe im Dateinamen, Schnitte an Nulldurchgängen), One-Shots getrimmt und alles nachgemastert (DC/Rumpeln weg, Stille trimmen, Fades, Lautheit je Kategorie, Soft-Limiter bis −1 dBFS). Danach sortiert auf die Import-Bänke M–P gelegt (Kick, Snare, Clap, Hats, Becken, Perc, 808/Bass, Melodie, FX) und im Sample-Browser als eigenes Pack filterbar. Nichts wird hochgeladen; fremde Packs werden nicht mit der App verteilt.
 - **Step-Rolls:** 2, 3 oder 4 Schläge pro Step (lange drücken / Rechtsklick auf den Step → Roll).
 - **Eigene Samples hinzufügen:** „+ Samples hinzufügen“ (SAMPLES, Menü Datei) lädt mehrere Audiodateien auf einmal (WAV, MP3, AIFF, FLAC, OGG, M4A, bis 60 s), erkennt die Kategorie am Dateinamen (kick, snare, hat, 808 …) und legt sie auf Wunsch der Reihe nach auf Pads. Dateien lassen sich auch ins Fenster oder direkt auf ein Pad ziehen; „+ Datei“ im Pad-Editor lädt direkt aufs Pad. Eigene Samples bleiben im Browser gespeichert (IndexedDB) und sind umbenennbar.
-- **Handy/Tablet:** feste Navigationsleiste unten (PADS, SEQ, PAD, MIX, SOUNDS, CHOP, SONG, PROJEKT); jede Ansicht bekommt den ganzen Bildschirm.
+- **Handy/Tablet:** feste Navigationsleiste unten (siehe oben); jede Ansicht bekommt den ganzen Bildschirm.
 
 - **250 echte Samples** (CC0) in vier Packs, Quellen und Bearbeitung je Datei in `samples/LICENSE.md`:
   - **Core 50**: akustisches Jazz-Kit mit Close-, Overhead-, Raum- und Lofi-Mikrofon, Claps, Hand-Percussion, Klavier, Vibraphon, Tenorsaxophon.
@@ -65,7 +76,7 @@ Das Skript lädt die Originale von raw.githubusercontent.com, braucht `ffmpeg` u
 
 - Eigene Gestaltung; keine Herstellerlogos oder Firmware. Gerätenamen wie APC mini mk2 nennen nur die Kompatibilität, keine Verbindung zum Hersteller. Der Workflow (Pads, 16 Levels, Note Repeat, Swing, 12-Bit-Wandler) ist an klassische Pad-Sampler angelehnt.
 - Getestet in Chromium (Desktop und Telefon-Emulation). Die APC-Ansteuerung wurde mit simulierten MIDI-Ports getestet, nicht am echten Gerät; in Safari/iOS wurde diese Version nicht abgenommen; Web MIDI fehlt in Safari.
-- Chop/Mikrofon: Nur Material verwenden, an dem du die Rechte hast.
+- Chop/Mikrofon/Vocals: Nur Material verwenden, an dem du die Rechte hast. Bei Vocal-Aufnahmen Kopfhörer benutzen; liegt die Stimme hörbar versetzt, den Versatz-Regler anpassen (Bluetooth-Kopfhörer haben hohe Latenz).
 
 ## Android-App
 

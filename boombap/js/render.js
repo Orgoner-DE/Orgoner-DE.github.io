@@ -2,7 +2,8 @@
 import { Engine } from './engine.js';
 import { patternEvents } from './seq.js';
 
-export async function renderPatterns(project, catalog, order, { tail = 1.5, sampleRate = 44100, dust = true } = {}) {
+// vox: Vocal-Spuren mitrendern (ab Start, bis zum Ende des Exports)
+export async function renderPatterns(project, catalog, order, { tail = 1.5, sampleRate = 44100, dust = true, vox = false, seed = 1 } = {}) {
   let total = 0;
   for (const i of order) total += patternEvents(project, i, 0).dur;
   const len = Math.ceil((total + tail + 0.05) * sampleRate);
@@ -12,13 +13,25 @@ export async function renderPatterns(project, catalog, order, { tail = 1.5, samp
   const eng = new Engine(ctx, catalog, proj);
   await eng.init();
   let t = 0.02;
-  for (const i of order) {
-    const { events, dur } = patternEvents(proj, i, t);
+  order.forEach((i, n) => {
+    const { events, dur } = patternEvents(proj, i, t, seed + n);
     for (const e of events) eng.trigger(e.pad, e.v, e.t, e.tune);
     t += dur;
-  }
+  });
+  if (vox && proj.vox) eng.playVox(0.02);
   const buf = await ctx.startRendering();
   return { buffer: buf, musicalLength: total, offset: 0.02 };
+}
+
+// Ende der letzten Vocal-Aufnahme (Sekunden ab Start), 0 = keine
+export function voxEnd(project, catalog) {
+  let end = 0;
+  for (const tr of (project.vox && project.vox.tracks) || []) {
+    if (!tr.take || tr.mute) continue;
+    const m = catalog.meta(tr.take);
+    if (m) end = Math.max(end, tr.at + m.dur);
+  }
+  return end;
 }
 
 export function songOrder(project) {

@@ -7,8 +7,10 @@ import { Sequencer, REPEAT_DIVS, stepDur } from './seq.js';
 import {
   NUM_PATTERNS, NUM_PADS, NUM_BANKS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
   saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads, presetKitIds, padForSample,
+  listKits, saveKit, deleteKit, saveKits,
 } from './state.js';
-import { renderPatterns, songOrder, encodeWav, toMono } from './render.js';
+import { renderPatterns, songOrder, encodeWav, toMono, voxEnd } from './render.js';
+import { generate, pickRoles, STYLES } from './gen.js';
 import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
 import { readZip, makeZip } from './zip.js';
 import { detectBpm, decideLoop, isMelodic, chopLoop, master, classifyDrum } from './chopper.js';
@@ -53,7 +55,7 @@ function toast(msg) {
 const autosave = debounce(() => { saveAuto(P()); }, 600);
 function dirty() { autosave(); updateLCD(); }
 
-function snapshot() { return JSON.stringify({ pads: P().pads, patterns: P().patterns, song: P().song, master: P().master, bpm: P().bpm, swing: P().swing }); }
+function snapshot() { return JSON.stringify({ pads: P().pads, patterns: P().patterns, song: P().song, master: P().master, bpm: P().bpm, swing: P().swing, vox: P().vox, feel: P().feel }); }
 function pushUndo(force = false) {
   const now = performance.now();
   if (!force && now - S.lastUndo < 700) return;
@@ -66,6 +68,8 @@ function restore(snap) {
   if (o.master) P().master = o.master;
   if (o.bpm) P().bpm = o.bpm;
   if (o.swing) P().swing = o.swing;
+  if (o.vox) P().vox = o.vox;
+  if (o.feel != null) P().feel = o.feel;
   S.engine.setProject(P());
   renderAll();
   dirty();
@@ -119,7 +123,8 @@ async function boot() {
     S.engine = await new Engine(S.ctx, S.catalog, S.project).init();
     S.seq = new Sequencer(S.engine, P, {
       onPattern: () => { S.needPtnRefresh = true; },
-      onStop: () => { S.playStep = -1; S.needPhRefresh = true; },
+      onStop: () => { S.playStep = -1; S.needPhRefresh = true; S.engine.stopVox(); if (S.voxRec) voxRecStop(); S.needVoxRefresh = true; },
+      onStart: (t0) => { S.playT0 = t0; S.engine.playVox(t0, S.voxRec ? S.voxRec.track : -1); S.needVoxRefresh = true; },
       onRecord: (pad, step) => { S.recFlash = { pad, step }; S.needGridRefresh = true; autosave(); },
       onSongPos: (i) => { S.songPos = i; S.needSongRefresh = true; },
     });
@@ -143,7 +148,7 @@ async function boot() {
 }
 
 // ---------- Aufbau ----------
-const TABS = [['seq', 'SEQUENCER', '▤', 'Spielen'], ['pad', 'PAD-EDIT', '◉'], ['mix', 'MIXER', '☰'], ['song', 'SONG', '≡'], ['samples', 'SAMPLE-BANK', '▥', 'Klänge'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['file', 'IMPORT / EXPORT', '⇅', 'Daten'], ['apc', 'APC', '▦']];
+const TABS = [['seq', 'SEQUENCER', '▤', 'Spielen'], ['pad', 'PAD-EDIT', '◉'], ['mix', 'MIXER', '☰'], ['song', 'SONG', '≡'], ['vox', 'VOCALS', '🎤'], ['samples', 'SAMPLE-BANK', '▥', 'Klänge'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['file', 'IMPORT / EXPORT', '⇅', 'Daten'], ['apc', 'APC', '▦']];
 const BUILDERS = {};
 
 function buildUI() {
@@ -555,12 +560,12 @@ function copyPatternToFree() {
   toast('Kein freies Pattern mehr');
 }
 
-function clearPattern() { pushUndo(true); const ptn = curPtn(); ptn.steps = {}; ptn.tune = {}; ptn.roll = {}; refreshSeq(); dirty(); toast('Pattern geleert'); }
+function clearPattern() { pushUndo(true); const ptn = curPtn(); ptn.steps = {}; ptn.tune = {}; ptn.roll = {}; ptn.prob = {}; refreshSeq(); dirty(); toast('Pattern geleert'); }
 
 function clearBankLanes() {
   pushUndo(true);
   const ptn = curPtn();
-  for (let i = 0; i < 16; i++) { delete ptn.steps[bankBase() + i]; delete ptn.tune[bankBase() + i]; if (ptn.roll) delete ptn.roll[bankBase() + i]; }
+  for (let i = 0; i < 16; i++) { delete ptn.steps[bankBase() + i]; delete ptn.tune[bankBase() + i]; if (ptn.roll) delete ptn.roll[bankBase() + i]; if (ptn.prob) delete ptn.prob[bankBase() + i]; }
   refreshSeq();
   dirty();
   toast(`Spuren von Bank ${BANK_NAMES[P().cur.bank]} geleert`);
@@ -570,7 +575,7 @@ function doublePattern() {
   const ptn = curPtn();
   if (ptn.len * 2 > MAX_STEPS) { toast('Maximal 4 Takte'); return; }
   pushUndo(true);
-  for (const lane of [ptn.steps, ptn.tune, ptn.roll || {}]) for (const arr of Object.values(lane)) for (let i = 0; i < ptn.len; i++) arr[i + ptn.len] = arr[i];
+  for (const lane of [ptn.steps, ptn.tune, ptn.roll || {}, ptn.prob || {}]) for (const arr of Object.values(lane)) for (let i = 0; i < ptn.len; i++) arr[i + ptn.len] = arr[i];
   ptn.len *= 2;
   refreshSeq();
   dirty();
@@ -586,6 +591,7 @@ function nudgeLane(d) {
   rot(arr);
   if (ptn.tune[i]) rot(ptn.tune[i]);
   if (ptn.roll && ptn.roll[i]) rot(ptn.roll[i]);
+  if (ptn.prob && ptn.prob[i]) rot(ptn.prob[i]);
   refreshSeq();
   dirty();
 }
@@ -681,8 +687,10 @@ async function runBusy(label, fn) {
   busyNow = false;
 }
 
+function voxInExport() { const v = P().vox; return !!(v && v.inExport && v.tracks.some((t) => t.take && !t.mute)); }
+
 async function exportWav(order, label) {
-  const { buffer } = await renderPatterns(P(), S.catalog, order, { tail: 2, sampleRate: 44100 });
+  const { buffer } = await renderPatterns(P(), S.catalog, order, { tail: 2, sampleRate: 44100, vox: voxInExport() });
   const ok = await download(`${(P().name || 'bap50').replace(/[^\w\- ]+/g, '')}-${label}.wav`, encodeWav(buffer));
   if (ok !== false) toast('WAV exportiert');
 }
@@ -693,6 +701,23 @@ function exportWavPattern(times = 1) {
 }
 
 function exportWavSong() { return runBusy('Song rendern', () => exportWav(songOrder(P()), 'Song')); }
+
+// Beat (Pattern oder Song, wiederholt) so lange, bis alle Vocals zu Ende sind
+function exportMixdown() {
+  return runBusy('Mixdown rendern', async () => {
+    const p = P();
+    const end = voxEnd(p, S.catalog);
+    if (!end) { toast('Noch keine Vocals aufgenommen'); return; }
+    const base = p.song.on && p.song.list.length ? songOrder(p) : [p.cur.ptn];
+    const sd = 60 / p.bpm / 4;
+    const order = [];
+    let dur = 0;
+    while (dur < end - 0.01 && order.length < 512) for (const i of base) { order.push(i); dur += p.patterns[i].len * sd; }
+    const { buffer } = await renderPatterns(p, S.catalog, order, { tail: 2, sampleRate: 44100, vox: true });
+    const ok = await download(`${safeName(p.name || 'BAP-50')} - Mixdown.wav`, encodeWav(buffer));
+    if (ok !== false) toast(`Mixdown exportiert (${Math.floor(dur / 60)}:${String(Math.round(dur % 60)).padStart(2, '0')} min)`);
+  });
+}
 
 function resampleToPad() {
   return runBusy('Resample', async () => {
@@ -736,7 +761,10 @@ function showHelp() {
     ['?', 'Diese Hilfe'],
     ['Datei ins Fenster ziehen', 'Samples hinzufügen; direkt auf ein Pad ziehen = auf dieses Pad legen'],
     ['Alt', 'Menüleiste mit der Tastatur: Fokus auf „Datei“, dann Pfeiltasten'],
-    ['APC mini mk2: Scene 1–5', 'Modus PADS · SEQ · LANE · MIX · MENÜ (Belegung im Bereich CONTROLLER)'],
+    ['🎲 Beat-Generator', 'Sequencer oder Menü Pattern: Beat im Stil Boom Bap, Dark Hill, Phonk oder Lo-Fi würfeln'],
+    ['VOCALS', 'Spur wählen → Aufnahme: nach dem Vorzähler läuft der Beat, die Stimme wird synchron mitgeschnitten'],
+    ['Step lange drücken', 'Velocity, Tune, Roll und Chance (Step spielt nur manchmal)'],
+    ['APC mini mk2: Scene 1–5', 'Modus PADS · SEQ · LANE · MIX · MENÜ (Belegung im Bereich APC)'],
     ['APC: Scene 6 / 7 / 8', 'Seite blättern · Play/Stop · Aufnahme'],
     ['APC: Shift + Pad', 'Pad/Spur wählen, ohne zu spielen'],
   ];
@@ -775,6 +803,7 @@ function menus() {
       mi('Pattern als WAV', () => exportWavPattern(1)),
       mi('Pattern ×4 als WAV', () => exportWavPattern(4)),
       mi('Song als WAV', exportWavSong),
+      mi('Mixdown Beat + Vocals (WAV)', exportMixdown, { disabled: !voxEnd(p, S.catalog) }),
       mi('Stems (Spuren einzeln, ZIP)', exportStems),
       mi(`Bank ${BANK_NAMES[p.cur.bank]} als ZIP`, () => exportBankZip(p.cur.bank)),
       mi('Eigene Samples als ZIP', () => exportUserSamplesZip()),
@@ -805,6 +834,8 @@ function menus() {
       '-',
       ...LENGTHS.map((l) => mi(`Länge ${l / 16} Takt${l > 16 ? 'e' : ''}`, () => setPatternLength(l), { checked: ptnLen === l, radio: true })),
       '-',
+      mi('🎲 Beat-Generator …', showGenerator),
+      '-',
       mi('Verdoppeln', doublePattern, { disabled: ptnLen * 2 > MAX_STEPS }),
       mi('In nächstes freies Pattern kopieren', copyPatternToFree),
       mi('Spur des Pads einen Step früher', () => nudgeLane(-1)),
@@ -820,6 +851,9 @@ function menus() {
     ] },
     { id: 'pads', label: 'Pads', items: [
       ...Array.from(BANK_NAMES, (n, i) => mi(`Bank ${n} · ${bankTitle(i)}`, () => setBank(i), { checked: p.cur.bank === i, radio: true, kbd: i === 0 ? ', .' : '' })),
+      '-',
+      mi(`Bank ${BANK_NAMES[p.cur.bank]} als Kit speichern …`, () => saveBankAsKit()),
+      mi('Kits verwalten …', () => { S.bankTab = 'banks'; showView('samples'); }),
       '-',
       mi('Full Level (volle Anschlagstärke)', () => setFull(!S.fullLevel), { checked: S.fullLevel }),
       '-',
@@ -872,18 +906,34 @@ function menus() {
 }
 
 // ---------- Untere Navigation (Handy/Tablet) ----------
-const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'EDIT', '◉'], ['mix', 'MIX', '☰'], ['samples', 'BANK', '▥'], ['synth', 'SYNTH', '∿'], ['chop', 'CHOP', '✂'], ['song', 'SONG', '≡'], ['file', 'DATEI', '⇅']];
-const VIEW_NAMES = { synth: 'Synth-Sampler', seq: 'Sequencer', pad: 'Pad-Editor', mix: 'Mixer', samples: 'Sample-Bank', chop: 'Chop & Aufnahme', song: 'Song', file: 'Import / Export', apc: 'Controller (APC mini mk2)' };
+const NAV = [['pads', 'PADS', '▦'], ['seq', 'SEQ', '▤'], ['pad', 'EDIT', '◉'], ['mix', 'MIX', '☰'], ['samples', 'BANK', '▥'], ['vox', 'VOX', '🎤'], ['song', 'SONG', '≡'], ['more', 'MEHR', '⋯']];
+const MORE = [['synth', 'Synth-Sampler', '∿', 'Eigene Klänge bauen'], ['chop', 'Chop & Aufnahme', '✂', 'Loops zerschneiden'], ['file', 'Import / Export', '⇅', 'Projekte, WAV, Backups'], ['apc', 'APC mini mk2', '▦', 'Controller & LEDs']];
+const VIEW_NAMES = { synth: 'Synth-Sampler', seq: 'Sequencer', pad: 'Pad-Editor', mix: 'Mixer', samples: 'Sample-Bank', chop: 'Chop & Aufnahme', song: 'Song', file: 'Import / Export', apc: 'Controller (APC mini mk2)', vox: 'Vocals (Aufnahme über den Beat)' };
 
 function buildBottomNav() {
   const nav = $('#botnav');
   nav.replaceChildren();
   for (const [id, label, icon] of NAV) {
     const b = el('button', { type: 'button', class: 'bn', 'data-id': id, 'aria-label': label }, el('span', { class: 'bn-i', 'aria-hidden': 'true', text: icon }), el('span', { class: 'bn-l', text: label }));
-    b.addEventListener('click', () => { if (id === 'pads') showPadsScreen(); else showView(id); });
+    b.addEventListener('click', () => { if (id === 'pads') showPadsScreen(); else if (id === 'more') showMoreSheet(); else showView(id); });
     nav.append(b);
   }
   updateBottomNav();
+}
+
+function showMoreSheet() {
+  let close = null;
+  const grid = el('div', { class: 'more-grid' }, ...MORE.map(([id, label, icon, desc]) => {
+    const b = el('button', { type: 'button', class: 'io-item' + (S.view === id && S.mScreen !== 'pads' ? ' pri' : '') },
+      el('span', { class: 'io-i', 'aria-hidden': 'true', text: icon }), el('span', { class: 'io-t' }, el('b', { text: label }), el('small', { text: desc })));
+    b.addEventListener('click', () => { close(); showView(id); });
+    return b;
+  }));
+  const help = el('button', { type: 'button', class: 'btn', text: '? Hilfe' });
+  help.addEventListener('click', () => { close(); showHelp(); });
+  const gen = el('button', { type: 'button', class: 'btn pri', text: '🎲 Beat-Generator' });
+  gen.addEventListener('click', () => { close(); showGenerator(); });
+  close = openDialog('Mehr', el('div', {}, grid, el('div', { class: 'row', style: { marginTop: '10px', marginBottom: '0' } }, gen, help)));
 }
 
 function showPadsScreen() {
@@ -897,7 +947,8 @@ function updateBottomNav() {
   deck.classList.toggle('m-pads', S.mScreen === 'pads');
   deck.classList.toggle('m-work', S.mScreen !== 'pads');
   for (const b of $('#botnav').children) {
-    const on = b.dataset.id === (S.mScreen === 'pads' ? 'pads' : S.view);
+    const cur = S.mScreen === 'pads' ? 'pads' : MORE.some(([k]) => k === S.view) ? 'more' : S.view;
+    const on = b.dataset.id === cur;
     b.classList.toggle('on', on);
     b.setAttribute('aria-current', on ? 'page' : 'false');
   }
@@ -940,7 +991,11 @@ BUILDERS.seq = (root) => {
   pageSeg.append(followBtn);
   const velSeg = seg([[127, 'FF'], [100, 'F'], [72, 'MP'], [42, 'GH']], S.paint, (v) => { S.paint = v; });
   velSeg.prepend(el('span', { class: 'lab', text: 'VELO' }));
-  root.append(el('div', { class: 'row' }, lenSeg, pageSeg, velSeg));
+  const genB = el('button', { class: 'btn pri', type: 'button', text: '🎲 Beat-Generator', title: 'Pattern im Stil Boom Bap, Dark Hill, Phonk oder Lo-Fi erzeugen' });
+  genB.addEventListener('click', showGenerator);
+  const feel = knob({ label: 'Feel', min: 0, max: 1, step: 0.01, def: 0, value: p.feel || 0, small: true, format: (v) => (v < 0.01 ? 'exakt' : Math.round(v * 100) + '%'), onInput: (v) => { p.feel = v; dirty(); } });
+  feel.node.title = 'Humanize: leichte Zeit- und Anschlagsschwankungen beim Abspielen und Export';
+  root.append(el('div', { class: 'row' }, lenSeg, pageSeg, velSeg, genB, feel.node));
 
   const groove = el('select', { class: 'sel-in', 'aria-label': 'Groove laden' },
     el('option', { value: '', text: 'Groove laden …' }),
@@ -1005,7 +1060,7 @@ BUILDERS.seq = (root) => {
     grid.append(row);
   }
   root.append(head, grid);
-  root.append(el('p', { class: 'hint', html: 'Tippen = Step an/aus (Wischen malt). <b>Lange drücken</b> oder Rechtsklick = Velocity &amp; Tonhöhe des Steps. Pattern-Wechsel während Play erfolgt am Pattern-Ende.' }));
+  root.append(el('p', { class: 'hint', html: 'Tippen = Step an/aus (Wischen malt). <b>Lange drücken</b> oder Rechtsklick = Velocity, Tonhöhe, Roll und <b>Chance</b> des Steps (gestrichelt = spielt nur manchmal). <b>Feel</b> macht das Timing menschlicher. Pattern-Wechsel während Play erfolgt am Pattern-Ende.' }));
   bindGrid(grid);
   refreshGrid();
   refreshPlayhead();
@@ -1046,6 +1101,9 @@ function refreshGrid() {
       if (v && t) c.dataset.t = fmtSigned(t); else delete c.dataset.t;
       c.classList.toggle('rl', !!(v && rl > 1));
       if (v && rl > 1) c.dataset.r2 = '×' + rl; else delete c.dataset.r2;
+      const ch = st < ptn.len && ptn.prob && ptn.prob[r.i] ? ptn.prob[r.i][st] : 0;
+      c.classList.toggle('ch', !!(v && ch > 0 && ch < 100));
+      if (v && ch > 0 && ch < 100) c.dataset.ch = ch + '%'; else delete c.dataset.ch;
       c.setAttribute('aria-label', `${padLabel(r.i)} Step ${st + 1}${v ? ' Velocity ' + v : ' aus'}`);
     });
   }
@@ -1080,6 +1138,14 @@ function setStep(padIdx, st, v, tune = null, roll = null) {
     if (!ptn.roll[padIdx]) ptn.roll[padIdx] = new Array(MAX_STEPS).fill(0);
     ptn.roll[padIdx][st] = roll > 1 ? roll : 0;
   } else if (!v && ptn.roll[padIdx]) ptn.roll[padIdx][st] = 0;
+  if (!v && ptn.prob && ptn.prob[padIdx]) ptn.prob[padIdx][st] = 0;
+}
+
+function setChance(padIdx, st, c) {
+  const ptn = curPtn();
+  if (!ptn.prob) ptn.prob = {};
+  if (!ptn.prob[padIdx]) ptn.prob[padIdx] = new Array(MAX_STEPS).fill(0);
+  ptn.prob[padIdx][st] = c >= 100 ? 0 : c;
 }
 
 let gridDrag = null;
@@ -1162,6 +1228,9 @@ function openStepPop(padIdx, st, anchor) {
     label: 'Roll', min: 1, max: 4, step: 1, def: 1, value: rl0, format: (x) => (x <= 1 ? 'aus' : '×' + x),
     onInput: (x) => { setStep(padIdx, st, ptn.steps[padIdx][st] || S.paint, null, x); refreshGrid(); dirty(); },
   });
+  const ch0 = (ptn.prob && ptn.prob[padIdx] && ptn.prob[padIdx][st]) || 100;
+  const chSeg = seg([[100, '100'], [75, '75'], [50, '50'], [25, '25']], ch0, (c) => { pushUndo(); if (!(ptn.steps[padIdx] && ptn.steps[padIdx][st])) setStep(padIdx, st, S.paint); setChance(padIdx, st, c); refreshGrid(); dirty(); }, 'teal');
+  chSeg.prepend(el('span', { class: 'lab', text: 'CHANCE %' }));
   const del = el('button', { class: 'btn warn', type: 'button', text: 'Löschen' });
   del.addEventListener('click', () => { setStep(padIdx, st, 0); refreshGrid(); refreshPtnBtns(); dirty(); closePop(); });
   const ok = el('button', { class: 'btn pri', type: 'button', text: 'OK' });
@@ -1169,13 +1238,14 @@ function openStepPop(padIdx, st, anchor) {
   popEl = el('div', { class: 'pop', role: 'dialog', 'aria-label': 'Step bearbeiten' },
     el('div', { class: 'label', text: `${padLabel(padIdx)} · Step ${st + 1}` }),
     el('div', { class: 'knobs', style: { margin: '8px 0' } }, kv.node, kt.node, kr.node),
+    el('div', { class: 'row', style: { marginBottom: '8px' } }, chSeg),
     el('div', { class: 'row', style: { justifyContent: 'space-between', marginBottom: '0' } }, del, ok));
   document.body.append(popEl);
   const r = anchor.getBoundingClientRect();
   const w = 260;
   popEl.style.left = clamp(r.left + r.width / 2 - w / 2, 8, window.innerWidth - w - 8) + 'px';
-  const top = r.bottom + 8 + 190 > window.innerHeight ? r.top - 190 : r.bottom + 8;
-  popEl.style.top = clamp(top, 8, window.innerHeight - 200) + 'px';
+  const top = r.bottom + 8 + 240 > window.innerHeight ? r.top - 240 : r.bottom + 8;
+  popEl.style.top = clamp(top, 8, window.innerHeight - 250) + 'px';
   setTimeout(() => {
     const away = (e) => { if (popEl && !popEl.contains(e.target)) { closePop(); window.removeEventListener('pointerdown', away, true); } };
     window.addEventListener('pointerdown', away, true);
@@ -1242,6 +1312,15 @@ BUILDERS.pad = (root) => {
   revB.addEventListener('click', () => { pad.rev = !pad.rev; revB.classList.toggle('on', pad.rev); revB.setAttribute('aria-pressed', String(pad.rev)); S.engine.trigger(i, 110); drawPadWave(); dirty(); });
   const monoB = el('button', { type: 'button', class: pad.mono ? 'on' : '', text: 'MONO', title: 'Neuer Schlag stoppt den vorigen', 'aria-pressed': String(pad.mono) });
   monoB.addEventListener('click', () => { pad.mono = !pad.mono; monoB.classList.toggle('on', pad.mono); monoB.setAttribute('aria-pressed', String(pad.mono)); dirty(); });
+  const scOn = () => S.engine.scOf(i);
+  const scB = el('button', { type: 'button', class: scOn() ? 'on' : '', text: 'PUMP', title: 'Sidechain: wird bei jeder Kick kurz leiser (Stärke: Mixer → Master → Pump)', 'aria-pressed': String(scOn()) });
+  scB.addEventListener('click', () => {
+    pad.sc = !scOn();
+    scB.classList.toggle('on', pad.sc);
+    scB.setAttribute('aria-pressed', String(pad.sc));
+    dirty();
+    if (pad.sc && !(P().master.pump > 0.001)) toast('Stärke im Mixer einstellen: Master → Pump');
+  });
 
   const kFq = knob({ label: 'Cutoff', min: 0, max: 1, step: 0.005, def: pad.ft === 'hp' ? 0 : 1, value: pad.fq, format: (v) => { const hz = 20 * Math.pow(2, v * 9.97); return hz >= 1000 ? (hz / 1000).toFixed(1) + 'k' : Math.round(hz) + ''; }, onInput: upd('fq') });
   const kRes = knob({ label: 'Reso', min: 0, max: 1, step: 0.01, def: 0, value: pad.res, format: (v) => Math.round(v * 100) + '%', onInput: upd('res') });
@@ -1265,7 +1344,7 @@ BUILDERS.pad = (root) => {
   chSeg.prepend(el('span', { class: 'lab', text: 'CHOKE' }));
 
   root.append(el('div', { class: 'edit-grid' },
-    card('Klang', el('div', { class: 'knobs' }, kTune.node, kFine.node, kAtt.node, kDec.node), el('div', { class: 'row', style: { marginTop: '8px', marginBottom: '0' } }, el('div', { class: 'seg' }, revB, monoB))),
+    card('Klang', el('div', { class: 'knobs' }, kTune.node, kFine.node, kAtt.node, kDec.node), el('div', { class: 'row', style: { marginTop: '8px', marginBottom: '0' } }, el('div', { class: 'seg' }, revB, monoB, scB))),
     card('Ausschnitt', el('div', { class: 'knobs' }, kStart.node, kEnd.node), el('p', { class: 'hint', text: 'Start/Ende auch direkt in der Wellenform ziehen.' })),
     card('Filter / Drive', el('div', { class: 'row' }, ftSeg), el('div', { class: 'knobs' }, kFq.node, kRes.node, kDrv.node)),
     card('Mix', el('div', { class: 'knobs' }, kVol.node, kPan.node, kSa.node, kSb.node)),
@@ -1412,8 +1491,8 @@ BUILDERS.mix = (root) => {
   root.append(el('div', { class: 'fxgrid' },
     el('div', { class: 'card' }, el('h3', { text: 'Master-Bus' }), el('div', { class: 'knobs' },
       mk('comp', 'Comp', null, 0.35).node, mk('tape', 'Tape', null, 0.25).node, mk('warm', 'Warm', null, 0.12).node,
-      mk('dust', 'Vinyl', null, 0.25).node, mk('crunch', 'Crunch', null, 0).node),
-    el('p', { class: 'hint', text: 'Vinyl-Rauschen läuft nur während der Wiedergabe. Crunch reduziert Bits und Rate auf dem ganzen Mix.' })),
+      mk('dust', 'Vinyl', null, 0.25).node, mk('crunch', 'Crunch', null, 0).node, mk('pump', 'Pump', null, 0).node),
+    el('p', { class: 'hint', text: 'Vinyl-Rauschen läuft nur während der Wiedergabe. Crunch reduziert Bits und Rate auf dem ganzen Mix. Pump = Sidechain: jede Kick duckt Bass und Keys (pro Pad im Pad-Editor umschaltbar).' })),
     el('div', { class: 'card' }, el('h3', { text: 'Send A · Hall' }), el('div', { class: 'knobs' }, mk('revSize', 'Größe', null, 0.35).node, mk('revRet', 'Return', null, 0.6).node)),
     el('div', { class: 'card' }, el('h3', { text: 'Send B · Delay' }), el('div', { class: 'row' }, dlySeg), el('div', { class: 'knobs' },
       knob({ label: 'Feedback', min: 0, max: 0.9, step: 0.01, def: 0.35, value: m.dlyFb, format: (v) => Math.round(v * 100) + '%', onInput: (v) => { m.dlyFb = v; S.engine.applyMaster(); dirty(); } }).node,
@@ -1459,7 +1538,7 @@ BUILDERS.samples = (root) => {
     el('div', { class: 'row', style: { marginBottom: '0' } }, addB, packB, recB, expB)));
   const tabs = seg([['sounds', 'KLÄNGE'], ['banks', 'BÄNKE A–P']], S.bankTab || 'sounds', (v) => { S.bankTab = v; renderView('samples'); }, 'teal sb-tabs');
   root.append(el('div', { class: 'row' }, tabs));
-  if ((S.bankTab || 'sounds') === 'banks') buildBankCards(root); else buildSoundBrowser(root);
+  if ((S.bankTab || 'sounds') === 'banks') { buildKitCard(root); buildBankCards(root); } else buildSoundBrowser(root);
 };
 
 function buildSoundBrowser(root) {
@@ -1656,6 +1735,8 @@ function buildBankCards(root) {
     open.addEventListener('click', () => { setBank(b); S.bankTab = 'sounds'; renderView('samples'); });
     const exp = el('button', { type: 'button', class: 'btn', text: '⇩ ZIP', disabled: !used });
     exp.addEventListener('click', () => exportBankZip(b));
+    const kitB = el('button', { type: 'button', class: 'btn', text: '★ Kit', title: 'Als Kit speichern', disabled: !used });
+    kitB.addEventListener('click', () => saveBankAsKit(b));
     const clr = el('button', { type: 'button', class: 'btn warn', text: 'Leeren', disabled: !used });
     clr.addEventListener('click', () => {
       if (!confirm(`Bank ${BANK_NAMES[b]} leeren? (Rückgängig möglich)`)) return;
@@ -1677,7 +1758,7 @@ function buildBankCards(root) {
     }
     grid.append(el('div', { class: 'bk-card' + (b === P().cur.bank ? ' cur' : '') },
       el('div', { class: 'bk-head' }, el('b', { class: 'bk-l', text: BANK_NAMES[b] }), el('div', { class: 'bk-t' }, el('div', { text: bankTitle(b) }), el('small', { text: `${used}/16 Pads belegt` })), ren),
-      cells, el('div', { class: 'row', style: { marginBottom: '0', marginTop: '8px' } }, open, exp, clr)));
+      cells, el('div', { class: 'row', style: { marginBottom: '0', marginTop: '8px' } }, open, kitB, exp, clr)));
   }
   root.append(el('p', { class: 'hint', text: 'Pad antippen = auswählen und hören, doppelt tippen = im Pad-Editor öffnen. Bänke M–P füllt der Pack-Import automatisch.' }), grid);
 }
@@ -2527,6 +2608,7 @@ async function exportFullBackup() {
   return runBusy('Backup erstellen', async () => {
     const { entries, manifest } = await userSampleEntries();
     entries.push({ name: 'project.json', data: JSON.stringify(P()) });
+    entries.push({ name: 'bap50-kits.json', data: JSON.stringify(listKits()) });
     entries.push({ name: 'bap50-samples.json', data: JSON.stringify(manifest, null, 1) });
     entries.push({ name: 'bap50-backup.json', data: JSON.stringify({ type: 'full', app: 'BAP-50', version: 1, created: new Date().toISOString(), project: P().name, count: manifest.length }) });
     await download(`${safeName(P().name || 'BAP-50')}.bap50.zip`, makeZip(entries));
@@ -2543,18 +2625,27 @@ async function exportStems() {
     if (!lanes.length) { toast('Pattern ist leer'); return; }
     const folder = safeName(`${p.name || 'BAP-50'} Stems P${pi + 1} ${p.bpm} BPM`);
     const entries = [];
+    // Alle Spuren laufen mit (stumm), damit Sidechain-Pump und Zufall in jedem Stem gleich sind
     for (const k of lanes) {
       const proj = clone(p);
-      const one = (lane) => (lane && lane[k] ? { [k]: lane[k] } : {});
-      proj.patterns[pi] = { len: ptn.len, steps: one(ptn.steps), tune: one(ptn.tune), roll: one(ptn.roll) };
+      proj.pads.forEach((pd, i) => { pd.solo = false; pd.mute = String(i) !== k; });
+      if (proj.vox) proj.vox.tracks.forEach((t) => { t.mute = true; });
       const { buffer } = await renderPatterns(proj, S.catalog, [pi], { tail: 1.5, sampleRate: 44100, dust: false });
       entries.push({ name: `${folder}/${padLabel(+k)} ${safeName(padTitle(+k))}.wav`, data: await wavBytes(buffer) });
     }
-    const { buffer } = await renderPatterns(p, S.catalog, [pi], { tail: 1.5, sampleRate: 44100, dust: false });
+    const vx = voxInExport() ? p.vox.tracks.map((t, k) => [t, k]).filter(([t]) => t.take && !t.mute) : [];
+    for (const [t, k] of vx) {
+      const proj = clone(p);
+      proj.pads.forEach((pd) => { pd.solo = false; pd.mute = true; });
+      proj.vox.tracks.forEach((x, j) => { x.solo = false; x.mute = j !== k; });
+      const { buffer } = await renderPatterns(proj, S.catalog, [pi], { tail: 1.5, sampleRate: 44100, dust: false, vox: true });
+      entries.push({ name: `${folder}/V${k + 1} ${safeName(t.name)}.wav`, data: await wavBytes(buffer) });
+    }
+    const { buffer } = await renderPatterns(p, S.catalog, [pi], { tail: 1.5, sampleRate: 44100, dust: false, vox: voxInExport() });
     entries.push({ name: `${folder}/00 Mix.wav`, data: await wavBytes(buffer) });
     entries.push({ name: `${folder}/LIESMICH.txt`, data: `Stems von Pattern ${pi + 1}, ${p.bpm} BPM, Swing ${p.swing} %. Jede Spur einzeln über die Master-Kette gerendert, alle Dateien gleich lang und bei 0 synchron.\n\n${licenseText()}` });
     await download(`${folder}.zip`, makeZip(entries));
-    toast(`${lanes.length} Stems + Mix exportiert`);
+    toast(`${lanes.length + vx.length} Stems + Mix exportiert`);
   });
 }
 
@@ -2611,6 +2702,15 @@ async function restoreBackup(name, entries) {
     } catch (_) { failed++; }
   }
   void byName;
+  const kEntry = find('bap50-kits.json');
+  if (kEntry) {
+    try {
+      const kits = JSON.parse(new TextDecoder().decode(await kEntry.data()));
+      const have = listKits();
+      const names = new Set(have.map((k) => k.name));
+      if (Array.isArray(kits)) saveKits([...have, ...kits.filter((k) => k && k.name && Array.isArray(k.pads) && !names.has(k.name))]);
+    } catch (_) { /* Kits optional */ }
+  }
   const proj = find('project.json');
   if (proj && confirm(`Backup „${name}“: ${restored} Samples eingelesen${existed ? `, ${existed} schon vorhanden` : ''}.\n\nAuch das Projekt aus dem Backup laden? (ersetzt das aktuelle, rückgängig möglich)`)) {
     loadProject(JSON.parse(new TextDecoder().decode(await proj.data())), 'Backup geladen: ' + name);
@@ -2677,6 +2777,7 @@ BUILDERS.file = (root) => {
     ioItem('♪', `Pattern ${p.cur.ptn + 1} als WAV`, '44,1 kHz · 16 Bit · Stereo · mit Ausklang', () => exportWavPattern(1), { pri: true }),
     ioItem('♫', `Pattern ${p.cur.ptn + 1} ×4 als WAV`, 'Viermal hintereinander, z. B. als Loop zum Rappen', () => exportWavPattern(4)),
     ioItem('≡', 'Song als WAV', 'Die Song-Liste komplett', exportWavSong),
+    ioItem('🎤', 'Mixdown Beat + Vocals', 'Beat läuft, bis alle Vocal-Takes zu Ende sind', exportMixdown, { disabled: !voxEnd(p, S.catalog) }),
     ioItem('▤', `Stems von Pattern ${p.cur.ptn + 1} (ZIP)`, 'Jede Spur als eigene WAV + Mix, synchron', exportStems),
     ioItem('▦', `Bank ${BANK_NAMES[b]} als ZIP`, `${bankTitle(b)} – 16 WAVs, wie auf den Pads geschnitten`, () => exportBankZip(b)),
     ioItem('📚', 'Eigene Samples als ZIP', `${own} Samples (Importe, Aufnahmen, Synth) – wieder importierbar`, () => exportUserSamplesZip(), { disabled: !own }),
@@ -2698,7 +2799,7 @@ BUILDERS.file = (root) => {
       ioItem('▦', 'APC mini mk2', 'LEDs, 5 Modi am Gerät, Fader – Controller-Ansicht öffnen', () => showView('apc'), { pri: !!(S.apc && S.apc.connected) }),
       el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, ab +16 die Pads ab B01 direkt (bis Note 127). MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System.' })),
     el('div', { class: 'card', id: 'about' }, el('h3', { text: 'Über BAP-50' }),
-      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && m.pack !== 'synth').length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-1.7.0.apk" style="color:var(--teal)">BAP-50-1.7.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos. Gerätenamen (z. B. APC mini mk2) stehen nur als Hinweis auf die Kompatibilität; keine Verbindung zum Hersteller.</p>` }))));
+      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && m.pack !== 'synth').length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-2.0.0.apk" style="color:var(--teal)">BAP-50-2.0.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos. Gerätenamen (z. B. APC mini mk2) stehen nur als Hinweis auf die Kompatibilität; keine Verbindung zum Hersteller.</p>` }))));
 };
 
 function loadProject(raw, msg) {
@@ -2711,6 +2812,466 @@ function loadProject(raw, msg) {
   renderAll();
   saveAuto(S.project);
   toast(msg);
+}
+
+// =====================================================================
+// BEAT-GENERATOR
+// =====================================================================
+const GEN = { style: 'boombap', density: 2, bars: 2, tempo: true, keep: false };
+function bankItems(b) {
+  const out = [];
+  for (let k = 0; k < 16; k++) {
+    const i = b * 16 + k;
+    const pad = P().pads[i];
+    if (!pad.s) continue;
+    const m = S.catalog.meta(pad.s);
+    out.push({ i, cat: m ? m.cat : 'user', name: `${m ? m.name : ''} ${m && m.tags ? m.tags : ''}` });
+  }
+  return out;
+}
+
+function runGenerator(play = true) {
+  const b = P().cur.bank;
+  const items = bankItems(b);
+  if (!items.some((x) => ['kick', 'snare', 'clap', 'hat'].includes(x.cat))) { toast(`Bank ${BANK_NAMES[b]} hat keine Drums – andere Bank wählen`); return null; }
+  pushUndo(true);
+  const g = generate(items, { style: GEN.style, density: GEN.density, bars: GEN.bars, seed: (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0 });
+  const ptn = curPtn();
+  if (GEN.keep) {
+    for (let k = 0; k < 16; k++) { const i = b * 16 + k; for (const lane of [ptn.steps, ptn.tune, ptn.roll || {}, ptn.prob || {}]) delete lane[i]; }
+  } else { ptn.steps = {}; ptn.tune = {}; ptn.roll = {}; ptn.prob = {}; }
+  if (!ptn.roll) ptn.roll = {};
+  ptn.len = g.len;
+  for (const [pad, l] of Object.entries(g.lanes)) {
+    ptn.steps[pad] = l.v.slice();
+    if (l.tune.some(Boolean)) ptn.tune[pad] = l.tune.slice();
+    if (l.roll.some((x) => x > 1)) ptn.roll[pad] = l.roll.slice();
+  }
+  if (GEN.tempo) { P().bpm = g.bpm; P().swing = g.swing; S.engine.applyDelayTime(); }
+  S.page = 0;
+  updateTransport();
+  updateLCD();
+  refreshSeq();
+  dirty();
+  if (play && !S.seq.playing) togglePlay(false);
+  return g;
+}
+
+function showGenerator() {
+  const body = el('div', { class: 'gen' });
+  const info = el('p', { class: 'muted gen-info' });
+  const ROLE_NAMES = { kick: 'Kick', snare: 'Snare', clap: 'Clap', hat: 'Hat', openHat: 'Open Hat', perc: 'Perc', bell: 'Bell', bass: 'Bass', keys: 'Keys' };
+  const roleText = (extra = '') => {
+    const R = pickRoles(bankItems(P().cur.bank));
+    const parts = Object.entries(ROLE_NAMES).filter(([k]) => R[k] != null).map(([k, l]) => `${l} ${padLabel(R[k])}`);
+    info.textContent = (parts.length ? 'Benutzt: ' + parts.join(' · ') : 'Diese Bank hat keine passenden Klänge.') + extra;
+  };
+  const bankSel = el('select', { class: 'sel-in', 'aria-label': 'Bank für den Beat' },
+    ...Array.from(BANK_NAMES, (n, i) => el('option', { value: String(i), text: `Bank ${n} · ${bankTitle(i)}`, selected: i === P().cur.bank })));
+  bankSel.addEventListener('change', () => { setBank(+bankSel.value); roleText(); });
+  const styleSeg = seg(Object.entries(STYLES).map(([k, v]) => [k, v.name.toUpperCase()]), GEN.style, (v) => { GEN.style = v; }, 'teal');
+  const densSeg = seg([[1, 'SPARSAM'], [2, 'NORMAL'], [3, 'VOLL']], GEN.density, (v) => { GEN.density = v; });
+  const barSeg = seg([[1, '1 TAKT'], [2, '2 TAKTE'], [4, '4 TAKTE']], GEN.bars, (v) => { GEN.bars = v; });
+  const chk = (label, key) => {
+    const c = el('input', { type: 'checkbox', checked: GEN[key] });
+    c.addEventListener('change', () => { GEN[key] = c.checked; });
+    return el('label', { class: 'chk' }, c, el('span', { text: label }));
+  };
+  const roll = el('button', { class: 'btn pri gen-roll', type: 'button', text: '🎲 Würfeln & abspielen' });
+  roll.addEventListener('click', () => {
+    const g = runGenerator(true);
+    if (g) roleText(` · ${g.bpm} BPM, Swing ${g.swing} % · Pattern ${P().cur.ptn + 1}`);
+  });
+  const stop = el('button', { class: 'btn', type: 'button', text: '■ Stop' });
+  stop.addEventListener('click', stopTransport);
+  body.append(
+    el('div', { class: 'gen-grid' },
+      el('span', { class: 'lab', text: 'Klänge aus' }), bankSel,
+      el('span', { class: 'lab', text: 'Stil' }), styleSeg,
+      el('span', { class: 'lab', text: 'Dichte' }), densSeg,
+      el('span', { class: 'lab', text: 'Länge' }), barSeg),
+    el('div', { class: 'gen-chk' }, chk('Tempo & Swing des Stils übernehmen', 'tempo'), chk('Andere Bänke im Pattern behalten', 'keep')),
+    el('div', { class: 'row', style: { marginTop: '10px' } }, roll, stop), info,
+    el('p', { class: 'hint', text: `Schreibt in Pattern ${P().cur.ptn + 1}. Jeder Wurf ist neu – gefällt er nicht: nochmal würfeln oder Strg+Z. Danach im Sequencer weiterbauen.` }));
+  roleText();
+  openDialog('Beat-Generator', body);
+}
+
+// =====================================================================
+// KIT-SPEICHER
+// =====================================================================
+function saveBankAsKit(b = P().cur.bank) {
+  const pads = P().pads.slice(b * 16, b * 16 + 16);
+  if (!pads.some((x) => x.s)) { toast('Bank ist leer'); return; }
+  const n = prompt(`Bank ${BANK_NAMES[b]} als Kit speichern – Name:`, bankTitle(b));
+  if (n == null || !n.trim()) return;
+  const name = n.trim().slice(0, 40);
+  if (listKits().some((k) => k.name === name) && !confirm(`Kit „${name}“ überschreiben?`)) return;
+  if (saveKit(name, pads.map((x) => ({ ...x, mute: false, solo: false })))) toast(`Kit „${name}“ gespeichert`);
+  else toast('Speichern nicht möglich (Browser-Speicher voll?)');
+  if (S.view === 'samples') renderView('samples');
+}
+
+function loadKitToBank(kit, b) {
+  pushUndo(true);
+  let missing = 0;
+  kit.pads.slice(0, 16).forEach((pd, k) => {
+    const i = b * 16 + k;
+    const pad = { ...defaultPad(null), ...pd, mute: false, solo: false };
+    if (pad.s && !S.catalog.meta(pad.s)) { missing++; pad.s = null; }
+    P().pads[i] = pad;
+    if (pad.s) { S.engine.strip(i); S.engine.updatePad(i); }
+  });
+  if (!P().bankNames) P().bankNames = {};
+  P().bankNames[b] = kit.name;
+  setBank(b);
+  updatePads();
+  dirty();
+  toast(`Kit „${kit.name}“ auf Bank ${BANK_NAMES[b]}${missing ? ` (${missing} Samples fehlen)` : ''}`);
+  if (S.view === 'samples') renderView('samples');
+}
+
+function buildKitCard(root) {
+  const kits = listKits();
+  const box = el('div', { class: 'card kit-card' }, el('h3', { text: `Gespeicherte Kits (${kits.length})` }));
+  const saveB = el('button', { class: 'btn pri', type: 'button', text: `★ Bank ${BANK_NAMES[P().cur.bank]} als Kit speichern` });
+  saveB.addEventListener('click', () => saveBankAsKit());
+  box.append(el('div', { class: 'row' }, saveB));
+  if (!kits.length) box.append(el('p', { class: 'muted', text: 'Noch keine Kits. Ein Kit merkt sich alle 16 Pads einer Bank mit Einstellungen und lässt sich in jedes Projekt und jede Bank laden.' }));
+  for (const kit of kits) {
+    const target = el('select', { class: 'sel-in', 'aria-label': 'Ziel-Bank für ' + kit.name },
+      ...Array.from(BANK_NAMES, (n, i) => el('option', { value: String(i), text: 'Bank ' + n, selected: i === P().cur.bank })));
+    const load = el('button', { class: 'btn', type: 'button', text: 'Laden' });
+    load.addEventListener('click', () => {
+      const b = +target.value;
+      const used = P().pads.slice(b * 16, b * 16 + 16).some((x) => x.s);
+      if (used && !confirm(`Bank ${BANK_NAMES[b]} ist belegt. Mit Kit „${kit.name}“ überschreiben? (Rückgängig möglich)`)) return;
+      loadKitToBank(kit, b);
+    });
+    const del = el('button', { class: 'btn warn', type: 'button', 'aria-label': 'Kit löschen ' + kit.name, text: '✕' });
+    del.addEventListener('click', () => { if (confirm(`Kit „${kit.name}“ löschen?`)) { deleteKit(kit.name); renderView('samples'); } });
+    const n = kit.pads.filter((x) => x && x.s).length;
+    box.append(el('div', { class: 'kit-row' }, el('div', { class: 'kit-n' }, el('b', { text: kit.name }), el('small', { text: `${n} Pads · ${new Date(kit.at).toLocaleDateString('de-DE')}` })), target, load, del));
+  }
+  root.append(box);
+}
+
+// =====================================================================
+// VOCALS – Aufnahme über den Beat
+// =====================================================================
+const REC_WORKLET = `
+class BapRec extends AudioWorkletProcessor {
+  constructor() {
+    super();
+    this.buf = new Float32Array(4096); this.n = 0; this.f0 = 0; this.on = true;
+    this.port.onmessage = (e) => { if (e.data === 'stop') { this.flush(); this.on = false; this.port.postMessage({ done: true }); } };
+  }
+  flush() { if (this.n) { this.port.postMessage({ f: this.f0, d: this.buf.slice(0, this.n) }); this.n = 0; } }
+  process(inputs) {
+    if (!this.on) return false;
+    const inp = inputs[0];
+    if (inp && inp.length) {
+      const a = inp[0], b = inp[1];
+      if (this.n && currentFrame !== this.f0 + this.n) this.flush();
+      if (this.n === 0) this.f0 = currentFrame;
+      for (let i = 0; i < a.length; i++) this.buf[this.n++] = b ? (a[i] + b[i]) * 0.5 : a[i];
+      if (this.n + 128 > this.buf.length) this.flush();
+    }
+    return true;
+  }
+}
+registerProcessor('bap-rec', BapRec);
+`;
+let recModule = null;
+const MAX_TAKE_SEC = 480;
+
+async function voxRecStart() {
+  if (S.voxRec) return;
+  const vx = P().vox;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia || !S.ctx.audioWorklet) { toast('Aufnahme wird von diesem Browser nicht unterstützt'); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  } catch (_) { toast('Kein Mikrofonzugriff – Berechtigung prüfen'); return; }
+  try {
+    if (!recModule) recModule = S.ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([REC_WORKLET], { type: 'application/javascript' })));
+    await recModule;
+  } catch (_) { recModule = null; stream.getTracks().forEach((t) => t.stop()); toast('Aufnahme-Modul nicht verfügbar'); return; }
+  if (S.ctx.state !== 'running') await S.ctx.resume();
+  if (S.seq.playing) S.seq.stop();
+  const ctx = S.ctx;
+  const src = ctx.createMediaStreamSource(stream);
+  const node = new AudioWorkletNode(ctx, 'bap-rec', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [1] });
+  const sink = ctx.createGain();
+  sink.gain.value = 0;
+  src.connect(node);
+  node.connect(sink);
+  sink.connect(ctx.destination);
+  const an = ctx.createAnalyser();
+  an.fftSize = 512;
+  src.connect(an);
+  const k = vx.arm;
+  let mon = null;
+  if (vx.monitor) { mon = S.engine.voxStrip(k).input; S.engine.updateVox(k); src.connect(mon); }
+  const chunks = [];
+  const R = { stream, src, node, sink, an, mon, chunks, track: k, t0: 0, inLat: 0.01, startedAt: 0, frames: 0, onDone: null };
+  node.port.onmessage = (e) => {
+    if (e.data && e.data.d) {
+      chunks.push(e.data);
+      R.frames += e.data.d.length;
+      if (R.frames > MAX_TAKE_SEC * ctx.sampleRate) { toast('Maximale Take-Länge erreicht'); voxRecStop(); }
+    } else if (e.data && e.data.done && R.onDone) R.onDone();
+  };
+  const tr = stream.getAudioTracks()[0];
+  const set = tr && tr.getSettings ? tr.getSettings() : {};
+  if (typeof set.latency === 'number' && set.latency >= 0 && set.latency < 0.5) R.inLat = set.latency;
+  const bar = (4 * 60) / P().bpm;
+  const lead = ctx.currentTime + 0.15;
+  for (let n = 0; n < vx.countIn * 4; n++) S.engine.click(lead + (n * bar) / 4, n % 4 === 0);
+  R.t0 = lead + vx.countIn * bar;
+  R.startedAt = performance.now();
+  S.voxRec = R;
+  S.seq.start(R.t0);
+  updateTransport();
+  if (S.view === 'vox') renderView('vox');
+  toast(vx.countIn ? `Vorzähler … dann Aufnahme auf „${vx.tracks[k].name}“` : `Aufnahme auf „${vx.tracks[k].name}“`);
+}
+
+async function voxRecStop() {
+  const R = S.voxRec;
+  if (!R || R.stopping) return;
+  R.stopping = true;
+  await new Promise((res) => { R.onDone = res; R.node.port.postMessage('stop'); setTimeout(res, 500); });
+  for (const n of [R.src, R.node, R.sink, R.an]) { try { n.disconnect(); } catch (_) { /* egal */ } }
+  R.stream.getTracks().forEach((t) => t.stop());
+  S.voxRec = null;
+  if (S.seq.playing) S.seq.stop();
+  updateTransport();
+  const ctx = S.ctx;
+  const sr = ctx.sampleRate;
+  const vx = P().vox;
+  const done = () => { if (S.view === 'vox') renderView('vox'); };
+  if (!R.chunks.length) { toast('Nichts aufgenommen (Mikrofon stumm?)'); done(); return; }
+  // Was zum Zeitpunkt t0 gesungen wurde, kommt um Ausgabe- + Eingangslatenz später an
+  const comp = (ctx.outputLatency || 0) + (ctx.baseLatency || 0) + R.inLat + (vx.latency || 0) / 1000;
+  const t0F = Math.round((R.t0 + comp) * sr);
+  const first = R.chunks[0].f;
+  const last = R.chunks[R.chunks.length - 1];
+  const endF = last.f + last.d.length;
+  const startF = Math.max(t0F, first);
+  const n = endF - startF;
+  if (n < sr * 0.4) { toast('Aufnahme zu kurz – Take verworfen'); done(); return; }
+  const data = new Float32Array(n);
+  for (const c of R.chunks) {
+    const off = c.f - startF;
+    if (off + c.d.length <= 0 || off >= n) continue;
+    const a = Math.max(0, -off);
+    data.set(c.d.subarray(a, Math.min(c.d.length, n - off)), off + a);
+  }
+  const at = (startF - t0F) / sr;
+  const tr = vx.tracks[R.track];
+  pushUndo(true);
+  const name = `${tr.name} · Take ${tr.takes.length + 1}`;
+  const { id, stored } = await S.catalog.addUser(name, data, sr, 'vocal take aufnahme', 'user', null, undefined, 'Vocals');
+  tr.takes.push({ id, at });
+  if (tr.takes.length > 12) tr.takes.shift();
+  tr.take = id;
+  tr.at = at;
+  dirty();
+  done();
+  toast(`${name} gespeichert (${(n / sr).toFixed(1)} s)${stored ? '' : ' – nur für diese Sitzung'}`);
+}
+
+function voxTimeline() {
+  const p = P();
+  const bar = (4 * 60) / p.bpm;
+  const arr = p.song.on && p.song.list.length
+    ? songOrder(p).reduce((a, i) => a + p.patterns[i].len / 16, 0) * bar
+    : (p.patterns[p.cur.ptn].len / 16) * bar * 4;
+  return Math.max(8 * bar, arr, voxEnd(p, S.catalog) + bar);
+}
+
+const VX = { lanes: [], meter: null, time: null, tl: 1 };
+
+function setTakeAt(tr, at) {
+  tr.at = clamp(+at.toFixed(4), -30, 3600);
+  const t = tr.takes.find((x) => x.id === tr.take);
+  if (t) t.at = tr.at;
+}
+
+function drawVoxLane(cv, tr) {
+  const dpr = window.devicePixelRatio || 1;
+  const w = Math.max(10, cv.clientWidth);
+  const h = Math.max(10, cv.clientHeight);
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
+  const g = cv.getContext('2d');
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.clearRect(0, 0, w, h);
+  const p = P();
+  const bar = (4 * 60) / p.bpm;
+  const tl = VX.tl;
+  for (let b = 0, x = 0; x < w; b++) {
+    x = (b * bar / tl) * w;
+    g.fillStyle = b % 4 === 0 ? 'rgba(255,255,255,.16)' : 'rgba(255,255,255,.06)';
+    g.fillRect(Math.round(x), 0, 1, h);
+    if (b % 4 === 0 && b) { g.fillStyle = 'rgba(255,255,255,.35)'; g.font = '9px monospace'; g.fillText(String(b + 1), x + 3, 10); }
+  }
+  if (!tr.take) { g.fillStyle = 'rgba(255,255,255,.25)'; g.font = '11px sans-serif'; g.fillText('leer – Spur wählen und aufnehmen', 8, h / 2 + 4); return; }
+  const m = S.catalog.meta(tr.take);
+  if (!m) { g.fillStyle = '#e5533d'; g.font = '11px sans-serif'; g.fillText('Take fehlt', 8, h / 2 + 4); return; }
+  const x0 = (tr.at / tl) * w;
+  const x1 = ((tr.at + m.dur) / tl) * w;
+  g.fillStyle = tr.mute ? 'rgba(120,120,120,.18)' : 'rgba(79,209,197,.16)';
+  g.fillRect(x0, 2, Math.max(2, x1 - x0), h - 4);
+  const n = Math.max(16, Math.min(1200, Math.round(x1 - x0)));
+  const pk = S.catalog.peaksFor(tr.take, n);
+  if (!pk) return;
+  g.fillStyle = tr.mute ? '#777' : '#4fd1c5';
+  const step = (x1 - x0) / n;
+  for (let i = 0; i < n; i++) {
+    const a = Math.min(1, pk[i] * 1.6) * (h / 2 - 3);
+    g.fillRect(x0 + i * step, h / 2 - a, Math.max(1, step - 0.2), a * 2 || 1);
+  }
+}
+
+BUILDERS.vox = (root) => {
+  root.replaceChildren();
+  const p = P();
+  const vx = p.vox;
+  const rec = !!S.voxRec;
+  VX.tl = voxTimeline();
+  const lab = (t) => el('span', { class: 'lab', text: t });
+  const recB = el('button', { class: 'btn vx-rec' + (rec ? ' on' : ''), type: 'button', text: rec ? '■ Aufnahme stoppen' : `● Aufnahme auf Spur ${vx.arm + 1}` });
+  recB.addEventListener('click', () => (S.voxRec ? voxRecStop() : voxRecStart()));
+  const playB = el('button', { class: 'btn', type: 'button', text: S.seq.playing && !rec ? '■ Stop' : '▶ Abspielen', disabled: rec });
+  playB.addEventListener('click', () => { togglePlay(false); renderView('vox'); });
+  const armSeg = seg(vx.tracks.map((t, k) => [k, String(k + 1), t.name]), vx.arm, (k) => { vx.arm = k; dirty(); renderView('vox'); }, 'red');
+  armSeg.prepend(lab('SPUR'));
+  const ciSeg = seg([[0, 'AUS'], [1, '1 TAKT'], [2, '2 TAKTE']], vx.countIn, (v) => { vx.countIn = v; dirty(); });
+  ciSeg.prepend(lab('VORZÄHLER'));
+  const tog = (key, text, title) => {
+    const b = el('button', { type: 'button', class: vx[key] ? 'on' : '', text, title, 'aria-pressed': String(!!vx[key]) });
+    b.addEventListener('click', () => { vx[key] = !vx[key]; b.classList.toggle('on', vx[key]); b.setAttribute('aria-pressed', String(vx[key])); dirty(); });
+    return b;
+  };
+  const opts = el('div', { class: 'seg' }, tog('monitor', 'MITHÖREN', 'Eigene Stimme mit Effekten hören – nur mit Kopfhörer!'), tog('inExport', 'IN WAV-EXPORT', 'Vocals in Pattern-/Song-WAV und Stems mitrendern'));
+  const lat = knob({ label: 'Versatz', min: -200, max: 200, step: 1, def: 0, value: vx.latency, small: true, format: (v) => (v > 0 ? '+' : '') + Math.round(v) + ' ms', onInput: (v) => { vx.latency = v; dirty(); } });
+  lat.node.title = 'Latenz-Ausgleich für neue Aufnahmen: liegt die Stimme hörbar zu spät, Wert erhöhen';
+  const mixB = el('button', { class: 'btn pri', type: 'button', text: '⇩ Mixdown (Beat + Vocals)', disabled: !voxEnd(p, S.catalog) });
+  mixB.addEventListener('click', exportMixdown);
+  VX.meter = el('div', { class: 'vx-meter', 'aria-hidden': 'true' }, el('i'));
+  VX.time = el('span', { class: 'vx-time', text: rec ? 'REC' : '' });
+  root.append(el('div', { class: 'sb-head' },
+    el('div', {}, el('h2', { class: 'vh', text: 'Vocals' }),
+      el('p', { class: 'muted vsub', text: 'Rap und Gesang über den Beat aufnehmen · 4 Spuren · laufen ab Play synchron mit Pattern oder Song' })),
+    el('div', { class: 'row', style: { marginBottom: '0' } }, mixB)));
+  root.append(el('div', { class: 'card vx-card' },
+    el('div', { class: 'row' }, recB, playB, VX.meter, VX.time),
+    el('div', { class: 'row', style: { marginBottom: '0' } }, armSeg, ciSeg, opts, lat.node),
+    el('p', { class: 'hint', text: 'Kopfhörer aufsetzen, Spur wählen, „Aufnahme“ – nach dem Vorzähler startet der Beat von vorn und die Stimme wird mitgeschnitten. Stop beendet und speichert den Take. Jede Aufnahme ist ein neuer Take; ältere bleiben wählbar.' })));
+
+  VX.lanes = [];
+  const list = el('div', { class: 'vx-list' });
+  vx.tracks.forEach((tr, k) => {
+    const name = el('input', { class: 'txt-in vx-name', type: 'text', value: tr.name, maxlength: '24', 'aria-label': `Name Spur ${k + 1}` });
+    name.addEventListener('change', () => { tr.name = name.value.trim() || 'Vocal ' + (k + 1); dirty(); renderView('vox'); });
+    const takeSel = el('select', { class: 'sel-in', 'aria-label': `Take Spur ${k + 1}` },
+      el('option', { value: '', text: tr.takes.length ? '— kein Take —' : 'keine Takes' }),
+      ...tr.takes.map((t, n) => { const m = S.catalog.meta(t.id); return el('option', { value: t.id, text: `Take ${n + 1}${m ? ` · ${m.dur.toFixed(1)} s` : ' · fehlt'}`, selected: t.id === tr.take }); }));
+    takeSel.addEventListener('change', () => {
+      pushUndo(true);
+      tr.take = takeSel.value || null;
+      const t = tr.takes.find((x) => x.id === tr.take);
+      tr.at = t ? t.at : 0;
+      dirty();
+      if (S.seq.playing) S.engine.playVox(S.playT0, S.voxRec ? S.voxRec.track : -1);
+      renderView('vox');
+    });
+    const ms = (key, text) => {
+      const b = el('button', { type: 'button', class: 'gms ' + (key === 'mute' ? 'm' : 's') + (tr[key] ? ' on' : ''), 'aria-pressed': String(!!tr[key]), 'aria-label': `${key === 'mute' ? 'Mute' : 'Solo'} ${tr.name}`, text });
+      b.addEventListener('click', () => { tr[key] = !tr[key]; b.classList.toggle('on', tr[key]); b.setAttribute('aria-pressed', String(tr[key])); S.engine.updateAllVox(); dirty(); drawVoxLane(cv, tr); });
+      return b;
+    };
+    const set = (field) => (v) => { pushUndo(); tr[field] = v; S.engine.voxStrip(k); S.engine.updateVox(k); dirty(); };
+    const kn = [
+      knob({ label: 'Level', min: 0, max: 1, step: 0.01, def: 0.85, value: tr.vol, small: true, format: (v) => Math.round(v * 100), onInput: set('vol') }),
+      knob({ label: 'Pan', min: -1, max: 1, step: 0.01, def: 0, value: tr.pan, bipolar: true, small: true, format: (v) => (Math.abs(v) < 0.01 ? 'C' : (v < 0 ? 'L' : 'R') + Math.round(Math.abs(v) * 100)), onInput: set('pan') }),
+      knob({ label: 'Press', min: 0, max: 1, step: 0.01, def: 0.4, value: tr.press, small: true, format: (v) => Math.round(v * 100), onInput: set('press') }),
+      knob({ label: 'Hall', min: 0, max: 1, step: 0.01, def: 0.12, value: tr.sa, small: true, format: (v) => Math.round(v * 100), onInput: set('sa') }),
+      knob({ label: 'Delay', min: 0, max: 1, step: 0.01, def: 0, value: tr.sb, small: true, format: (v) => Math.round(v * 100), onInput: set('sb') }),
+    ];
+    const telB = el('button', { type: 'button', class: tr.tel ? 'on' : '', text: 'TEL', title: 'Telefon-/Radio-Sound', 'aria-pressed': String(!!tr.tel) });
+    telB.addEventListener('click', () => { tr.tel = !tr.tel; telB.classList.toggle('on', tr.tel); telB.setAttribute('aria-pressed', String(tr.tel)); S.engine.voxStrip(k); S.engine.updateVox(k); dirty(); });
+    const atLab = el('span', { class: 'vx-at', text: '' });
+    const showAt = () => { atLab.textContent = tr.take ? `${tr.at >= 0 ? '+' : ''}${Math.round(tr.at * 1000)} ms` : ''; };
+    const nudge = (ms) => { if (!tr.take) return; pushUndo(); setTakeAt(tr, tr.at + ms / 1000); showAt(); drawVoxLane(cv, tr); dirty(); };
+    const nl = el('button', { class: 'btn sm', type: 'button', text: '◀ 10', title: 'Take 10 ms früher', disabled: !tr.take });
+    const nr = el('button', { class: 'btn sm', type: 'button', text: '10 ▶', title: 'Take 10 ms später', disabled: !tr.take });
+    nl.addEventListener('click', () => nudge(-10));
+    nr.addEventListener('click', () => nudge(10));
+    const chopB = el('button', { class: 'btn sm', type: 'button', text: '✂ Chop', title: 'Take in der Chop-Ansicht zerschneiden und auf Pads legen', disabled: !tr.take });
+    chopB.addEventListener('click', () => { const b = S.catalog.get(tr.take); if (b) { setChopSource(b, tr.name); showView('chop'); } });
+    const delB = el('button', { class: 'btn sm warn', type: 'button', text: '🗑', 'aria-label': 'Take löschen', title: 'Aktiven Take löschen', disabled: !tr.take });
+    delB.addEventListener('click', async () => {
+      if (!confirm(`Take von „${tr.name}“ endgültig löschen?`)) return;
+      const id = tr.take;
+      tr.takes = tr.takes.filter((x) => x.id !== id);
+      const nx = tr.takes[tr.takes.length - 1];
+      tr.take = nx ? nx.id : null;
+      tr.at = nx ? nx.at : 0;
+      await S.catalog.removeUser(id);
+      dirty();
+      renderView('vox');
+    });
+    const cv = el('canvas', { class: 'vx-cv', 'aria-label': `Zeitleiste ${tr.name}` });
+    const ph = el('i', { class: 'vx-ph' });
+    const lane = el('div', { class: 'vx-lane' }, cv, ph);
+    // Take mit der Maus/dem Finger verschieben
+    let drag = null;
+    cv.addEventListener('pointerdown', (e) => { if (!tr.take) return; pushUndo(true); drag = { x: e.clientX, at: tr.at }; cv.setPointerCapture(e.pointerId); });
+    cv.addEventListener('pointermove', (e) => { if (!drag) return; setTakeAt(tr, drag.at + ((e.clientX - drag.x) / cv.clientWidth) * VX.tl); showAt(); drawVoxLane(cv, tr); });
+    const end = () => { if (drag) { drag = null; dirty(); } };
+    cv.addEventListener('pointerup', end);
+    cv.addEventListener('pointercancel', end);
+    showAt();
+    const armed = vx.arm === k;
+    list.append(el('div', { class: 'vx-row' + (armed ? ' arm' : '') + (rec && S.voxRec.track === k ? ' rec' : '') },
+      el('div', { class: 'vx-head' }, el('b', { class: 'vx-n', text: String(k + 1) }), name, takeSel, ms('mute', 'M'), ms('solo', 'S')),
+      lane,
+      el('div', { class: 'vx-ctl' }, el('div', { class: 'knobs' }, ...kn.map((x) => x.node)), el('div', { class: 'seg' }, telB),
+        el('div', { class: 'row', style: { marginBottom: '0' } }, nl, atLab, nr, chopB, delB))));
+    VX.lanes.push({ cv, ph, tr });
+  });
+  root.append(list);
+  root.append(el('p', { class: 'hint', text: 'Takes landen auch in der Sample-Bank (Gruppe „Vocals“) und im Komplett-Backup. Zeitleiste ziehen = Take verschieben. Versatz gilt für neue Aufnahmen, ◀ 10 ▶ für den aktiven Take.' }));
+  requestAnimationFrame(() => { for (const l of VX.lanes) drawVoxLane(l.cv, l.tr); });
+};
+
+function paintVox() {
+  if (!VX.lanes.length) return;
+  const playing = S.seq.playing && S.playT0 != null;
+  const pos = playing ? S.ctx.currentTime - S.playT0 : -1;
+  for (const l of VX.lanes) {
+    if (pos < 0) { l.ph.style.display = 'none'; continue; }
+    l.ph.style.display = '';
+    l.ph.style.left = (clamp(pos / VX.tl, 0, 1) * 100) + '%';
+  }
+  const R = S.voxRec;
+  if (R && VX.meter) {
+    if (!R.buf) R.buf = new Float32Array(R.an.fftSize);
+    R.an.getFloatTimeDomainData(R.buf);
+    let pk = 0;
+    for (let i = 0; i < R.buf.length; i++) { const x = Math.abs(R.buf[i]); if (x > pk) pk = x; }
+    R.peak = Math.max(pk, (R.peak || 0) * 0.9);
+    const db = R.peak > 0 ? 20 * Math.log10(R.peak) : -60;
+    VX.meter.firstChild.style.width = clamp((db + 48) / 48, 0, 1) * 100 + '%';
+    VX.meter.classList.toggle('hot', R.peak > 0.9);
+    const sec = S.ctx.currentTime - R.t0;
+    VX.time.textContent = sec < 0 ? `Vorzähler ${Math.ceil(-sec / (60 / P().bpm))}` : `● REC ${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+  } else if (VX.meter && VX.meter.firstChild.style.width !== '0%') {
+    VX.meter.firstChild.style.width = '0%';
+  }
 }
 
 // =====================================================================
@@ -3036,6 +3597,7 @@ function apcApi() {
     undo,
     redo,
     setSwing: (v) => { P().swing = v; updateTransport(); updateLCD(); dirty(); toast('Swing ' + v + ' %'); },
+    generate: () => { const g = runGenerator(true); if (g) toast(`Beat gewürfelt: ${STYLES[GEN.style].name}, ${g.bpm} BPM`); },
     stopAll: () => { S.engine.stopAll(); for (const k of Array.from(S.seq.held.keys())) S.seq.release(k); toast('Alle Stimmen gestoppt'); },
   };
 }
@@ -3082,6 +3644,10 @@ function frame() {
     const lit = !!S.seq.repeatDiv && S.seq.held.has(local);
     if (lit) { b.classList.add('hit'); b._nr = true; }
     else if (b._nr) { b._nr = false; b.classList.remove('hit'); }
+  }
+  if (S.view === 'vox') {
+    if (S.needVoxRefresh) { S.needVoxRefresh = false; renderView('vox'); }
+    paintVox();
   }
   const now = performance.now();
   if (S.apc && (S.apc.connected || S.view === 'apc') && now - apcLast >= 33) {

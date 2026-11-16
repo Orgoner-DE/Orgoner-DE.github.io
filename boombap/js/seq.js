@@ -18,18 +18,41 @@ export function rollVelo(v, r, n) {
   return Math.max(1, Math.round(v * (r === n - 1 ? 0.9 : 0.72)));
 }
 
-export function patternEvents(project, ptnIdx, t0) {
+// Step-Chance: 0 oder ≥100 = immer, sonst Prozent
+export function chanceOf(ptn, k, i) {
+  const c = ptn.prob && ptn.prob[k] ? ptn.prob[k][i] : 0;
+  return c > 0 && c < 100 ? c : 100;
+}
+
+// Humanize: Zeit ±15 ms, Anschlag ±20 % bei feel = 1
+export function humanize(feel, v, t, rnd) {
+  if (!(feel > 0)) return [v, t];
+  const dv = Math.round(v * (1 + (rnd() * 2 - 1) * 0.2 * feel));
+  const dt = (rnd() * 2 - 1) * 0.015 * feel;
+  return [Math.max(1, Math.min(127, dv)), t + dt];
+}
+
+function seeded(seed) {
+  let a = seed >>> 0;
+  return () => { a = (a + 0x6d2b79f5) >>> 0; let x = a; x = Math.imul(x ^ (x >>> 15), x | 1); x ^= x + Math.imul(x ^ (x >>> 7), x | 61); return ((x ^ (x >>> 14)) >>> 0) / 4294967296; };
+}
+
+export function patternEvents(project, ptnIdx, t0, seed = 1) {
   const ptn = project.patterns[ptnIdx];
   const sd = stepDur(project.bpm);
   const ev = [];
+  const rnd = seeded(seed * 7919 + ptnIdx);
   for (let i = 0; i < ptn.len; i++) {
     const t = t0 + i * sd + swingOffset(i, project.bpm, project.swing);
     for (const [k, arr] of Object.entries(ptn.steps)) {
-      const v = arr[i];
-      if (!(v > 0)) continue;
+      const v0 = arr[i];
+      if (!(v0 > 0)) continue;
+      const ch = chanceOf(ptn, k, i);
+      if (ch < 100 && rnd() * 100 >= ch) continue;
+      const [v, th] = humanize(project.feel, v0, t, rnd);
       const tune = (ptn.tune[k] && ptn.tune[k][i]) || 0;
       const roll = (ptn.roll && ptn.roll[k] && ptn.roll[k][i]) || 1;
-      for (let r = 0; r < roll; r++) ev.push({ pad: +k, v: rollVelo(v, r, roll), t: t + (r * sd) / roll, tune });
+      for (let r = 0; r < roll; r++) ev.push({ pad: +k, v: rollVelo(v, r, roll), t: Math.max(t0, th) + (r * sd) / roll, tune });
     }
   }
   return { events: ev, dur: ptn.len * sd };
@@ -78,7 +101,8 @@ export class Sequencer {
     }
   }
 
-  start() {
+  // at: optionale Startzeit im AudioContext (z. B. nach dem Vorzähler)
+  start(at = 0) {
     if (this.playing) return;
     const p = this.getProject();
     if (p.song.on && p.song.list.length) {
@@ -92,9 +116,12 @@ export class Sequencer {
     this.abs = 0;
     this.skip.clear();
     // Läuft der Note-Repeat-Takt schon, wird sein Raster übernommen.
-    if (!this.clockOn) this.nextTime = this.ctx.currentTime + 0.06;
+    if (at > 0) this.nextTime = Math.max(at, this.ctx.currentTime + 0.02);
+    else if (!this.clockOn) this.nextTime = this.ctx.currentTime + 0.06;
+    this.startTime = this.nextTime;
     this.engine.setDust(true);
     this.setClock(true);
+    this.hooks.onStart && this.hooks.onStart(this.startTime);
     this.tick();
   }
 
@@ -158,9 +185,12 @@ export class Sequencer {
         if (!v) continue;
         const key = k + ':' + i;
         if (this.skip.has(key)) { this.skip.delete(key); continue; }
+        const ch = chanceOf(ptn, k, i);
+        if (ch < 100 && Math.random() * 100 >= ch) continue;
+        const [hv, ht] = humanize(p.feel, v, ts, Math.random);
         const tune = (ptn.tune[k] && ptn.tune[k][i]) || 0;
         const roll = (ptn.roll && ptn.roll[k] && ptn.roll[k][i]) || 1;
-        for (let r = 0; r < roll; r++) this.engine.trigger(+k, rollVelo(v, r, roll), ts + (r * sd) / roll, tune);
+        for (let r = 0; r < roll; r++) this.engine.trigger(+k, rollVelo(hv, r, roll), Math.max(t, ht) + (r * sd) / roll, tune);
       }
       if (p.metro && i % 4 === 0) this.engine.click(ts, i % 16 === 0);
       this.queue.push({ t: ts, step: i, ptn: p.cur.ptn });

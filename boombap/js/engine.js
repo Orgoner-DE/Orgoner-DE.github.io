@@ -114,6 +114,8 @@ export class Engine {
     this.catalog = catalog;
     this.project = project;
     this.strips = new Map();
+    this.vox = new Map();
+    this.voxSrc = [];
     this.voices = [];
     this.irSize = -1;
     this.offline = typeof OfflineAudioContext !== 'undefined' && ctx instanceof OfflineAudioContext;
@@ -217,6 +219,7 @@ export class Engine {
   setProject(p) {
     this.project = p;
     for (const [i] of this.strips) this.updatePad(i);
+    this.updateAllVox();
     this.applyMaster();
   }
 
@@ -276,6 +279,7 @@ export class Engine {
       drive: c.createWaveShaper(),
       pan: c.createStereoPanner ? c.createStereoPanner() : null,
       fader: c.createGain(),
+      duck: c.createGain(),
       mute: c.createGain(),
       sendA: c.createGain(),
       sendB: c.createGain(),
@@ -285,7 +289,8 @@ export class Engine {
     s.input.connect(s.filter);
     s.filter.connect(s.drive);
     if (s.pan) { s.drive.connect(s.pan); s.pan.connect(s.fader); } else s.drive.connect(s.fader);
-    s.fader.connect(s.mute);
+    s.fader.connect(s.duck);
+    s.duck.connect(s.mute);
     s.mute.connect(this.bus);
     s.mute.connect(s.sendA);
     s.mute.connect(s.sendB);
@@ -351,6 +356,30 @@ export class Engine {
     }
   }
 
+  // ---------- Sidechain-Pump ----------
+  // Pads mit sc (Standard: Bass und Keys) werden bei jedem Kick kurz leiser.
+  scOf(i) {
+    const p = this.project.pads[i];
+    if (!p || !p.s) return false;
+    if (p.sc != null) return !!p.sc;
+    const m = this.catalog.meta(p.s);
+    return !!m && (m.cat === 'bass' || m.cat === 'keys');
+  }
+
+  duck(t, velo) {
+    const amt = this.project.master.pump || 0;
+    if (amt <= 0.001) return;
+    const depth = Math.min(0.92, amt * 0.85 * (0.55 + 0.45 * velo / 127));
+    const rel = 0.05 + amt * 0.2;
+    for (const [i, s] of this.strips) {
+      if (!this.scOf(i)) continue;
+      const g = s.duck.gain;
+      g.cancelScheduledValues(t);
+      g.setTargetAtTime(1 - depth, t, 0.004);
+      g.setTargetAtTime(1, t + 0.025, rel / 3);
+    }
+  }
+
   // ---------- Stimmen ----------
   // tuneOfs: zusätzliche Halbtöne (16 Levels / Step-Tune), velo 1..127
   trigger(i, velo, when = 0, tuneOfs = 0, over = null) {
@@ -362,6 +391,10 @@ export class Engine {
     const t = Math.max(when, c.currentTime);
     const s = this.strip(i);
     this.choke(i, t);
+    if (!over && this.project.master.pump > 0.001) {
+      const m = this.catalog.meta(p.s);
+      if (m && m.cat === 'kick') this.duck(t, velo);
+    }
 
     const rate = Math.pow(2, (p.tune + tuneOfs + p.fine / 100) / 12);
     const dur = buf.duration;
@@ -466,6 +499,112 @@ export class Engine {
     g.connect(this.bus);
     src.start();
     src.onended = () => { try { g.disconnect(); } catch (_) { /* egal */ } };
+  }
+
+  // ---------- Vocal-Spuren ----------
+  voxStrip(k) {
+    let v = this.vox.get(k);
+    if (v) return v;
+    const c = this.ctx;
+    v = {
+      input: c.createGain(), hp: c.createBiquadFilter(), tel: c.createBiquadFilter(), comp: c.createDynamicsCompressor(),
+      makeup: c.createGain(), fader: c.createGain(), pan: c.createStereoPanner ? c.createStereoPanner() : null,
+      mute: c.createGain(), sendA: c.createGain(), sendB: c.createGain(), meter: null,
+    };
+    v.hp.type = 'highpass';
+    v.hp.frequency.value = 95;
+    v.tel.type = 'peaking';
+    v.input.connect(v.hp);
+    v.hp.connect(v.tel);
+    v.tel.connect(v.comp);
+    v.comp.connect(v.makeup);
+    v.makeup.connect(v.fader);
+    if (v.pan) { v.fader.connect(v.pan); v.pan.connect(v.mute); } else v.fader.connect(v.mute);
+    v.mute.connect(this.bus);
+    v.mute.connect(v.sendA);
+    v.mute.connect(v.sendB);
+    v.sendA.connect(this.revIn);
+    v.sendB.connect(this.dlyIn);
+    this.vox.set(k, v);
+    this.updateVox(k);
+    return v;
+  }
+
+  updateVox(k) {
+    const v = this.vox.get(k);
+    const vx = this.project.vox;
+    if (!v || !vx) return;
+    const tr = vx.tracks[k];
+    const t = this.ctx.currentTime;
+    const ramp = (param, x) => { param.cancelScheduledValues(t); param.setTargetAtTime(x, t, 0.015); };
+    // Telefon-Sound: Bandpass statt Hochpass
+    v.hp.type = tr.tel ? 'bandpass' : 'highpass';
+    ramp(v.hp.frequency, tr.tel ? 1400 : 95);
+    ramp(v.hp.Q, tr.tel ? 1.1 : 0.7);
+    ramp(v.tel.frequency, 3000);
+    ramp(v.tel.gain, tr.tel ? 6 : 1.5 * tr.press);
+    v.comp.threshold.value = -6 - tr.press * 26;
+    v.comp.ratio.value = 1.5 + tr.press * 6;
+    v.comp.knee.value = 6;
+    v.comp.attack.value = 0.004;
+    v.comp.release.value = 0.12;
+    ramp(v.makeup.gain, 1 + tr.press * 1.4);
+    ramp(v.fader.gain, Math.pow(tr.vol, 2) * 1.2);
+    if (v.pan) ramp(v.pan.pan, clamp(tr.pan, -1, 1));
+    ramp(v.sendA.gain, tr.sa);
+    ramp(v.sendB.gain, tr.sb);
+    const solo = vx.tracks.some((x) => x.solo);
+    ramp(v.mute.gain, !tr.mute && (!solo || tr.solo) ? 1 : 0);
+  }
+
+  updateAllVox() { if (this.project.vox) for (let k = 0; k < this.project.vox.tracks.length; k++) this.updateVox(k); }
+
+  // Spielt die aktiven Takes ab Transport-Start t0 (skip = Spur auslassen, z. B. während der Aufnahme)
+  playVox(t0, skip = -1, from = 0) {
+    const vx = this.project.vox;
+    if (!vx) return;
+    this.stopVox();
+    const c = this.ctx;
+    vx.tracks.forEach((tr, k) => {
+      if (k === skip || !tr.take) return;
+      const buf = this.catalog.get(tr.take);
+      if (!buf) return;
+      const v = this.voxStrip(k);
+      this.updateVox(k);
+      const src = c.createBufferSource();
+      src.buffer = buf;
+      src.connect(v.input);
+      const startAt = t0 + tr.at - from;
+      const now = c.currentTime;
+      if (startAt >= now) src.start(startAt);
+      else {
+        const ofs = now - startAt;
+        if (ofs >= buf.duration) return;
+        src.start(now, ofs);
+      }
+      this.voxSrc.push(src);
+      src.onended = () => { const i = this.voxSrc.indexOf(src); if (i >= 0) this.voxSrc.splice(i, 1); };
+    });
+  }
+
+  stopVox() {
+    const t = this.ctx.currentTime;
+    for (const src of this.voxSrc) { try { src.stop(t + 0.01); } catch (_) { /* egal */ } }
+    this.voxSrc = [];
+  }
+
+  voxMeter(k) {
+    const v = this.voxStrip(k);
+    if (!v.meter) {
+      v.meter = this.ctx.createAnalyser();
+      v.meter.fftSize = 256;
+      v.mute.connect(v.meter);
+      v.meterBuf = new Float32Array(256);
+    }
+    v.meter.getFloatTimeDomainData(v.meterBuf);
+    let pk = 0;
+    for (let i = 0; i < v.meterBuf.length; i++) { const x = Math.abs(v.meterBuf[i]); if (x > pk) pk = x; }
+    return pk;
   }
 
   click(when, accent) {

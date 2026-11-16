@@ -94,7 +94,16 @@ export function presetKitPads(name, catOf) {
 }
 
 export function emptyPattern(len = 32) {
-  return { len, steps: {}, tune: {}, roll: {} };
+  return { len, steps: {}, tune: {}, roll: {}, prob: {} };
+}
+
+// Vocal-/Audiospuren: Aufnahmen laufen ab Transport-Start linear mit (at = Versatz in Sekunden).
+export const NUM_VOX = 4;
+export function defaultVoxTrack(k) {
+  return { name: 'Vocal ' + (k + 1), take: null, takes: [], at: 0, vol: 0.85, pan: 0, press: 0.4, sa: 0.12, sb: 0, tel: false, mute: false, solo: false };
+}
+export function defaultVox() {
+  return { tracks: Array.from({ length: NUM_VOX }, (_, k) => defaultVoxTrack(k)), arm: 0, countIn: 1, latency: 0, monitor: false, inExport: true };
 }
 
 const VEL = { X: 127, x: 100, o: 72, g: 42, '.': 0, '-': 0 };
@@ -326,8 +335,10 @@ export function defaultProject(catOf = () => '') {
     metro: false,
     master: {
       vol: 0.82, comp: 0.35, tape: 0.25, warm: 0.12, dust: 0.25, crunch: 0,
-      revSize: 0.35, revRet: 0.6, dlyTime: '3/16', dlyFb: 0.35, dlyRet: 0.45,
+      revSize: 0.35, revRet: 0.6, dlyTime: '3/16', dlyFb: 0.35, dlyRet: 0.45, pump: 0,
     },
+    feel: 0,
+    vox: defaultVox(),
     pads,
     patterns,
     cur: { ptn: 0, bank: 0, pad: 0 },
@@ -349,7 +360,12 @@ export function normalizeProject(raw, catOf) {
   p.patterns = Array.from({ length: NUM_PATTERNS }, (_, i) => {
     const src = (raw.patterns || [])[i];
     if (!src) return emptyPattern(32);
-    const ptn = { len: LENGTHS.includes(src.len) ? src.len : 32, steps: {}, tune: {}, roll: {} };
+    const ptn = { len: LENGTHS.includes(src.len) ? src.len : 32, steps: {}, tune: {}, roll: {}, prob: {} };
+    for (const [k, arr] of Object.entries(src.prob || {})) {
+      const pad = +k;
+      if (!(pad >= 0 && pad < NUM_PADS) || !Array.isArray(arr)) continue;
+      ptn.prob[pad] = Array.from({ length: MAX_STEPS }, (_, j) => clamp(+arr[j] || 0, 0, 100));
+    }
     for (const [k, arr] of Object.entries(src.steps || {})) {
       const pad = +k;
       if (!(pad >= 0 && pad < NUM_PADS) || !Array.isArray(arr)) continue;
@@ -374,8 +390,42 @@ export function normalizeProject(raw, catOf) {
   p.song = { on: !!(raw.song && raw.song.on), list: ((raw.song && raw.song.list) || d.song.list).map((e) => ({ p: clamp(e.p | 0, 0, NUM_PATTERNS - 1), n: clamp(e.n | 0 || 1, 1, 16) })) };
   p.midi = { ...d.midi, ...(raw.midi || {}) };
   p.bankNames = { ...(raw.bankNames || {}) };
+  p.feel = clamp(+p.feel || 0, 0, 1);
+  const rv = raw.vox && typeof raw.vox === 'object' ? raw.vox : {};
+  const dv = defaultVox();
+  p.vox = { ...dv, ...rv, tracks: dv.tracks.map((t, k) => {
+    const src = (rv.tracks || [])[k] || {};
+    const tr = { ...t, ...src };
+    tr.at = clamp(+tr.at || 0, -30, 3600);
+    tr.takes = (Array.isArray(src.takes) ? src.takes : [])
+      .map((x) => (typeof x === 'string' ? { id: x, at: 0 } : x))
+      .filter((x) => x && typeof x.id === 'string').slice(0, 12)
+      .map((x) => ({ id: x.id, at: clamp(+x.at || 0, -30, 3600) }));
+    if (tr.take && !tr.takes.some((x) => x.id === tr.take)) tr.takes.push({ id: tr.take, at: tr.at });
+    return tr;
+  }) };
+  p.vox.arm = clamp(p.vox.arm | 0, 0, NUM_VOX - 1);
+  p.vox.countIn = clamp(p.vox.countIn | 0, 0, 2);
+  p.vox.latency = clamp(+p.vox.latency || 0, -500, 500);
   return p;
 }
+
+// ---------- Kit-Speicher (projektübergreifend) ----------
+const KEY_KITS = 'bap50.kits.v1';
+export function listKits() {
+  if (!store) return [];
+  try { const a = JSON.parse(store.getItem(KEY_KITS) || '[]'); return Array.isArray(a) ? a : []; } catch (_) { return []; }
+}
+export function saveKits(all) {
+  if (!store) return false;
+  try { store.setItem(KEY_KITS, JSON.stringify(all.slice(0, 64))); return true; } catch (_) { return false; }
+}
+export function saveKit(name, pads) {
+  const all = listKits().filter((k) => k.name !== name);
+  all.unshift({ name, at: Date.now(), pads: JSON.parse(JSON.stringify(pads)) });
+  return saveKits(all);
+}
+export function deleteKit(name) { saveKits(listKits().filter((k) => k.name !== name)); }
 
 // ---------- Speicher ----------
 const KEY_AUTO = 'bap50.autosave.v1';
