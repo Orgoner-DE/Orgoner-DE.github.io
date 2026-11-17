@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-HfYbsJBkmYW1tGE/tUY6BD/PoRrnuST3tCBEbI34430=' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob: mediastream:; connect-src blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-1hmw14wEOPX9gRlHv++OoffVc5Y2s6TdttXaeTkevZY=' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob: mediastream:; connect-src blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0a0c10">
@@ -788,8 +788,12 @@ const Engine = {
     if (this.ready) return;
     const AC = window.AudioContext || window.webkitAudioContext;
     this.ctx = new AC({ latencyHint: 'interactive' });
-    const url = URL.createObjectURL(new Blob([WORKLET_SRC], { type: 'application/javascript' }));
-    await this.ctx.audioWorklet.addModule(url);
+    let ok = false;
+    if (this.ctx.audioWorklet && window.AudioWorkletNode) {
+      try { await this.ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET_SRC], { type: 'application/javascript' }))); ok = true; }
+      catch (e) { console.warn('AudioWorklet nicht verfügbar – Kompatibilitätsmodus', e); }
+    }
+    if (!ok) await this.loadFallback();
     const c = this.ctx;
     // Master bus
     this.masterBus = c.createGain();
@@ -810,7 +814,7 @@ const Engine = {
     this.masterOut.connect(this.cueMixMaster).connect(this.cueVol);
     this.setCueMix(0.5);
     // Recorder tap
-    this.recNode = new AudioWorkletNode(c, 'rec-proc', { numberOfInputs: 1, numberOfOutputs: 0, channelCount: 2, channelCountMode: 'explicit' });
+    this.recNode = this.node('rec-proc', { numberOfInputs: 1, numberOfOutputs: 0, channelCount: 2, channelCountMode: 'explicit' });
     this.masterOut.connect(this.recNode);
     this.recStream = c.createMediaStreamDestination ? c.createMediaStreamDestination() : null;
     if (this.recStream) this.masterOut.connect(this.recStream);
@@ -818,6 +822,37 @@ const Engine = {
     this.routing = 'stereo';
     this.applyRouting('stereo');
     this.ready = true;
+  },
+  /* Kompatibilitätsmodus: gleicher Prozessor-Code auf dem Haupt-Thread (z. B. wenn die Datei lokal geöffnet wird) */
+  async loadFallback() {
+    const src = 'window.__djp4Fallback=function(sampleRate){let currentTime=0;const reg={};' +
+      'class AudioWorkletProcessor{constructor(){const ch=new MessageChannel();this.port=ch.port1;this.__main=ch.port2;}}' +
+      'function registerProcessor(n,c){reg[n]=c;}\n' + WORKLET_SRC + '\nreturn{reg,setTime:t=>{currentTime=t}};};';
+    await new Promise((res, rej) => {
+      const el = document.createElement('script'); el.src = URL.createObjectURL(new Blob([src], { type: 'text/javascript' }));
+      el.onload = res; el.onerror = () => rej(new Error('Audio-Engine konnte nicht geladen werden')); document.head.appendChild(el);
+    });
+    if (typeof window.__djp4Fallback !== 'function' || !this.ctx.createScriptProcessor) throw new Error('Audio-Engine nicht unterstützt');
+    this.fb = window.__djp4Fallback(this.ctx.sampleRate); this.fbSize = 2048;
+  },
+  node(name, o) {
+    if (!this.fb) return new AudioWorkletNode(this.ctx, name, o);
+    const c = this.ctx, Cls = this.fb.reg[name], proc = new Cls(), N = this.fbSize, sr = c.sampleRate;
+    const sp = c.createScriptProcessor(N, 2, 2), pmap = new Map(), params = {};
+    (Cls.parameterDescriptors || []).forEach(d => { pmap.set(d.name, { value: d.defaultValue }); params[d.name] = [d.defaultValue]; });
+    sp.parameters = pmap; sp.port = proc.__main;
+    const noOut = o && o.numberOfOutputs === 0, fb = this.fb;
+    sp.onaudioprocess = e => {
+      const ib = e.inputBuffer, ob = e.outputBuffer, I0 = ib.getChannelData(0), I1 = ib.getChannelData(1), O0 = ob.getChannelData(0), O1 = ob.getChannelData(1);
+      pmap.forEach((p, k) => { params[k][0] = p.value; });
+      for (let i = 0; i < N; i += 128) {
+        fb.setTime(e.playbackTime + i / sr);
+        proc.process([[I0.subarray(i, i + 128), I1.subarray(i, i + 128)]], [[O0.subarray(i, i + 128), O1.subarray(i, i + 128)]], params);
+      }
+      if (noOut) { O0.fill(0); O1.fill(0); }
+    };
+    if (noOut) { const g = c.createGain(); g.gain.value = 0; sp.connect(g).connect(c.destination); }
+    return sp;
   },
   setCueMix(v) { // 0 = nur Cue, 1 = nur Master
     if (!this.cueMixCue) return;
@@ -865,14 +900,14 @@ const Engine = {
   },
   async setMasterSink(id) { if (this.ctx && this.ctx.setSinkId) await this.ctx.setSinkId(id || ''); },
   async setCueSink(id) { this.cueSink = id; if (this.cueEl && this.cueEl.setSinkId) await this.cueEl.setSinkId(id || ''); },
-  latency() { const c = this.ctx; if (!c) return 0; return (c.outputLatency || 0) + (c.baseLatency || 0); },
+  latency() { const c = this.ctx; if (!c) return 0; return (c.outputLatency || 0) + (c.baseLatency || 0) + (this.fb ? this.fbSize / c.sampleRate : 0); },
 };
 
 /* Kanalzug: Player -> Trim -> EQ(3) -> Filter -> FX-Inserts -> (Cue) -> Fader -> Crossfader -> Master */
 class Channel {
   constructor(eng, idx) {
     const c = eng.ctx; this.eng = eng; this.idx = idx;
-    this.player = new AudioWorkletNode(c, 'deck-proc', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
+    this.player = eng.node('deck-proc', { numberOfInputs: 0, numberOfOutputs: 1, outputChannelCount: [2] });
     this.trim = c.createGain();
     this.lo = c.createBiquadFilter(); this.lo.type = 'lowshelf'; this.lo.frequency.value = 180;
     this.mid = c.createBiquadFilter(); this.mid.type = 'peaking'; this.mid.frequency.value = 1100; this.mid.Q.value = 0.6;
@@ -1107,7 +1142,7 @@ class FxStutter extends FxBase {
 class FxCrush extends FxBase {
   constructor(ctx, host) {
     super(ctx, host);
-    this.c = this.n(new AudioWorkletNode(ctx, 'crush-proc', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] }));
+    this.c = this.n(Engine.node('crush-proc', { numberOfInputs: 1, numberOfOutputs: 1, outputChannelCount: [2] }));
     this.input.connect(this.c).connect(this.wet);
   }
   apply() {
@@ -2423,7 +2458,7 @@ const APP = window.APP = {
         }
       } catch (e) {}
     }
-    row('Latenz', h('span', 'sval', Math.round(Engine.latency() * 1000) + ' ms · ' + Engine.ctx.sampleRate + ' Hz'));
+    row('Latenz', h('span', 'sval', Math.round(Engine.latency() * 1000) + ' ms · ' + Engine.ctx.sampleRate + ' Hz' + (Engine.fb ? ' · Kompatibilitätsmodus' : '')));
     sec('Decks');
     row('Anzahl Decks', select('deckCount', [[2, '2 Decks'], [4, '4 Decks']], () => this.applyDeckCount()));
     row('Standard-Tempobereich', select('defRange', RANGES.map((r, i) => [i, '±' + Math.round(r * 100) + '%']), v => this.decks.forEach(d => { if (!d.track) { d.rangeI = v; d.sendState(); } })));
