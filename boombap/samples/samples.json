@@ -5722,12 +5722,955 @@
     }
    ],
    "fx": {}
+  },
+  {
+   "id": "kz01",
+   "name": "808 Boom Kick",
+   "cat": "kick",
+   "pack": "kz",
+   "file": "samples/kz01-808-boom-kick.wav",
+   "dur": 2.2,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz02",
+   "name": "808 Kick Punch",
+   "cat": "kick",
+   "pack": "kz",
+   "file": "samples/kz02-808-kick-punch.wav",
+   "dur": 0.8,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz03",
+   "name": "808 Kick Dirty",
+   "cat": "kick",
+   "pack": "kz",
+   "file": "samples/kz03-808-kick-dirty.wav",
+   "dur": 1.6,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz04",
+   "name": "Miami Kick Short",
+   "cat": "kick",
+   "pack": "kz",
+   "file": "samples/kz04-miami-kick-short.wav",
+   "dur": 0.5,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz05",
+   "name": "Kick Layer Boom",
+   "cat": "kick",
+   "pack": "kz",
+   "file": "samples/kz05-kick-layer-boom.wav",
+   "dur": 1.6,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "db04 Kick Low Boom"
+    }
+   ],
+   "layers": [
+    "db04 Kick Low Boom"
+   ]
+  },
+  {
+   "id": "kz06",
+   "name": "808 Snare",
+   "cat": "snare",
+   "pack": "kz",
+   "file": "samples/kz06-808-snare.wav",
+   "dur": 0.5,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz07",
+   "name": "808 Snare Snappy",
+   "cat": "snare",
+   "pack": "kz",
+   "file": "samples/kz07-808-snare-snappy.wav",
+   "dur": 0.6,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz08",
+   "name": "Crunk Snare Stack",
+   "cat": "snare",
+   "pack": "kz",
+   "file": "samples/kz08-crunk-snare-stack.wav",
+   "dur": 0.818,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd24 Clap Stack"
+    },
+    {
+     "lib": "bap50",
+     "file": "db09 Snare Crack 12"
+    }
+   ],
+   "layers": [
+    "cd24 Clap Stack",
+    "db09 Snare Crack 12"
+   ]
+  },
+  {
+   "id": "kz09",
+   "name": "808 Clap",
+   "cat": "clap",
+   "pack": "kz",
+   "file": "samples/kz09-808-clap.wav",
+   "dur": 0.878,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz10",
+   "name": "Clap Wall",
+   "cat": "clap",
+   "pack": "kz",
+   "file": "samples/kz10-clap-wall.wav",
+   "dur": 1.026,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "c01 Clap Crowd"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd24 Clap Stack"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd25 Clap Person"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd26 Handclap Body"
+    },
+    {
+     "lib": "bap50",
+     "file": "db21 Clap Stack"
+    }
+   ],
+   "layers": [
+    "c01 Clap Crowd",
+    "cd24 Clap Stack",
+    "cd25 Clap Person",
+    "cd26 Handclap Body",
+    "db21 Clap Stack"
+   ]
+  },
+  {
+   "id": "kz11",
+   "name": "Snap Room",
+   "cat": "clap",
+   "pack": "kz",
+   "file": "samples/kz11-snap-room.wav",
+   "dur": 0.641,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd28 Finger Snap"
+    }
+   ],
+   "layers": [
+    "cd28 Finger Snap"
+   ]
+  },
+  {
+   "id": "kz12",
+   "name": "808 Rim",
+   "cat": "snare",
+   "pack": "kz",
+   "file": "samples/kz12-808-rim.wav",
+   "dur": 0.091,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz13",
+   "name": "808 Clave",
+   "cat": "perc",
+   "pack": "kz",
+   "file": "samples/kz13-808-clave.wav",
+   "dur": 0.18,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz14",
+   "name": "808 Cowbell",
+   "cat": "perc",
+   "pack": "kz",
+   "file": "samples/kz14-808-cowbell.wav",
+   "dur": 0.6,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz15",
+   "name": "Cowbell Dirty",
+   "cat": "perc",
+   "pack": "kz",
+   "file": "samples/kz15-cowbell-dirty.wav",
+   "dur": 0.6,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz16",
+   "name": "808 Hat Closed",
+   "cat": "hat",
+   "pack": "kz",
+   "file": "samples/kz16-808-hat-closed.wav",
+   "dur": 0.25,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "choke": 1
+  },
+  {
+   "id": "kz17",
+   "name": "808 Hat Tight",
+   "cat": "hat",
+   "pack": "kz",
+   "file": "samples/kz17-808-hat-tight.wav",
+   "dur": 0.15,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "choke": 1
+  },
+  {
+   "id": "kz18",
+   "name": "808 Hat Open",
+   "cat": "hat",
+   "pack": "kz",
+   "file": "samples/kz18-808-hat-open.wav",
+   "dur": 1.2,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "choke": 1
+  },
+  {
+   "id": "kz19",
+   "name": "808 Cymbal",
+   "cat": "cymbal",
+   "pack": "kz",
+   "file": "samples/kz19-808-cymbal.wav",
+   "dur": 2.2,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz20",
+   "name": "808 Tom Low",
+   "cat": "tom",
+   "pack": "kz",
+   "file": "samples/kz20-808-tom-low.wav",
+   "dur": 1.0,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz21",
+   "name": "808 Tom Mid",
+   "cat": "tom",
+   "pack": "kz",
+   "file": "samples/kz21-808-tom-mid.wav",
+   "dur": 0.9,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz22",
+   "name": "808 Conga Hi",
+   "cat": "perc",
+   "pack": "kz",
+   "file": "samples/kz22-808-conga-hi.wav",
+   "dur": 0.45,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz23",
+   "name": "808 Conga Low",
+   "cat": "perc",
+   "pack": "kz",
+   "file": "samples/kz23-808-conga-low.wav",
+   "dur": 0.5,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz24",
+   "name": "808 Maracas",
+   "cat": "perc",
+   "pack": "kz",
+   "file": "samples/kz24-808-maracas.wav",
+   "dur": 0.08,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz25",
+   "name": "808 Sub C",
+   "cat": "bass",
+   "pack": "kz",
+   "file": "samples/kz25-808-sub-c.wav",
+   "dur": 2.2,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz26",
+   "name": "808 Bass Dist C",
+   "cat": "bass",
+   "pack": "kz",
+   "file": "samples/kz26-808-bass-dist-c.wav",
+   "dur": 2.0,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz27",
+   "name": "808 Slide C",
+   "cat": "bass",
+   "pack": "kz",
+   "file": "samples/kz27-808-slide-c.wav",
+   "dur": 2.0,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz28",
+   "name": "Miami Boom C",
+   "cat": "bass",
+   "pack": "kz",
+   "file": "samples/kz28-miami-boom-c.wav",
+   "dur": 2.6,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz29",
+   "name": "Square Bass C",
+   "cat": "bass",
+   "pack": "kz",
+   "file": "samples/kz29-square-bass-c.wav",
+   "dur": 0.9,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz30",
+   "name": "Tuba 808 Bass C",
+   "cat": "bass",
+   "pack": "kz",
+   "file": "samples/kz30-tuba-808-bass-c.wav",
+   "dur": 1.6,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd91 Tuba Hit C"
+    }
+   ],
+   "layers": [
+    "cd91 Tuba Hit C"
+   ],
+   "root": "C"
+  },
+  {
+   "id": "kz31",
+   "name": "Orchester-Hit Cm",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz31-orchester-hit-cm.wav",
+   "dur": 1.529,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd66 Upright Bass Arco C"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd91 Tuba Hit C"
+    }
+   ],
+   "layers": [
+    "cd66 Upright Bass Arco C",
+    "cd91 Tuba Hit C"
+   ],
+   "root": "C"
+  },
+  {
+   "id": "kz32",
+   "name": "Orchester-Hit Dark",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz32-orchester-hit-dark.wav",
+   "dur": 2.2,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd66 Upright Bass Arco C"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd91 Tuba Hit C"
+    }
+   ],
+   "layers": [
+    "cd66 Upright Bass Arco C",
+    "cd91 Tuba Hit C"
+   ],
+   "root": "G"
+  },
+  {
+   "id": "kz33",
+   "name": "Bläser-Stab Cm",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz33-blaeser-stab-cm.wav",
+   "dur": 1.034,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd94 Tuba Stab G"
+    },
+    {
+     "lib": "bap50",
+     "file": "m04 Tenor Sax Stab C"
+    }
+   ],
+   "layers": [
+    "cd94 Tuba Stab G",
+    "m04 Tenor Sax Stab C"
+   ],
+   "root": "C"
+  },
+  {
+   "id": "kz34",
+   "name": "Crunk Stab Cm",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz34-crunk-stab-cm.wav",
+   "dur": 0.5,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz35",
+   "name": "Electro Lead C",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz35-electro-lead-c.wav",
+   "dur": 1.3,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz36",
+   "name": "Piano Stab Dark Cm",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz36-piano-stab-dark-cm.wav",
+   "dur": 2.0,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "dh44 Piano Bbm Stab"
+    }
+   ],
+   "layers": [
+    "dh44 Piano Bbm Stab"
+   ],
+   "root": "C"
+  },
+  {
+   "id": "kz37",
+   "name": "Streicher Pad Cm",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz37-streicher-pad-cm.wav",
+   "dur": 3.5,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd66 Upright Bass Arco C"
+    }
+   ],
+   "layers": [
+    "cd66 Upright Bass Arco C"
+   ],
+   "root": "C"
+  },
+  {
+   "id": "kz38",
+   "name": "Glocke Dark C",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz38-glocke-dark-c.wav",
+   "dur": 3.0,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz39",
+   "name": "Pluck Lead C",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz39-pluck-lead-c.wav",
+   "dur": 0.6,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz40",
+   "name": "Chor Pad Cm",
+   "cat": "keys",
+   "pack": "kz",
+   "file": "samples/kz40-chor-pad-cm.wav",
+   "dur": 3.5,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": [],
+   "root": "C"
+  },
+  {
+   "id": "kz41",
+   "name": "Air Horn",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz41-air-horn.wav",
+   "dur": 1.29,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz42",
+   "name": "Martinshorn",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz42-martinshorn.wav",
+   "dur": 3.2,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz43",
+   "name": "Sirene Wail",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz43-sirene-wail.wav",
+   "dur": 3.5,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz44",
+   "name": "Laser Zap",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz44-laser-zap.wav",
+   "dur": 0.35,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz45",
+   "name": "Peitsche",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz45-peitsche.wav",
+   "dur": 0.625,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz46",
+   "name": "Scratch Baby",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz46-scratch-baby.wav",
+   "dur": 0.597,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "m04 Tenor Sax Stab C"
+    }
+   ],
+   "layers": [
+    "m04 Tenor Sax Stab C"
+   ]
+  },
+  {
+   "id": "kz47",
+   "name": "Scratch Chirp",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz47-scratch-chirp.wav",
+   "dur": 0.499,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd95 Tuba Woo"
+    }
+   ],
+   "layers": [
+    "cd95 Tuba Woo"
+   ]
+  },
+  {
+   "id": "kz48",
+   "name": "Reverse Becken",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz48-reverse-becken.wav",
+   "dur": 1.999,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
+  },
+  {
+   "id": "kz49",
+   "name": "Tape Stop",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz49-tape-stop.wav",
+   "dur": 1.0,
+   "tags": "kiez 808 berlin miami crunk layer",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd66 Upright Bass Arco C"
+    },
+    {
+     "lib": "bap50",
+     "file": "cd91 Tuba Hit C"
+    }
+   ],
+   "layers": [
+    "cd66 Upright Bass Arco C",
+    "cd91 Tuba Hit C"
+   ]
+  },
+  {
+   "id": "kz50",
+   "name": "Sub Drop",
+   "cat": "fx",
+   "pack": "kz",
+   "file": "samples/kz50-sub-drop.wav",
+   "dur": 2.2,
+   "tags": "kiez 808 berlin miami crunk synth",
+   "src": [
+    {
+     "lib": "synth",
+     "file": "build_pack_kz.py"
+    }
+   ],
+   "layers": []
   }
  ],
  "packs": {
   "core": "Core 50",
   "db": "Dusty Bap",
   "dh": "Dark Hill",
-  "cd": "Crate Diggers"
+  "cd": "Crate Diggers",
+  "kz": "Kiez 808"
  }
 }

@@ -707,3 +707,9 @@ body.dropping::after {
 .more-grid { display: grid; gap: 8px; min-width: min(420px, 84vw); }
 @media (max-width: 640px) { .gen, .more-grid { min-width: 0; } }
 @media (max-width: 1300px) and (min-width: 981px) { .tab { padding: 7px 5px; font-size: 11px; letter-spacing: .02em; } .tab[aria-selected='true'] .ti { display: none; } .tab-g { margin: 0 2px; } }
+/* 20 Bänke (A–T): Leiste immer einzeilig, Tasten teilen sich die Breite */
+.seg.banks { display: flex; width: 100%; flex-wrap: nowrap; }
+.seg.banks button { min-width: 0; padding: 7px 0; flex: 1 1 0; }
+/* Auswahlfelder nie breiter als ihr Platz (lange Preset-Namen) */
+.sel-in { max-width: 100%; min-width: 0; text-overflow: ellipsis; }
+.row > .sel-in { flex: 0 1 auto; }

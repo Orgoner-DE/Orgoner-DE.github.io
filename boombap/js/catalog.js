@@ -13,7 +13,7 @@ export const CATS = {
   tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', bass: 'Bass', fx: 'FX', user: 'Eigene',
 };
 
-export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', cd: 'Crate Diggers', synth: 'Synth', user: 'Eigene' };
+export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', cd: 'Crate Diggers', kz: 'Kiez 808', synth: 'Synth', user: 'Eigene' };
 
 const DB_NAME = 'bap50';
 const STORE = 'samples';

@@ -1,6 +1,14 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **2.0.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **2.1.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+
+## Neu in 2.1 – Kiez 808
+
+- **Pack „Kiez 808“ (50 Klänge)** im Sound des Großstadt-Straßenraps der 2000er: 808-Boom-Kicks, 808-Snares, Claps, Snaps, Rim, Clave, Cowbells, Hats, Toms, Congas, 808-Subbässe mit Slide und Distortion, Miami Boom, Orchester-Hits, Bläser-Stabs, Crunk-Stabs, Electro- und Pluck-Lead, Klavier-Stab, Streicher- und Chor-Pad, Air Horn, Martinshorn, Sirene, Laser, Peitsche, Scratches, Tape Stop, Sub Drop. Eigene Klänge (`tools/build_pack_kz.py`): 808-Synthese, Hits und Stabs zusätzlich mit vorhandenen CC0-Aufnahmen geschichtet. Keine Samples von Platten, keine nachgebauten Songs, keine Künstlernamen.
+- **20 Bänke (A–T, 320 Pads):** Q = Kiez 808 Drums, R = Kiez 808 Hits & Bass, S/T frei. Bestehende Projekte bekommen Q/R automatisch dazu; der Pack-Import überspringt belegte Bänke.
+- **Style-Presets** (Pattern 13–15, Menü Pattern → Style-Presets): „Kiez Bounce“ (128 BPM, Miami-Bass-Bounce), „Hinterhof Crunk“ (78 BPM), „Plattenbau Nacht“ (92 BPM, düster).
+- **Beat-Generator:** neue Stile „Kiez Bounce“ und „Crunk“; nimmt automatisch die Nachbarbank dazu (Q + R, M + N), Zusatz-Bank frei wählbar.
+- **APC mini mk2:** fünfte Bankseite (Q–T) im PADS-Modus, im MENÜ mit Shift Bänke E–T.
 
 ## Neu in 2.0
 
@@ -31,7 +39,7 @@ Version **2.0.0** · läuft unter `/boombap/` dieser Seite, als PWA installierba
   - **Dusty Bap** (50): gealterte Boom-Bap-Drums (12 Bit, gepitcht, Snare+Clap-Layer), Piano-, Vibes- und E-Piano-Akkorde, Bläser-Stabs, Piano-Bass.
   - **Crate Diggers** (100): weitere echte Drumkits (Karoryfer Big Rusty, Swirly, Unruly, Frankensnare, The Hat With The Phat), Body-Percussion (Claps, Snaps, Stomps, Brust/Bauch), gezupfter und gestrichener Kontrabass, Horror-Piano einzeln und als Akkorde, Jazzgitarren-Akkorde, Saxophon-Stabs, Tuba-Stöße. Vorbelegt auf Bank M (Drums) und N (Bass & Keys), Groove „Crate Diggers“ in Pattern 12.
   - **Dark Hill** (50): dunkler Westcoast-Boom-Bap – schwere Drums mit Raum, Timbales, Congas, Guiro, Cuica, Sirenen-/Pfeifen-Quietscher, Flexaton, Gong, Orgel, düsteres Piano, Mundharmonika, Saxophon.
-- **256 Pads** in 16 Bänken (A Boom-Bap-Kern, B Drums 2, C Hats/Becken/Toms/Perc, D Keys, E Dusty-Bap-Drums, F Dusty-Bap-Chops, G Dark-Hill-Drums & Latin, H Dark-Hill-Keys & FX, I–K Style-Presets, L Synth, M–N Crate Diggers, O–P Import), anschlagdynamisch (Tipp-Höhe im Pad), Full Level.
+- **320 Pads** in 20 Bänken (A Boom-Bap-Kern, B Drums 2, C Hats/Becken/Toms/Perc, D Keys, E Dusty-Bap-Drums, F Dusty-Bap-Chops, G Dark-Hill-Drums & Latin, H Dark-Hill-Keys & FX, I–K Style-Presets, L Synth, M–N Crate Diggers, O–P Import, Q–R Kiez 808, S–T Import), anschlagdynamisch (Tipp-Höhe im Pad), Full Level.
 - **16 Levels** (Tune / Velocity) und **Note Repeat** (1/8, 1/16, 1/16T, 1/32), beide auch in der Aufnahme.
 - **Step-Sequencer**: 16 Patterns, 1–4 Takte, Swing 50–75 %, Velocity und Tonhöhe pro Step, Live-Aufnahme quantisiert, Pattern-Wechsel am Pattern-Ende, Spur verschieben, Verdoppeln, Kopieren, Undo/Redo, 8 eigene Grooves (u. a. „Dusty Crate“, „Dark Hill“, „Hill Latin Smoke“).
 - **Song-Modus**: Pattern-Kette mit Wiederholungen.
@@ -68,6 +76,7 @@ python3 -m http.server 8000   # im Repo-Wurzelordner
 python3 boombap/tools/build_samples.py --cache /tmp/bap-cache   # Core 50
 python3 boombap/tools/build_packs.py --cache /tmp/bap-cache     # Dusty Bap + Dark Hill
 python3 boombap/tools/build_pack_cd.py --cache /tmp/bap-cache   # Crate Diggers
+python3 boombap/tools/build_pack_kz.py                          # Kiez 808 (Synthese + Layer aus vorhandenen Samples)
 ```
 
 Das Skript lädt die Originale von raw.githubusercontent.com, braucht `ffmpeg` und `numpy`.

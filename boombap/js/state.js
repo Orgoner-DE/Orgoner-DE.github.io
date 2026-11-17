@@ -1,8 +1,8 @@
 // Projektmodell, Standard-Kit, Grooves, Speichern/Laden, Undo.
 import { clamp, safeStorage } from './util.js';
 
-export const NUM_PADS = 256;
-export const NUM_BANKS = 16;
+export const NUM_PADS = 320;
+export const NUM_BANKS = 20;
 export const NUM_PATTERNS = 16;
 export const MAX_STEPS = 64;
 export const LENGTHS = [16, 32, 48, 64];
@@ -29,8 +29,13 @@ PRESET_KITS.crate_m = [['cd01'], ['cd03'], ['cd10'], ['cd22'], ['cd30'], ['cd32'
   ['cd14'], ['cd16'], ['cd56'], ['cd28'], ['cd38'], ['cd39'], ['cd44'], ['cd42']];
 PRESET_KITS.crate_n = [['cd59'], ['cd61'], ['cd62'], ['cd63'], ['cd64'], ['cd76'], ['cd77'], ['cd80'],
   ['cd81'], ['cd70'], ['cd71'], ['cd87'], ['cd84'], ['cd91'], ['cd68'], ['cd94']];
+// Q/R: Kiez 808 – Großstadt-Straßenrap der 2000er (808, Miami Bass, Crunk), eigene Klänge
+PRESET_KITS.kiez_q = [['kz01'], ['kz02'], ['kz06'], ['kz08'], ['kz16'], ['kz17'], ['kz18'], ['kz09'],
+  ['kz10'], ['kz11'], ['kz12'], ['kz14'], ['kz13'], ['kz22'], ['kz20'], ['kz19']];
+PRESET_KITS.kiez_r = [['kz25'], ['kz26'], ['kz27'], ['kz28'], ['kz31'], ['kz32'], ['kz33'], ['kz34'],
+  ['kz35'], ['kz36'], ['kz37'], ['kz41'], ['kz42'], ['kz44'], ['kz45'], ['kz46']];
 export function presetKitIds(name) { return (PRESET_KITS[name] || []).map(([id]) => id); }
-export const PRESET_BANKS = { grey: 8, memphis: 9, coffin: 10, synth: 11, crate_m: 12, crate_n: 13 };
+export const PRESET_BANKS = { grey: 8, memphis: 9, coffin: 10, synth: 11, crate_m: 12, crate_n: 13, kiez_q: 16, kiez_r: 17 };
 
 // [Sample-ID, Halbtöne] je Pad. A = Boom-Bap-Kern, B = Drums 2, C = Hats/Becken/Toms/Perc, D = Keys,
 // E = Dusty Bap Drums, F = Dusty Bap Chops, G = Dark Hill Drums/Latin, H = Dark Hill Keys/FX.
@@ -54,6 +59,9 @@ const KIT = [
   ...PRESET_KITS.grey, ...PRESET_KITS.memphis, ...PRESET_KITS.coffin, ...PRESET_KITS.synth,
   // M: Crate Diggers Drums, N: Crate Diggers Bass & Keys (O, P frei für Importe)
   ...PRESET_KITS.crate_m, ...PRESET_KITS.crate_n,
+  // O, P: frei für Importe; Q, R: Kiez 808; S, T: frei
+  ...Array.from({ length: 32 }, () => [null]),
+  ...PRESET_KITS.kiez_q, ...PRESET_KITS.kiez_r,
 ];
 
 function padFor(id, tune, catOf) {
@@ -81,6 +89,15 @@ function padFor(id, tune, catOf) {
     p.vol = { bass: 0.46, kick: 0.62, snare: 0.6, clap: 0.62, hat: 0.5, perc: 0.48, keys: 0.4, fx: 0.42 }[cat] ?? 0.5;
     if (cat === 'bass') p.mono = true;
     if (cat === 'hat') { p.choke = 1; p.mono = true; }
+  }
+  if (/^kz/.test(id)) {
+    // Kiez 808: Synthese-Klänge sind dicht und auf −1 dBFS gemastert
+    p.vint = 'off'; p.fq = 1; p.res = 0; p.sb = 0;
+    p.vol = { kick: 0.6, snare: 0.6, clap: 0.62, hat: 0.46, cymbal: 0.44, perc: 0.48, tom: 0.55, bass: 0.5, keys: 0.44, fx: 0.42 }[cat] ?? 0.5;
+    p.sa = { snare: 0.1, clap: 0.12, keys: 0.14, fx: 0.16, perc: 0.08 }[cat] ?? 0;
+    if (cat === 'bass') p.mono = true;
+    if (cat === 'kick') p.mono = true;
+    if (cat === 'hat') { p.choke = 1; p.mono = true; p.pan = 0.12; }
   }
   // Pack-Drums sind gesättigt und dichter: etwas leiser einpegeln
   if (/^d[bh]/.test(id) && ['kick', 'snare', 'clap', 'hat', 'perc', 'cymbal'].includes(cat)) p.vol = +(p.vol * 0.8).toFixed(2);
@@ -309,6 +326,57 @@ export const GROOVES = [
       [218, '................|................|o...............|................'],
       [216, '................|................|................|o...............'],
       [219, '................|............o...|................|............o...'],
+    ],
+  },
+  // Kiez 808 (Q/R): eigener Sound im Stil des Großstadt-Straßenraps der 2000er – keine nachgebauten Songs
+  {
+    name: 'Kiez Bounce (Preset Bank Q/R)', bpm: 128, swing: 50, len: 32, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17]],
+    master: { comp: 0.5, tape: 0.35, warm: 0.15, dust: 0.12, crunch: 0, revSize: 0.3, revRet: 0.4, pump: 0 },
+    lanes: [
+      [257, 'X.....X...X.....|X.....X...X..X..'],
+      [275, 'X.....x...x.....|X.....x...x..x..', [0, 0, 3, 0, 0, -2, -4]],
+      [263, '....X.......X...|....X.......X...'],
+      [258, '....o.......o...|....o.......o..g'],
+      [260, 'xoxoxoxoxoxoxoxo|xoxoxoxoxoxox3xo'],
+      [262, '................|..............o.'],
+      [267, '..x..x....x..x..|..x..x....x.x...', [0, 0, -5, 0, 0, 0, -5, 3]],
+      [276, 'X...............|..........x.....', [0, -2]],
+      [285, '................|............x...'],
+      [287, '................|...............x'],
+    ],
+  },
+  {
+    name: 'Hinterhof Crunk (Preset Bank Q/R)', bpm: 78, swing: 52, len: 32, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17]],
+    master: { comp: 0.55, tape: 0.45, warm: 0.2, dust: 0.18, crunch: 0.05, revSize: 0.35, revRet: 0.45, pump: 0 },
+    lanes: [
+      [256, 'X......X..X.....|X......X..X..X..'],
+      [273, 'X......x..x.....|X......x..x..x..', [0, 0, 3, -2, -2, 0, -4]],
+      [259, '....X.......X...|....X.......X...'],
+      [264, '....x.......x...|....x.......x...'],
+      [260, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.x2x.3.'],
+      [266, '.......g......g.|..g....g........'],
+      [279, 'x..x..x.........|x..x..x...x.x...', [0, 0, 3, 0, 0, 3, 5, 3]],
+      [278, '................|........x.......', [-2]],
+      [283, 'o...............|................'],
+      [286, '............x...|................'],
+      [271, 'o...............|................'],
+    ],
+  },
+  {
+    name: 'Plattenbau Nacht (Preset Bank Q/R)', bpm: 92, swing: 54, len: 64, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17]],
+    master: { comp: 0.5, tape: 0.4, warm: 0.3, dust: 0.3, crunch: 0.1, revSize: 0.45, revRet: 0.5, pump: 0 },
+    lanes: [
+      [256, 'X.......X.X.....|X.......X.....x.|X.......X.X.....|X.......X...X...'],
+      [272, 'X.......x.x.....|X.......x.....x.|X.......x.x.....|X.......x...x...', [0, 0, 0, -4, -4, -4, 0, 0, 0, -2, -2, -2]],
+      [258, '....X.......X...|....X.......X...|....X.......X...|....X.......X...'],
+      [265, '....o.......o...|....o.......o...|....o.......o...|....o.......o...'],
+      [266, '..g.....g.....g.|......g.......g.|..g.....g.....g.|......g.....g...'],
+      [260, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.xxx.x.|x.x.x.x.x.x.x.x.|x.x.x.x.x.x.x.3.'],
+      [267, 'x..x..x...x..x..|................|x..x..x...x..x..|................', [-5, -2, 2, 0, -2, -5, -2, 2, 5, 2]],
+      [281, 'x...............|x...............|x...............|x...............', [0, -4, 0, -2]],
+      [282, 'o...............|................|o...............|................', [0, -2]],
+      [284, '................|................|................|o...............'],
+      [271, 'o...............|................|................|................'],
     ],
   },
 ];

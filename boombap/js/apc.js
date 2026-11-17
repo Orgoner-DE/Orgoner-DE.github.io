@@ -12,6 +12,9 @@ export const MODES = [['pads', 'PADS'], ['seq', 'SEQ'], ['lane', 'LANE'], ['mix'
 const TRACK0 = 0x64;
 const SCENE0 = 0x70;
 const SHIFT = 0x7a;
+const BANKS = 'ABCDEFGHIJKLMNOPQRST';
+const PAGES = Math.ceil(BANKS.length / 4); // PADS-Modus: 4 Bänke je Seite
+const NB = BANKS.length;
 const CC_FADER0 = 0x30;
 const CC_MASTER = 0x38;
 
@@ -155,7 +158,7 @@ export class Apc {
       track[4] = A.fullLevel() ? 1 : 0;
       track[5] = A.repeatDiv() ? 2 : 0;
       track[6] = this.bankPage > 0 ? 1 : 0;
-      track[7] = this.bankPage < 3 ? 1 : 0;
+      track[7] = this.bankPage < PAGES - 1 ? 1 : 0;
     } else if (this.mode === 'seq') {
       const pages = Math.ceil(ptn.len / 8);
       if (this.stepPage >= pages) this.stepPage = 0;
@@ -217,10 +220,13 @@ export class Apc {
         const used = Object.values(p.patterns[k].steps).some((a) => a.some((v) => v > 0));
         pads[n] = k === p.cur.ptn ? [0x96, 3] : A.pending() === k ? [BLINK, 21] : used ? [b(4), 21] : [0x90, 1];
       }
+      // Bänke: 16 Felder, mit Shift um 4 verschoben (E–T)
+      const b0 = this.shift ? NB - 16 : 0;
       for (let k = 0; k < 16; k++) {
         const n = (k < 8 ? 5 : 4) * 8 + (k % 8);
-        const used = p.pads.slice(k * 16, k * 16 + 16).some((x) => x.s);
-        pads[n] = k === p.cur.bank ? [0x96, 9] : used ? [b(3), 37] : [0x90, 1];
+        const bk = b0 + k;
+        const used = p.pads.slice(bk * 16, bk * 16 + 16).some((x) => x.s);
+        pads[n] = bk === p.cur.bank ? [0x96, 9] : used ? [b(3), 37] : [0x90, 1];
       }
       const rd = A.repeatDiv();
       [null, '1/8', '1/16', '1/16T', '1/32'].forEach((d, k) => { pads[3 * 8 + k] = rd === d ? [0x96, d ? 37 : 3] : [0x90, d ? 37 : 2]; });
@@ -337,7 +343,7 @@ export class Apc {
     const A = this.api;
     const p = A.project();
     if (row === 7 || row === 6) { A.selectPattern((row === 7 ? 0 : 8) + col); return; }
-    if (row === 5 || row === 4) { A.setBank((row === 5 ? 0 : 8) + col); return; }
+    if (row === 5 || row === 4) { A.setBank((this.shift ? NB - 16 : 0) + (row === 5 ? 0 : 8) + col); return; }
     if (row === 3) {
       if (col < 5) A.setRepeat([null, '1/8', '1/16', '1/16T', '1/32'][col]);
       else if (col === 5) A.setFull(!A.fullLevel());
@@ -369,7 +375,7 @@ export class Apc {
       else if (k === 4) A.setFull(!A.fullLevel());
       else if (k === 5) A.setRepeat(A.repeatDiv() ? null : '1/16');
       else if (k === 6) this.bankPage = Math.max(0, this.bankPage - 1);
-      else this.bankPage = Math.min(3, this.bankPage + 1);
+      else this.bankPage = Math.min(PAGES - 1, this.bankPage + 1);
     } else if (this.mode === 'seq') {
       const pages = Math.ceil(p.patterns[p.cur.ptn].len / 8);
       if (k < pages) this.stepPage = k;
@@ -385,7 +391,7 @@ export class Apc {
     const A = this.api;
     if (k < 5) { this.setMode(MODES[k][0]); return; }
     if (k === 5) {
-      if (this.mode === 'pads') this.bankPage = this.shift ? Math.max(0, this.bankPage - 1) : (this.bankPage + 1) % 4;
+      if (this.mode === 'pads') this.bankPage = this.shift ? Math.max(0, this.bankPage - 1) : (this.bankPage + 1) % PAGES;
       else this.lanePage = this.lanePage ? 0 : 1;
       this.notify();
       return;
@@ -398,7 +404,7 @@ export class Apc {
   labels() {
     const A = this.api;
     const p = A.project();
-    const L = (i) => 'ABCDEFGHIJKLMNOP'[i >> 4] + String((i % 16) + 1).padStart(2, '0');
+    const L = (i) => BANKS[i >> 4] + String((i % 16) + 1).padStart(2, '0');
     const grid = new Array(64).fill('');
     let track = new Array(8).fill('');
     const scene = ['PADS', 'SEQ', 'LANE', 'MIX', 'MENÜ', 'SEITE', 'PLAY', 'REC'];
@@ -411,10 +417,10 @@ export class Apc {
         const bank = this.bankPage * 4 + (row >= 4 ? 0 : 2) + (col >= 4 ? 1 : 0);
         grid[n] = L(bank * 16 + (row % 4) * 4 + (col % 4));
       }
-      const bn = (k) => 'ABCDEFGHIJKLMNOP'[this.bankPage * 4 + k];
+      const bn = (k) => BANKS[this.bankPage * 4 + k];
       track = [bn(0), bn(1), bn(2), bn(3), 'FULL', 'REPEAT', '◀ BÄNKE', 'BÄNKE ▶'];
       help = [['Raster', `4 Bänke gleichzeitig: oben ${bn(0)} | ${bn(1)}, unten ${bn(2)} | ${bn(3)}. Farbe = Klangart, pulsierend = gewähltes Pad, weiß = Anschlag.`],
-        ['Shift + Pad', 'Pad auswählen, ohne es zu spielen.'], ['Track 1–4', 'Bank wählen'], ['Track 5–6', 'Full Level · Note Repeat 1/16'], ['Track 7–8 / Scene 6', 'Bänke A–D, E–H, I–L, M–P durchblättern']];
+        ['Shift + Pad', 'Pad auswählen, ohne es zu spielen.'], ['Track 1–4', 'Bank wählen'], ['Track 5–6', 'Full Level · Note Repeat 1/16'], ['Track 7–8 / Scene 6', 'Bänke A–D, E–H, I–L, M–P, Q–T durchblättern']];
     } else if (this.mode === 'seq') {
       for (let r = 0; r < 8; r++) for (let st = 0; st < 8; st++) grid[(7 - r) * 8 + st] = st === 0 ? L(laneBase + r) : String(this.stepPage * 8 + st + 1);
       track = Array.from({ length: 8 }, (_, k) => `${k * 8 + 1}–${k * 8 + 8}`);
@@ -433,14 +439,15 @@ export class Apc {
       const set = (row, arr) => arr.forEach((t, k) => { grid[row * 8 + k] = t; });
       set(7, Array.from({ length: 8 }, (_, k) => 'P' + (k + 1)));
       set(6, Array.from({ length: 8 }, (_, k) => 'P' + (k + 9)));
-      set(5, 'ABCDEFGH'.split('').map((c) => 'BK ' + c));
-      set(4, 'IJKLMNOP'.split('').map((c) => 'BK ' + c));
+      const b0 = this.shift ? NB - 16 : 0;
+      set(5, BANKS.slice(b0, b0 + 8).split('').map((c) => 'BK ' + c));
+      set(4, BANKS.slice(b0 + 8, b0 + 16).split('').map((c) => 'BK ' + c));
       set(3, ['NR AUS', 'NR 8', 'NR 16', 'NR 16T', 'NR 32', 'FULL', 'TUNE', 'VELO']);
       set(2, ['PLAY', 'STOP', 'REC', 'METRO', 'SONG', 'TAP', 'BPM −', 'BPM +']);
       set(1, ['1 TAKT', '2 TAKTE', '3 TAKTE', '4 TAKTE', '×2 ⇧🎲', '⇧ LEER', 'UNDO', 'REDO']);
       set(0, ['SW 50', 'SW 54', 'SW 58', 'SW 62', 'SW 66', 'VINYL', 'CRUNCH', 'PANIK']);
       track = Array.from({ length: 8 }, (_, k) => 'MUTE ' + L(laneBase + k));
-      help = [['Reihe 1–2', 'Pattern 1–16 (weiß = aktuell, grün = belegt, blinkend = folgt)'], ['Reihe 3–4', 'Bank A–P'], ['Reihe 5', 'Note Repeat, Full Level, 16 Levels'],
+      help = [['Reihe 1–2', 'Pattern 1–16 (weiß = aktuell, grün = belegt, blinkend = folgt)'], ['Reihe 3–4', 'Bank A–P (mit Shift: E–T)'], ['Reihe 5', 'Note Repeat, Full Level, 16 Levels'],
         ['Reihe 6', 'Transport: Play, Stop, Rec, Metronom, Song, Tap, BPM ∓'], ['Reihe 7', 'Länge, verdoppeln (mit Shift: Beat würfeln), Bank-Spuren leeren (mit Shift), Undo, Redo'], ['Reihe 8', 'Swing, Vinyl, Crunch, Panik (alle Stimmen aus)']];
     }
     const fx = { vol: 'Level', pan: 'Pan', sa: 'Hall', sb: 'Delay', fq: 'Filter', tune: 'Tune' }[this.fader];

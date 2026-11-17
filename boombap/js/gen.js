@@ -7,6 +7,8 @@ export const STYLES = {
   dark: { name: 'Dark Hill', bpm: [86, 94], swing: [52, 56] },
   phonk: { name: 'Phonk', bpm: [132, 146], swing: [50, 50] },
   lofi: { name: 'Lo-Fi', bpm: [74, 84], swing: [58, 62] },
+  bounce: { name: 'Kiez Bounce', bpm: [124, 132], swing: [50, 50] },
+  crunk: { name: 'Crunk', bpm: [74, 82], swing: [50, 54] },
 };
 
 const KICKS = {
@@ -14,6 +16,8 @@ const KICKS = {
   dark: [[0, 6, 10], [0, 3, 8, 10], [0, 10], [0, 7, 10, 15], [0, 2, 8, 11]],
   phonk: [[0, 10], [0, 7, 10], [0, 3, 10], [0, 6, 10, 14]],
   lofi: [[0, 7, 10], [0, 9], [0, 3, 10], [0, 8, 11]],
+  bounce: [[0, 6, 10], [0, 6, 10, 13], [0, 3, 6, 10], [0, 10, 11], [0, 6, 8, 10]],
+  crunk: [[0, 7, 10], [0, 7, 10, 13], [0, 3, 10], [0, 10, 11, 14]],
 };
 const PROGS = [[0, -4, -2, -5], [0, -2, -4, -2], [0, 5, 3, -2], [0, 0, -4, -5], [0, 3, -2, -4]];
 const PENTA = [0, 3, 5, 7, 10, 12];
@@ -40,9 +44,13 @@ export function pickRoles(items) {
     hat: first(hats) ?? first(by('hat')),
     hat2: hats.length > 1 ? hats[1].i : null,
     openHat: first(openHat) ?? first(by('cymbal')),
-    perc: first(by('perc')),
-    perc2: by('perc').length > 1 ? by('perc')[1].i : first(by('tom')),
+    perc: first(by('perc', null, /cowbell|bell|glocke/i)) ?? first(by('perc')),
+    perc2: by('perc', null, /cowbell|bell|glocke/i).length > 1 ? by('perc', null, /cowbell|bell|glocke/i)[1].i : first(by('tom')),
     bell: first(items.filter((x) => /cowbell|bell|glocke/i.test(x.name))),
+    stab: first(items.filter((x) => (x.cat === 'keys' || x.cat === 'fx') && /orchester|orch|stab|hit|bläser|brass/i.test(x.name))),
+    lead: first(items.filter((x) => x.cat === 'keys' && /lead|pluck|square|synth/i.test(x.name))),
+    horn: first(items.filter((x) => x.cat === 'fx' && /horn|sirene|siren/i.test(x.name))),
+    whip: first(items.filter((x) => x.cat === 'fx' && /peitsche|whip/i.test(x.name))),
     bass: first(by('bass')),
     keys: first(by('keys')),
     fx: first(by('fx')),
@@ -71,8 +79,9 @@ export function generate(items, { style = 'boombap', density = 2, bars = 2, seed
   const kickA = pick(KICKS[style]);
   let kickB = pick(KICKS[style]);
   if (kickB === kickA && chance(0.5)) kickB = pick(KICKS[style]);
-  const backbeat = style === 'phonk' ? (R.clap ?? R.snare) : (R.snare ?? R.clap);
-  const layer = style === 'boombap' && R.clap != null && R.snare != null && chance(0.35) ? R.clap : null;
+  const backbeat = style === 'phonk' || style === 'bounce' ? (R.clap ?? R.snare) : (R.snare ?? R.clap);
+  const layer = (style === 'boombap' && chance(0.35)) || style === 'crunk' || (style === 'bounce' && chance(0.5))
+    ? (backbeat === R.clap ? R.snare : R.clap) : null;
 
   for (let b = 0; b < bars; b++) {
     const o = b * 16;
@@ -102,7 +111,17 @@ export function generate(items, { style = 'boombap', density = 2, bars = 2, seed
     }
     // Hats
     if (R.hat != null) {
-      if (style === 'phonk') {
+      if (style === 'bounce') {
+        for (let s = 0; s < 16; s++) {
+          if (density === 1 && s % 2) continue;
+          put(R.hat, o + s, s % 2 === 0 ? vel(96, 116) : vel(58, 76));
+        }
+        if (density >= 2 && chance(0.6)) put(R.hat, o + pick([13, 14, 15]), vel(80, 96), 0, pick([2, 3]));
+      } else if (style === 'crunk') {
+        for (let s = 0; s < 16; s += 2) put(R.hat, o + s, s % 4 === 0 ? vel(96, 112) : vel(66, 84));
+        const rolls = density - 1 + (last ? 1 : 0);
+        for (let k = 0; k < rolls; k++) put(R.hat, o + pick([6, 10, 11, 14, 15]), vel(78, 96), 0, pick([2, 3]));
+      } else if (style === 'phonk') {
         for (let s = 0; s < 16; s++) {
           if (density === 1 && s % 2) continue;
           put(R.hat, o + s, s % 4 === 0 ? vel(100, 118) : s % 2 === 0 ? vel(78, 96) : vel(55, 75));
@@ -131,7 +150,23 @@ export function generate(items, { style = 'boombap', density = 2, bars = 2, seed
       if (chance(pp)) put(s % 2 && R.perc2 != null ? R.perc2 : R.perc, o + s, vel(55, 90));
     }
     // Melodie / Akkorde
-    if (style === 'phonk' && (R.bell ?? R.keys) != null) {
+    if (style === 'bounce') {
+      if (R.bell != null) {
+        const motif = pick([[2, 5, 10, 13], [2, 5, 10, 12, 14], [3, 6, 11, 14]]);
+        motif.forEach((s, k) => put(R.bell, o + s, vel(78, 104), chord + [0, 0, -5, 3, 5][k % 5]));
+      }
+      if (R.stab != null && (b % 2 === 0 || (last && chance(0.6)))) put(R.stab, o + (b % 2 === 0 ? 0 : 10), vel(96, 118), chord);
+      if (R.fx != null && last && density >= 2 && chance(0.4)) put(R.fx, o + 12, vel(80, 100));
+    } else if (style === 'crunk') {
+      const lead = R.stab ?? R.lead ?? R.keys;
+      if (lead != null) {
+        const motif = pick([[0, 3, 6], [0, 3, 6, 10], [0, 3, 6, 10, 12]]);
+        const mel = motif.map(() => pick([0, 0, 3, 5, -2]));
+        motif.forEach((s, k) => put(lead, o + s, vel(92, 114), chord + mel[k]));
+      }
+      if (R.horn != null && b === 0 && chance(0.6)) put(R.horn, o, vel(80, 100));
+      if (R.whip != null && density >= 2 && chance(0.4)) put(R.whip, o + 12, vel(76, 96));
+    } else if (style === 'phonk' && (R.bell ?? R.keys) != null) {
       const lead = R.bell ?? R.keys;
       const motif = b % 2 === 0 ? [0, 3, 6, 8, 10, 13] : [0, 3, 6, 10, 12, 14];
       const notes = motif.map(() => pick(PENTA));

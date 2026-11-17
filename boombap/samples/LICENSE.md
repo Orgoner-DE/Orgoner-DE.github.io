@@ -1,6 +1,6 @@
 # Samples – Quellen und Lizenz
 
-Alle 250 Samples beruhen auf **echten Aufnahmen** (nichts von Grund auf synthetisiert). Alle Quellen stehen unter **CC0 1.0 Universal**:
+Die 250 Samples der Packs Core 50, Dusty Bap, Dark Hill und Crate Diggers beruhen auf **echten Aufnahmen** (nichts von Grund auf synthetisiert). Das Pack **Kiez 808** (50 Klänge, unten) ist überwiegend synthetisiert und teils mit diesen Aufnahmen geschichtet. Alle Quellen stehen unter **CC0 1.0 Universal**:
 
 - **Virtuosity Drums (Versilian Studios / sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/virtuosity_drums
 - **VCSL - Versilian Community Sample Library** – CC0-1.0 – https://github.com/sgossner/VCSL
@@ -290,3 +290,60 @@ Alle Dateien: 44,1 kHz, 16 Bit, Mono. Die bearbeiteten Dateien stehen ebenfalls 
 | cd98 | Guitar Mute Chuck | perc | 0.13 s | emily: `muted1_rr1.wav` × 1.0 | – |
 | cd99 | Guitar Fret Squeak | fx | 0.47 s | emily: `fingering1_rr1.wav` × 1.0 | – |
 | cd100 | Bass String Slap | perc | 0.60 s | dbass: `pizz_noise_mute_g.wav` × 1.0 | – |
+
+## Kiez 808
+
+Eigene Klänge im Sound des Großstadt-Straßenraps der 2000er (808, Miami Bass, Crunk). 808-Drums, Bässe, Synth-Stabs und FX sind in `../tools/build_pack_kz.py` synthetisiert; Orchester-Hits, Bläser, Klavier, Claps, Snaps und Scratches sind zusätzlich mit vorhandenen BAP-50-Aufnahmen (CC0, siehe oben) geschichtet. Keine Samples von Platten, keine nachgebauten Songs. CC0 1.0.
+
+| ID | Name | Kategorie | Dauer | Aufbau |
+|---|---|---|---|---|
+| kz01 | 808 Boom Kick | kick | 2.20 s | nur Synthese |
+| kz02 | 808 Kick Punch | kick | 0.80 s | nur Synthese |
+| kz03 | 808 Kick Dirty | kick | 1.60 s | nur Synthese |
+| kz04 | Miami Kick Short | kick | 0.50 s | nur Synthese |
+| kz05 | Kick Layer Boom | kick | 1.60 s | db04 Kick Low Boom |
+| kz06 | 808 Snare | snare | 0.50 s | nur Synthese |
+| kz07 | 808 Snare Snappy | snare | 0.60 s | nur Synthese |
+| kz08 | Crunk Snare Stack | snare | 0.82 s | cd24 Clap Stack, db09 Snare Crack 12 |
+| kz09 | 808 Clap | clap | 0.88 s | nur Synthese |
+| kz10 | Clap Wall | clap | 1.03 s | c01 Clap Crowd, cd24 Clap Stack, cd25 Clap Person, cd26 Handclap Body, db21 Clap Stack |
+| kz11 | Snap Room | clap | 0.64 s | cd28 Finger Snap |
+| kz12 | 808 Rim | snare | 0.09 s | nur Synthese |
+| kz13 | 808 Clave | perc | 0.18 s | nur Synthese |
+| kz14 | 808 Cowbell | perc | 0.60 s | nur Synthese |
+| kz15 | Cowbell Dirty | perc | 0.60 s | nur Synthese |
+| kz16 | 808 Hat Closed | hat | 0.25 s | nur Synthese |
+| kz17 | 808 Hat Tight | hat | 0.15 s | nur Synthese |
+| kz18 | 808 Hat Open | hat | 1.20 s | nur Synthese |
+| kz19 | 808 Cymbal | cymbal | 2.20 s | nur Synthese |
+| kz20 | 808 Tom Low | tom | 1.00 s | nur Synthese |
+| kz21 | 808 Tom Mid | tom | 0.90 s | nur Synthese |
+| kz22 | 808 Conga Hi | perc | 0.45 s | nur Synthese |
+| kz23 | 808 Conga Low | perc | 0.50 s | nur Synthese |
+| kz24 | 808 Maracas | perc | 0.08 s | nur Synthese |
+| kz25 | 808 Sub C | bass | 2.20 s | nur Synthese |
+| kz26 | 808 Bass Dist C | bass | 2.00 s | nur Synthese |
+| kz27 | 808 Slide C | bass | 2.00 s | nur Synthese |
+| kz28 | Miami Boom C | bass | 2.60 s | nur Synthese |
+| kz29 | Square Bass C | bass | 0.90 s | nur Synthese |
+| kz30 | Tuba 808 Bass C | bass | 1.60 s | cd91 Tuba Hit C |
+| kz31 | Orchester-Hit Cm | keys | 1.53 s | cd66 Upright Bass Arco C, cd91 Tuba Hit C |
+| kz32 | Orchester-Hit Dark | keys | 2.20 s | cd66 Upright Bass Arco C, cd91 Tuba Hit C |
+| kz33 | Bläser-Stab Cm | keys | 1.03 s | cd94 Tuba Stab G, m04 Tenor Sax Stab C |
+| kz34 | Crunk Stab Cm | keys | 0.50 s | nur Synthese |
+| kz35 | Electro Lead C | keys | 1.30 s | nur Synthese |
+| kz36 | Piano Stab Dark Cm | keys | 2.00 s | dh44 Piano Bbm Stab |
+| kz37 | Streicher Pad Cm | keys | 3.50 s | cd66 Upright Bass Arco C |
+| kz38 | Glocke Dark C | keys | 3.00 s | nur Synthese |
+| kz39 | Pluck Lead C | keys | 0.60 s | nur Synthese |
+| kz40 | Chor Pad Cm | keys | 3.50 s | nur Synthese |
+| kz41 | Air Horn | fx | 1.29 s | nur Synthese |
+| kz42 | Martinshorn | fx | 3.20 s | nur Synthese |
+| kz43 | Sirene Wail | fx | 3.50 s | nur Synthese |
+| kz44 | Laser Zap | fx | 0.35 s | nur Synthese |
+| kz45 | Peitsche | fx | 0.62 s | nur Synthese |
+| kz46 | Scratch Baby | fx | 0.60 s | m04 Tenor Sax Stab C |
+| kz47 | Scratch Chirp | fx | 0.50 s | cd95 Tuba Woo |
+| kz48 | Reverse Becken | fx | 2.00 s | nur Synthese |
+| kz49 | Tape Stop | fx | 1.00 s | cd66 Upright Bass Arco C, cd91 Tuba Hit C |
+| kz50 | Sub Drop | fx | 2.20 s | nur Synthese |
