@@ -34,8 +34,11 @@ PRESET_KITS.kiez_q = [['kz01'], ['kz02'], ['kz06'], ['kz08'], ['kz16'], ['kz17']
   ['kz10'], ['kz11'], ['kz12'], ['kz14'], ['kz13'], ['kz22'], ['kz20'], ['kz19']];
 PRESET_KITS.kiez_r = [['kz25'], ['kz26'], ['kz27'], ['kz28'], ['kz31'], ['kz32'], ['kz33'], ['kz34'],
   ['kz35'], ['kz36'], ['kz37'], ['kz41'], ['kz42'], ['kz44'], ['kz45'], ['kz46']];
+// S: Kiez Shouts & Extras (echte Stimmen, Streicher-Stab, Kuhglocke, Pauke, Bassdrum, Crash, Sirene)
+PRESET_KITS.kiez_s = [['kz51'], ['kz52'], ['kz53'], ['kz54'], ['kz55'], ['kz56'], ['kz57'], ['kz58'],
+  ['kz59'], ['kz66'], ['kz60'], ['kz61'], ['kz62'], ['kz63'], ['kz64'], ['kz65']];
 export function presetKitIds(name) { return (PRESET_KITS[name] || []).map(([id]) => id); }
-export const PRESET_BANKS = { grey: 8, memphis: 9, coffin: 10, synth: 11, crate_m: 12, crate_n: 13, kiez_q: 16, kiez_r: 17 };
+export const PRESET_BANKS = { grey: 8, memphis: 9, coffin: 10, synth: 11, crate_m: 12, crate_n: 13, kiez_q: 16, kiez_r: 17, kiez_s: 18 };
 
 // [Sample-ID, Halbtöne] je Pad. A = Boom-Bap-Kern, B = Drums 2, C = Hats/Becken/Toms/Perc, D = Keys,
 // E = Dusty Bap Drums, F = Dusty Bap Chops, G = Dark Hill Drums/Latin, H = Dark Hill Keys/FX.
@@ -61,8 +64,31 @@ const KIT = [
   ...PRESET_KITS.crate_m, ...PRESET_KITS.crate_n,
   // O, P: frei für Importe; Q, R: Kiez 808; S, T: frei
   ...Array.from({ length: 32 }, () => [null]),
-  ...PRESET_KITS.kiez_q, ...PRESET_KITS.kiez_r,
+  ...PRESET_KITS.kiez_q, ...PRESET_KITS.kiez_r, ...PRESET_KITS.kiez_s,
 ];
+
+// Messwerte der Samples (samples.json: loud, cents) – die App setzt die Quelle beim Start.
+let metaOf = () => null;
+export function setMetaSource(fn) { metaOf = fn || (() => null); }
+
+// Ziel-Schlaglautheit je Kategorie (dB, K-gewichtet, lautestes 100-ms-Fenster) nach typischen
+// Hip-Hop-Mix-Verhältnissen relativ zur Kick: Snare/Clap −1, Bass −2, Tom/Shouts −4, Keys −6,
+// Perc −8, FX −9, Hats −10, Becken −12 dB. Pad-Level: vol = 10^((Ziel − Messwert) / 40), da Gain = vol².
+const KICK_TARGET = -16;
+export const LOUD_TARGET = {
+  kick: 0, snare: -1, clap: -1, bass: -2, tom: -4, vox: -4, keys: -6, perc: -8, fx: -9, hat: -10, cymbal: -12,
+};
+
+// Pegel und Feinstimmung aus den Messwerten: gleich laute Pads je Kategorie, alles auf A = 440 Hz
+export function levelFromMeta(p, id, cat) {
+  const m = metaOf(id);
+  if (!m) return p;
+  if (typeof m.loud === 'number' && LOUD_TARGET[cat] != null) {
+    p.vol = +clamp(Math.pow(10, (KICK_TARGET + LOUD_TARGET[cat] - m.loud) / 40), 0.2, 1).toFixed(2);
+  }
+  p.fine = typeof m.cents === 'number' && Math.abs(m.cents) >= 4 ? clamp(-Math.round(m.cents), -50, 50) : 0;
+  return p;
+}
 
 function padFor(id, tune, catOf) {
   const p = defaultPad(id);
@@ -99,9 +125,11 @@ function padFor(id, tune, catOf) {
     if (cat === 'kick') p.mono = true;
     if (cat === 'hat') { p.choke = 1; p.mono = true; p.pan = 0.12; }
   }
+  if (cat === 'vox') { p.vol = 0.62; p.sa = 0.12; p.mono = true; }
   // Pack-Drums sind gesättigt und dichter: etwas leiser einpegeln
   if (/^d[bh]/.test(id) && ['kick', 'snare', 'clap', 'hat', 'perc', 'cymbal'].includes(cat)) p.vol = +(p.vol * 0.8).toFixed(2);
-  return p;
+  // gemessene Lautheit/Stimmung haben Vorrang (Synth-Klänge haben keine Messwerte)
+  return levelFromMeta(p, id, cat);
 }
 
 export function padForSample(id, cat) { return padFor(id, 0, () => cat); }
@@ -153,7 +181,7 @@ function writeLane(ptn, pad, str, tune = 0) {
 // Eigene Grooves (keine nachgebauten Songs).
 export const GROOVES = [
   {
-    name: 'Classic Nod', bpm: 90, swing: 56, len: 32,
+    name: 'Classic Nod', bpm: 90, swing: 56, len: 32, gain: 1.7,
     lanes: [
       [0, 'X......X..X.....|X......X.X....x.'],
       [2, '....X.......X...|....X.......X..g'],
@@ -164,7 +192,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Dusty Swing', bpm: 88, swing: 64, len: 32,
+    name: 'Dusty Swing', bpm: 88, swing: 64, len: 32, gain: 6.6,
     lanes: [
       [1, 'X.........X.....|X.......X.X.....'],
       [3, '....X.......X...|....X.......X...'],
@@ -174,7 +202,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Jazz Ride', bpm: 94, swing: 66, len: 32,
+    name: 'Jazz Ride', bpm: 94, swing: 66, len: 32, gain: 2.2,
     lanes: [
       [12, 'X...x.x.X...x.x.|X...x.x.X...x.x.'],
       [0, 'X.......X..x....|X.......X.....x.'],
@@ -184,7 +212,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Head Nod 93', bpm: 93, swing: 54, len: 32,
+    name: 'Head Nod 93', bpm: 93, swing: 54, len: 32, gain: 2.4,
     lanes: [
       [0, 'X.....x...X.....|X.....x..xX.....'],
       [16, 'x...............|x...............'],
@@ -196,7 +224,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Keys Loop', bpm: 86, swing: 58, len: 64,
+    name: 'Keys Loop', bpm: 86, swing: 58, len: 64, gain: 1,
     lanes: [
       [0, 'X......X..X.....|X......X..X.....|X......X..X.....|X......X.X....x.'],
       [3, '....X.......X...|....X.......X...|....X.......X...|....X.......X..g'],
@@ -217,7 +245,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Dusty Crate (Bank E/F)', bpm: 90, swing: 60, len: 32,
+    name: 'Dusty Crate (Bank E/F)', bpm: 90, swing: 60, len: 32, gain: -0.8,
     lanes: [
       [64, 'X......X..X.....|X......X.XX.....'],
       [66, '....X.......X...|....X.......X...'],
@@ -232,7 +260,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Dark Hill (Bank G/H)', bpm: 92, swing: 55, len: 32,
+    name: 'Dark Hill (Bank G/H)', bpm: 92, swing: 55, len: 32, gain: -0.9,
     lanes: [
       [96, 'X.....x.X.......|X.....x...X..x..'],
       [98, '....X.......X...|....X.......X...'],
@@ -261,7 +289,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Grey Fog (Preset Bank I)', bpm: 145, swing: 50, len: 64, bank: 8, preset: 'grey',
+    name: 'Grey Fog (Preset Bank I)', bpm: 145, swing: 50, len: 64, gain: -2.3, bank: 8, preset: 'grey',
     master: { comp: 0.5, tape: 0.45, warm: 0.3, dust: 0.35, crunch: 0.1, revSize: 0.45, revRet: 0.55 },
     lanes: [
       [128, 'X.........X.....|X......X..x.....|X.........X.....|X......X.....x..'],
@@ -278,7 +306,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Memphis Grave (Preset Bank J)', bpm: 130, swing: 54, len: 32, bank: 9, preset: 'memphis',
+    name: 'Memphis Grave (Preset Bank J)', bpm: 130, swing: 54, len: 32, gain: -4.7, bank: 9, preset: 'memphis',
     master: { comp: 0.55, tape: 0.5, warm: 0.35, dust: 0.45, crunch: 0.25, revSize: 0.35, revRet: 0.45 },
     lanes: [
       [144, 'X.....X...X.....|X.....X..X..X...'],
@@ -292,7 +320,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Coffin Choir (Preset Bank K)', bpm: 150, swing: 50, len: 64, bank: 10, preset: 'coffin',
+    name: 'Coffin Choir (Preset Bank K)', bpm: 150, swing: 50, len: 64, gain: -2.1, bank: 10, preset: 'coffin',
     master: { comp: 0.45, tape: 0.35, warm: 0.2, dust: 0.3, crunch: 0.05, revSize: 0.6, revRet: 0.7 },
     lanes: [
       [160, 'X.........X.....|X.........X..x..|X.........X.....|X......X..X.....'],
@@ -309,7 +337,7 @@ export const GROOVES = [
     ],
   },
   {
-    name: 'Crate Diggers (Bank M/N)', bpm: 88, swing: 58, len: 64, preset: 'crate_m', bank: 12, kits: [['crate_m', 12], ['crate_n', 13]],
+    name: 'Crate Diggers (Bank M/N)', bpm: 88, swing: 58, len: 64, gain: 2.7, preset: 'crate_m', bank: 12, kits: [['crate_m', 12], ['crate_n', 13]],
     lanes: [
       [192, 'X......X..X.....|X......X..X.....|X......X..X.....|X......X.X....x.'],
       [194, '....X.......X...|....X.......X...|....X.......X...|....X.......X...'],
@@ -330,11 +358,11 @@ export const GROOVES = [
   },
   // Kiez 808 (Q/R): eigener Sound im Stil des Großstadt-Straßenraps der 2000er – keine nachgebauten Songs
   {
-    name: 'Kiez Bounce (Preset Bank Q/R)', bpm: 128, swing: 50, len: 32, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17]],
+    name: 'Kiez Bounce (Preset Bank Q/R)', bpm: 128, swing: 50, len: 32, gain: -2.9, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17], ['kiez_s', 18]],
     master: { comp: 0.5, tape: 0.35, warm: 0.15, dust: 0.12, crunch: 0, revSize: 0.3, revRet: 0.4, pump: 0 },
     lanes: [
-      [257, 'X.....X...X.....|X.....X...X..X..'],
-      [275, 'X.....x...x.....|X.....x...x..x..', [0, 0, 3, 0, 0, -2, -4]],
+      [257, 'x.....x...x.....|x.....x...x..x..'],
+      [275, 'x.....o...o.....|x.....o...o..o..', [0, 0, 3, 0, 0, -2, -4]],
       [263, '....X.......X...|....X.......X...'],
       [258, '....o.......o...|....o.......o..g'],
       [260, 'xoxoxoxoxoxoxoxo|xoxoxoxoxoxox3xo'],
@@ -343,14 +371,16 @@ export const GROOVES = [
       [276, 'X...............|..........x.....', [0, -2]],
       [285, '................|............x...'],
       [287, '................|...............x'],
+      [295, '................|............x...'],
+      [292, 'x...............|................'],
     ],
   },
   {
-    name: 'Hinterhof Crunk (Preset Bank Q/R)', bpm: 78, swing: 52, len: 32, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17]],
+    name: 'Hinterhof Crunk (Preset Bank Q/R)', bpm: 78, swing: 52, len: 32, gain: -4.4, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17], ['kiez_s', 18]],
     master: { comp: 0.55, tape: 0.45, warm: 0.2, dust: 0.18, crunch: 0.05, revSize: 0.35, revRet: 0.45, pump: 0 },
     lanes: [
-      [256, 'X......X..X.....|X......X..X..X..'],
-      [273, 'X......x..x.....|X......x..x..x..', [0, 0, 3, -2, -2, 0, -4]],
+      [256, 'x......x..x.....|x......x..x..x..'],
+      [273, 'x......o..o.....|x......o..o..o..', [0, 0, 3, -2, -2, 0, -4]],
       [259, '....X.......X...|....X.......X...'],
       [264, '....x.......x...|....x.......x...'],
       [260, 'x.x.x.x.x.x.x.x.|x.x.x.x.x.x2x.3.'],
@@ -360,14 +390,16 @@ export const GROOVES = [
       [283, 'o...............|................'],
       [286, '............x...|................'],
       [271, 'o...............|................'],
+      [295, '............x...|............x...'],
+      [291, '................|..............x.'],
     ],
   },
   {
-    name: 'Plattenbau Nacht (Preset Bank Q/R)', bpm: 92, swing: 54, len: 64, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17]],
+    name: 'Plattenbau Nacht (Preset Bank Q/R)', bpm: 92, swing: 54, len: 64, gain: -2.6, preset: 'kiez_q', bank: 16, kits: [['kiez_q', 16], ['kiez_r', 17], ['kiez_s', 18]],
     master: { comp: 0.5, tape: 0.4, warm: 0.3, dust: 0.3, crunch: 0.1, revSize: 0.45, revRet: 0.5, pump: 0 },
     lanes: [
-      [256, 'X.......X.X.....|X.......X.....x.|X.......X.X.....|X.......X...X...'],
-      [272, 'X.......x.x.....|X.......x.....x.|X.......x.x.....|X.......x...x...', [0, 0, 0, -4, -4, -4, 0, 0, 0, -2, -2, -2]],
+      [256, 'x.......x.x.....|x.......x.....o.|x.......x.x.....|x.......x...x...'],
+      [272, 'x.......o.o.....|x.......o.....o.|x.......o.o.....|x.......o...o...', [0, 0, 0, -4, -4, -4, 0, 0, 0, -2, -2, -2]],
       [258, '....X.......X...|....X.......X...|....X.......X...|....X.......X...'],
       [265, '....o.......o...|....o.......o...|....o.......o...|....o.......o...'],
       [266, '..g.....g.....g.|......g.......g.|..g.....g.....g.|......g.....g...'],
@@ -377,6 +409,9 @@ export const GROOVES = [
       [282, 'o...............|................|o...............|................', [0, -2]],
       [284, '................|................|................|o...............'],
       [271, 'o...............|................|................|................'],
+      [298, 'x...............|................|x...............|................'],
+      [296, '................|................|................|............x...'],
+      [300, '................|x...............|................|................', [-4]],
     ],
   },
 ];
@@ -384,6 +419,7 @@ export const GROOVES = [
 export function grooveToPattern(g) {
   const ptn = emptyPattern(g.len);
   for (const [pad, str, tune] of g.lanes) writeLane(ptn, pad, str, tune);
+  if (g.gain) ptn.gain = g.gain;
   return ptn;
 }
 
@@ -402,7 +438,7 @@ export function defaultProject(catOf = () => '') {
     swing: 56,
     metro: false,
     master: {
-      vol: 0.82, comp: 0.35, tape: 0.25, warm: 0.12, dust: 0.25, crunch: 0,
+      vol: 0.95, comp: 0.35, tape: 0.25, warm: 0.12, dust: 0.25, crunch: 0,
       revSize: 0.35, revRet: 0.6, dlyTime: '3/16', dlyFb: 0.35, dlyRet: 0.45, pump: 0,
     },
     feel: 0,
@@ -413,6 +449,7 @@ export function defaultProject(catOf = () => '') {
     song: { on: false, list: [{ p: 0, n: 2 }, { p: 1, n: 2 }, { p: 3, n: 2 }, { p: 4, n: 1 }] },
     midi: { base: 36 },
     bankNames: {},
+    lv: 2,
   };
 }
 
@@ -425,10 +462,15 @@ export function normalizeProject(raw, catOf) {
   p.swing = clamp(+p.swing || 50, 50, 75);
   p.master = { ...d.master, ...(raw.master || {}) };
   p.pads = Array.from({ length: NUM_PADS }, (_, i) => ({ ...defaultPad(null), ...((raw.pads || [])[i] || d.pads[i]) }));
+  // Bank S (seit 2.2 Kiez Shouts & Extras): leer und unbenannt → mit dem Werks-Kit füllen
+  const sB = PRESET_BANKS.kiez_s * 16;
+  if (p.pads.slice(sB, sB + 16).every((x) => !x.s) && !(raw.bankNames && raw.bankNames[PRESET_BANKS.kiez_s])) {
+    for (let i = sB; i < sB + 16; i++) p.pads[i] = { ...d.pads[i] };
+  }
   p.patterns = Array.from({ length: NUM_PATTERNS }, (_, i) => {
     const src = (raw.patterns || [])[i];
     if (!src) return emptyPattern(32);
-    const ptn = { len: LENGTHS.includes(src.len) ? src.len : 32, steps: {}, tune: {}, roll: {}, prob: {} };
+    const ptn = { len: LENGTHS.includes(src.len) ? src.len : 32, steps: {}, tune: {}, roll: {}, prob: {}, gain: clamp(+src.gain || 0, -24, 12) };
     for (const [k, arr] of Object.entries(src.prob || {})) {
       const pad = +k;
       if (!(pad >= 0 && pad < NUM_PADS) || !Array.isArray(arr)) continue;
@@ -459,6 +501,11 @@ export function normalizeProject(raw, catOf) {
   p.midi = { ...d.midi, ...(raw.midi || {}) };
   p.bankNames = { ...(raw.bankNames || {}) };
   p.feel = clamp(+p.feel || 0, 0, 1);
+  // 2.2: Kiez-808-Klänge neu gebaut und gemessen → deren Pads einmalig neu einpegeln und stimmen
+  if (!(raw.lv >= 2)) {
+    p.pads.forEach((pad) => { if (pad.s && /^kz/.test(pad.s)) levelFromMeta(pad, pad.s, catOf(pad.s)); });
+  }
+  p.lv = 2;
   const rv = raw.vox && typeof raw.vox === 'object' ? raw.vox : {};
   const dv = defaultVox();
   p.vox = { ...dv, ...rv, tracks: dv.tracks.map((t, k) => {

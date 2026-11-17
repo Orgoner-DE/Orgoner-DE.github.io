@@ -7,10 +7,10 @@ import { Sequencer, REPEAT_DIVS, stepDur } from './seq.js';
 import {
   NUM_PATTERNS, NUM_PADS, NUM_BANKS, MAX_STEPS, LENGTHS, GROOVES, defaultPad, defaultProject, normalizeProject, grooveToPattern,
   saveAuto, loadAuto, listSlots, saveSlot, deleteSlot, History, presetKitPads, presetKitIds, padForSample,
-  listKits, saveKit, deleteKit, saveKits,
+  listKits, saveKit, deleteKit, saveKits, setMetaSource, levelFromMeta,
 } from './state.js';
 import { renderPatterns, songOrder, encodeWav, toMono, voxEnd } from './render.js';
-import { generate, pickRoles, STYLES } from './gen.js';
+import { generate, pickRoles, STYLES, KEYS } from './gen.js';
 import { buildMenubar, openDialog, isMenuOpen } from './menu.js';
 import { readZip, makeZip } from './zip.js';
 import { detectBpm, decideLoop, isMelodic, chopLoop, master, classifyDrum } from './chopper.js';
@@ -118,6 +118,7 @@ async function boot() {
     });
     $('#bootMsg').textContent = 'Synth-Klänge berechnen …';
     await renderFactorySynths();
+    setMetaSource((id) => S.catalog.meta(id));
     const saved = loadAuto();
     S.project = saved ? normalizeProject(saved, catOf) : defaultProject(catOf);
     S.engine = await new Engine(S.ctx, S.catalog, S.project).init();
@@ -292,7 +293,7 @@ function updateLCD() {
 
 // ---------- Pad-Leiste ----------
 const PB = {};
-const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth', 'Crate Diggers Drums', 'Crate Diggers Bass & Keys', 'Import 1', 'Import 2', 'Kiez 808 Drums', 'Kiez 808 Hits & Bass', 'Import 3', 'Import 4'];
+const BANK_TITLES = ['Boom-Bap-Kern', 'Drums 2', 'Hats, Becken, Toms, Perc', 'Keys', 'Dusty Bap Drums', 'Dusty Bap Chops', 'Dark Hill Drums & Latin', 'Dark Hill Keys & FX', 'Preset Grey Fog', 'Preset Memphis Grave', 'Preset Coffin Choir', 'Synth', 'Crate Diggers Drums', 'Crate Diggers Bass & Keys', 'Import 1', 'Import 2', 'Kiez 808 Drums', 'Kiez 808 Hits & Bass', 'Kiez Shouts & Extras', 'Import 3'];
 function buildPadbar() {
   const bar = $('#padbar');
   PB.bank = seg(Array.from(BANK_NAMES, (n, i) => [i, n, BANK_TITLES[i]]), P().cur.bank, (b) => setBank(b), 'banks');
@@ -764,6 +765,7 @@ function showHelp() {
     ['🎲 Beat-Generator', 'Sequencer oder Menü Pattern: Beat im Stil Boom Bap, Dark Hill, Phonk oder Lo-Fi würfeln'],
     ['VOCALS', 'Spur wählen → Aufnahme: nach dem Vorzähler läuft der Beat, die Stimme wird synchron mitgeschnitten'],
     ['Step lange drücken', 'Velocity, Tune, Roll und Chance (Step spielt nur manchmal)'],
+    ['⚖ (SEQ, Mixer, Menü)', 'Pattern bzw. Pads auf gleiche Lautheit und saubere Stimmung bringen'],
     ['APC mini mk2: Scene 1–5', 'Modus PADS · SEQ · LANE · MIX · MENÜ (Belegung im Bereich APC)'],
     ['APC: Scene 6 / 7 / 8', 'Seite blättern · Play/Stop · Aufnahme'],
     ['APC: Shift + Pad', 'Pad/Spur wählen, ohne zu spielen'],
@@ -835,6 +837,8 @@ function menus() {
       ...LENGTHS.map((l) => mi(`Länge ${l / 16} Takt${l > 16 ? 'e' : ''}`, () => setPatternLength(l), { checked: ptnLen === l, radio: true })),
       '-',
       mi('🎲 Beat-Generator …', showGenerator),
+      mi('⚖ Pattern auf gleiche Lautheit bringen', () => levelPatterns(false)),
+      mi('⚖ Alle Patterns angleichen', () => levelPatterns(true)),
       '-',
       mi('Verdoppeln', doublePattern, { disabled: ptnLen * 2 > MAX_STEPS }),
       mi('In nächstes freies Pattern kopieren', copyPatternToFree),
@@ -852,6 +856,8 @@ function menus() {
     { id: 'pads', label: 'Pads', items: [
       ...Array.from(BANK_NAMES, (n, i) => mi(`Bank ${n} · ${bankTitle(i)}`, () => setBank(i), { checked: p.cur.bank === i, radio: true, kbd: i === 0 ? ', .' : '' })),
       '-',
+      mi(`Bank ${BANK_NAMES[p.cur.bank]}: Pegel & Stimmung angleichen`, () => relevelPads(false)),
+      mi('Alle Bänke: Pegel & Stimmung angleichen', () => relevelPads(true)),
       mi(`Bank ${BANK_NAMES[p.cur.bank]} als Kit speichern …`, () => saveBankAsKit()),
       mi('Kits verwalten …', () => { S.bankTab = 'banks'; showView('samples'); }),
       '-',
@@ -995,7 +1001,11 @@ BUILDERS.seq = (root) => {
   genB.addEventListener('click', showGenerator);
   const feel = knob({ label: 'Feel', min: 0, max: 1, step: 0.01, def: 0, value: p.feel || 0, small: true, format: (v) => (v < 0.01 ? 'exakt' : Math.round(v * 100) + '%'), onInput: (v) => { p.feel = v; dirty(); } });
   feel.node.title = 'Humanize: leichte Zeit- und Anschlagsschwankungen beim Abspielen und Export';
-  root.append(el('div', { class: 'row' }, lenSeg, pageSeg, velSeg, genB, feel.node));
+  const pg = knob({ label: 'Pegel', min: -18, max: 12, step: 0.5, def: 0, value: ptn.gain || 0, small: true, bipolar: true, format: (v) => (v > 0 ? '+' : '') + v + ' dB', onInput: (v) => { pushUndo(); ptn.gain = v; dirty(); } });
+  pg.node.title = 'Pattern-Pegel: Lautstärke dieses Patterns (alle Spuren)';
+  const lvB = el('button', { class: 'btn', type: 'button', text: '⚖ Angleichen', title: 'Pattern auf gleiche Lautheit wie die anderen bringen (misst das Pattern)' });
+  lvB.addEventListener('click', () => levelPatterns(false));
+  root.append(el('div', { class: 'row' }, lenSeg, pageSeg, velSeg, genB, feel.node, pg.node, lvB));
 
   const groove = el('select', { class: 'sel-in', 'aria-label': 'Groove laden' },
     el('option', { value: '', text: 'Groove laden …' }),
@@ -1484,7 +1494,9 @@ BUILDERS.mix = (root) => {
   const mm = el('div', { class: 'meter', 'aria-hidden': 'true' }, el('i'));
   S.masterMeter = { bar: mm.firstChild, peak: 0 };
   mixer.append(el('div', { class: 'strip master' }, el('div', { class: 'sn', text: 'MASTER' }), el('div', { class: 'fw' }, mm, mf.node), el('div', { class: 'label', text: 'OUT' })));
-  root.append(el('div', { class: 'row sp' }, el('div', { class: 'label', text: `Bank ${BANK_NAMES[p.cur.bank]} · ${bankTitle(p.cur.bank)} · 16 Kanäle` }), el('div', { class: 'muted', style: { fontSize: '12px' }, text: 'Bank links wechseln. Doppelklick auf Regler = Standardwert.' })), mixer);
+  const lvB = el('button', { class: 'btn', type: 'button', text: '⚖ Bank angleichen', title: 'Level und Feinstimmung aus den Messwerten der Samples' });
+  lvB.addEventListener('click', () => relevelPads(false));
+  root.append(el('div', { class: 'row sp' }, el('div', { class: 'label', text: `Bank ${BANK_NAMES[p.cur.bank]} · ${bankTitle(p.cur.bank)} · 16 Kanäle` }), el('div', { class: 'row', style: { marginBottom: '0' } }, el('span', { class: 'muted', style: { fontSize: '12px' }, text: 'Doppelklick auf Regler = Standardwert.' }), lvB)), mixer);
 
   const mk = (field, label, fmt, def = 0) => knob({ label, min: 0, max: 1, step: 0.01, def, value: m[field], format: fmt || ((v) => Math.round(v * 100) + '%'), onInput: (v) => { m[field] = v; S.engine.applyMaster(); dirty(); } });
   const dlySeg = seg(Object.keys(DELAY_TIMES).map((k) => [k, k]), m.dlyTime, (v) => { m.dlyTime = v; S.engine.applyMaster(); dirty(); });
@@ -1760,7 +1772,7 @@ function buildBankCards(root) {
       el('div', { class: 'bk-head' }, el('b', { class: 'bk-l', text: BANK_NAMES[b] }), el('div', { class: 'bk-t' }, el('div', { text: bankTitle(b) }), el('small', { text: `${used}/16 Pads belegt` })), ren),
       cells, el('div', { class: 'row', style: { marginBottom: '0', marginTop: '8px' } }, open, kitB, exp, clr)));
   }
-  root.append(el('p', { class: 'hint', text: 'Pad antippen = auswählen und hören, doppelt tippen = im Pad-Editor öffnen. Freie Bänke (O, P, S, T) füllt der Pack-Import automatisch; belegte werden übersprungen.' }), grid);
+  root.append(el('p', { class: 'hint', text: 'Pad antippen = auswählen und hören, doppelt tippen = im Pad-Editor öffnen. Freie Bänke (O, P, T) füllt der Pack-Import automatisch; belegte werden übersprungen.' }), grid);
 }
 
 function updateSampleTarget() {
@@ -1804,7 +1816,8 @@ const CAT_WORDS = [
   ['cymbal', /crash|ride|cymbal|\bcym|splash|china/],
   ['tom', /\btom/],
   ['bass', /bass|\b808|\bsub\b/],
-  ['fx', /\bfx|riser|sweep|scratch|vox|vocal|noise|vinyl|siren|impact|whoosh|horn ?fx/],
+  ['vox', /\bvox\b|vocal|shout|chant|\bhey\b|\byeah\b|acapella|a cappella|\bvoice/],
+  ['fx', /\bfx|riser|sweep|scratch|noise|vinyl|siren|impact|whoosh|horn ?fx/],
   ['keys', /piano|keys|rhodes|chord|organ|stab|horn|sax|brass|guitar|synth|\bpad\b|vibe|string|flute|loop/],
   ['perc', /perc|shak|tamb|conga|bongo|cowbell|clave|wood|triang|guiro|timbal|agogo|cabasa/],
 ];
@@ -1950,7 +1963,7 @@ function bindDrop() {
 // SAMPLE-PACK IMPORT (ZIP oder Ordner) – lokal choppen, nachmastern, Bänke füllen
 // =====================================================================
 const IMPORT_BANK0 = 12; // Bank M
-const CAT_ORDER = ['kick', 'snare', 'clap', 'hat', 'cymbal', 'tom', 'perc', 'bass', 'keys', 'fx', 'user'];
+const CAT_ORDER = ['kick', 'snare', 'clap', 'hat', 'cymbal', 'tom', 'perc', 'bass', 'keys', 'vox', 'fx', 'user'];
 const bankTitle = (i) => (P().bankNames && P().bankNames[i]) || BANK_TITLES[i] || 'Bank ' + BANK_NAMES[i];
 
 function pickPackSource(folder = false) {
@@ -2806,7 +2819,7 @@ BUILDERS.file = (root) => {
       ioItem('▦', 'APC mini mk2', 'LEDs, 5 Modi am Gerät, Fader – Controller-Ansicht öffnen', () => showView('apc'), { pri: !!(S.apc && S.apc.connected) }),
       el('p', { class: 'hint', text: 'Startnote … +15 spielt die 16 Pads der aktuellen Bank, ab +16 die Pads ab B01 direkt (bis Note 127). MIDI Start/Stop steuern den Transport. Browser: Web MIDI (Chrome/Edge). Android-App: USB-MIDI über das System.' })),
     el('div', { class: 'card', id: 'about' }, el('h3', { text: 'Über BAP-50' }),
-      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && !['synth', 'kz'].includes(m.pack)).length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers), ${S.catalog.list.filter((m) => m.pack === 'kz').length} Klänge im Pack Kiez 808 (808-Synthese, teils mit diesen Aufnahmen geschichtet) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-2.1.0.apk" style="color:var(--teal)">BAP-50-2.1.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos. Gerätenamen (z. B. APC mini mk2) stehen nur als Hinweis auf die Kompatibilität; keine Verbindung zum Hersteller.</p>` }))));
+      el('div', { class: 'prose', html: `<p>${S.catalog.list.filter((m) => m.builtin && !['synth', 'kz'].includes(m.pack)).length} echte Aufnahmen in vier Packs (Core 50, Dusty Bap, Dark Hill, Crate Diggers), ${S.catalog.list.filter((m) => m.pack === 'kz').length} Klänge im Pack Kiez 808 (808-Synthese, teils mit diesen Aufnahmen geschichtet) plus ${S.catalog.list.filter((m) => m.pack === 'synth').length} Synth-Werksklänge. Alle Quellen stehen unter <b>CC0 1.0</b>; Herkunft und Bearbeitung je Sample in <code>samples/samples.json</code>.</p><ul>${libs}</ul>${isNativeApp() ? '' : '<p><b>Android:</b> <a href="download/BAP-50-2.2.0.apk" style="color:var(--teal)">BAP-50-2.2.0.apk</a> (Debug-Build, Installation aus unbekannten Quellen erlauben).</p>'}<p>Eigene Gestaltung, keine Herstellerlogos. Gerätenamen (z. B. APC mini mk2) stehen nur als Hinweis auf die Kompatibilität; keine Verbindung zum Hersteller.</p>` }))));
 };
 
 function loadProject(raw, msg) {
@@ -2824,9 +2837,9 @@ function loadProject(raw, msg) {
 // =====================================================================
 // BEAT-GENERATOR
 // =====================================================================
-const GEN = { style: 'boombap', density: 2, bars: 2, tempo: true, keep: false, extra: null };
+const GEN = { style: 'boombap', density: 2, bars: 2, tempo: true, keep: false, extra: null, key: 0 };
 // Zusatz-Bank passend zur Klang-Bank (Drums + Bass/Hits liegen in Nachbarbänken)
-const GEN_PAIR = { 12: 13, 16: 17 };
+const GEN_PAIR = { 12: [13], 16: [17, 18], 17: [16, 18] };
 function bankItems(b) {
   const out = [];
   for (let k = 0; k < 16; k++) {
@@ -2834,15 +2847,15 @@ function bankItems(b) {
     const pad = P().pads[i];
     if (!pad.s) continue;
     const m = S.catalog.meta(pad.s);
-    out.push({ i, cat: m ? m.cat : 'user', name: `${m ? m.name : ''} ${m && m.tags ? m.tags : ''}` });
+    out.push({ i, cat: m ? m.cat : 'user', name: `${m ? m.name : ''} ${m && m.tags ? m.tags : ''}`, root: m && m.root, ptune: pad.tune || 0 });
   }
   return out;
 }
 
 function genBanks() {
   const b = P().cur.bank;
-  const x = GEN.extra != null ? GEN.extra : GEN_PAIR[b];
-  return x != null && x >= 0 && x !== b ? [b, x] : [b];
+  const x = GEN.extra != null ? [GEN.extra] : (GEN_PAIR[b] || []);
+  return [b, ...x.filter((k) => k >= 0 && k !== b)];
 }
 
 function runGenerator(play = true) {
@@ -2851,7 +2864,7 @@ function runGenerator(play = true) {
   const items = banks.flatMap((bk) => bankItems(bk));
   if (!items.some((x) => ['kick', 'snare', 'clap', 'hat'].includes(x.cat))) { toast(`Bank ${BANK_NAMES[b]} hat keine Drums – andere Bank wählen`); return null; }
   pushUndo(true);
-  const g = generate(items, { style: GEN.style, density: GEN.density, bars: GEN.bars, seed: (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0 });
+  const g = generate(items, { style: GEN.style, density: GEN.density, bars: GEN.bars, key: GEN.key, seed: (Date.now() ^ Math.floor(Math.random() * 0x7fffffff)) >>> 0 });
   const ptn = curPtn();
   if (GEN.keep) {
     for (const bk of banks) for (let k = 0; k < 16; k++) { const i = bk * 16 + k; for (const lane of [ptn.steps, ptn.tune, ptn.roll || {}, ptn.prob || {}]) delete lane[i]; }
@@ -2876,7 +2889,7 @@ function runGenerator(play = true) {
 function showGenerator() {
   const body = el('div', { class: 'gen' });
   const info = el('p', { class: 'muted gen-info' });
-  const ROLE_NAMES = { kick: 'Kick', snare: 'Snare', clap: 'Clap', hat: 'Hat', openHat: 'Open Hat', perc: 'Perc', bell: 'Bell', bass: 'Bass', keys: 'Keys', stab: 'Stab', horn: 'Horn' };
+  const ROLE_NAMES = { kick: 'Kick', snare: 'Snare', clap: 'Clap', hat: 'Hat', openHat: 'Open Hat', perc: 'Perc', bell: 'Bell', bass: 'Bass', keys: 'Keys', stab: 'Stab', horn: 'Horn', shout: 'Shout' };
   const roleText = (extra = '') => {
     const R = pickRoles(genBanks().flatMap((bk) => bankItems(bk)));
     const parts = Object.entries(ROLE_NAMES).filter(([k]) => R[k] != null).map(([k, l]) => `${l} ${padLabel(R[k])}`);
@@ -2887,7 +2900,7 @@ function showGenerator() {
   const extraSel = el('select', { class: 'sel-in', 'aria-label': 'Zusatz-Bank' });
   const fillExtra = () => {
     const def = GEN_PAIR[P().cur.bank];
-    extraSel.replaceChildren(el('option', { value: 'auto', text: def != null ? `automatisch (Bank ${BANK_NAMES[def]})` : 'keine' }),
+    extraSel.replaceChildren(el('option', { value: 'auto', text: def ? `automatisch (Bank ${def.map((k) => BANK_NAMES[k]).join(' + ')})` : 'keine' }),
       ...Array.from(BANK_NAMES, (n, i) => (i === P().cur.bank ? null : el('option', { value: String(i), text: `+ Bank ${n} · ${bankTitle(i)}`, selected: GEN.extra === i }))).filter(Boolean));
   };
   fillExtra();
@@ -2896,6 +2909,8 @@ function showGenerator() {
   const styleSeg = seg(Object.entries(STYLES).map(([k, v]) => [k, v.name.toUpperCase()]), GEN.style, (v) => { GEN.style = v; }, 'teal');
   const densSeg = seg([[1, 'SPARSAM'], [2, 'NORMAL'], [3, 'VOLL']], GEN.density, (v) => { GEN.density = v; });
   const barSeg = seg([[1, '1 TAKT'], [2, '2 TAKTE'], [4, '4 TAKTE']], GEN.bars, (v) => { GEN.bars = v; });
+  const keySel = el('select', { class: 'sel-in', 'aria-label': 'Tonart' }, ...KEYS.map((k, i) => el('option', { value: String(i), text: `${k.replace('#', '♯')}-Moll`, selected: i === GEN.key })));
+  keySel.addEventListener('change', () => { GEN.key = +keySel.value; });
   const chk = (label, key) => {
     const c = el('input', { type: 'checkbox', checked: GEN[key] });
     c.addEventListener('change', () => { GEN[key] = c.checked; });
@@ -2914,12 +2929,92 @@ function showGenerator() {
       el('span', { class: 'lab', text: 'Dazu' }), extraSel,
       el('span', { class: 'lab', text: 'Stil' }), styleSeg,
       el('span', { class: 'lab', text: 'Dichte' }), densSeg,
-      el('span', { class: 'lab', text: 'Länge' }), barSeg),
+      el('span', { class: 'lab', text: 'Länge' }), barSeg,
+      el('span', { class: 'lab', text: 'Tonart' }), keySel),
     el('div', { class: 'gen-chk' }, chk('Tempo & Swing des Stils übernehmen', 'tempo'), chk('Andere Bänke im Pattern behalten', 'keep')),
     el('div', { class: 'row', style: { marginTop: '10px' } }, roll, stop), info,
-    el('p', { class: 'hint', text: `Schreibt in Pattern ${P().cur.ptn + 1}. Jeder Wurf ist neu – gefällt er nicht: nochmal würfeln oder Strg+Z. Danach im Sequencer weiterbauen.` }));
+    el('p', { class: 'hint', text: `Schreibt in Pattern ${P().cur.ptn + 1}. Bass, Keys, Stabs und Melodie werden anhand ihres Grundtons in die Tonart gesetzt, damit alles zusammenpasst. Jeder Wurf ist neu – gefällt er nicht: nochmal würfeln oder Strg+Z.` }));
   roleText();
   openDialog('Beat-Generator', body);
+}
+
+// =====================================================================
+// PEGEL & STIMMUNG ANGLEICHEN
+// =====================================================================
+// Setzt Level und Feinstimmung der Pads aus den Messwerten der Samples (gleich laut je Kategorie, A = 440 Hz).
+function relevelPads(all = false, ask = true) {
+  const p = P();
+  const from = all ? 0 : bankBase();
+  const to = all ? NUM_PADS : bankBase() + 16;
+  if (ask && !confirm(`${all ? 'Alle Bänke' : 'Bank ' + BANK_NAMES[p.cur.bank]}: Level und Feinstimmung der Pads nach den Messwerten der Samples setzen?\n\nDeine Level-/Fine-Einstellungen dieser Pads werden ersetzt (rückgängig möglich).`)) return 0;
+  pushUndo(true);
+  let n = 0;
+  for (let i = from; i < to; i++) {
+    const pad = p.pads[i];
+    const m = pad.s && S.catalog.meta(pad.s);
+    if (!m || typeof m.loud !== 'number') continue;
+    levelFromMeta(pad, pad.s, m.cat);
+    S.engine.strip(i);
+    S.engine.updatePad(i);
+    n++;
+  }
+  updatePads();
+  if (['mix', 'pad'].includes(S.view)) renderView(S.view);
+  dirty();
+  if (ask) toast(`${n} Pads angeglichen`);
+  return n;
+}
+
+// ---------- Pattern-Lautheit ----------
+const PTN_TARGET = -13; // LUFS-artig (K-gewichtet, gegatet)
+async function patternLoudness(pi, gainDb = null) {
+  const proj = clone(P());
+  if (gainDb != null) proj.patterns[pi].gain = gainDb;
+  const { buffer } = await renderPatterns(proj, S.catalog, [pi], { tail: 0.1, sampleRate: 22050, dust: false, seed: 7 });
+  const ctx = new OfflineAudioContext(1, buffer.length, buffer.sampleRate);
+  const src = ctx.createBufferSource();
+  src.buffer = buffer;
+  const hp = ctx.createBiquadFilter(); hp.type = 'highpass'; hp.frequency.value = 60; hp.Q.value = 0.5;
+  const sh = ctx.createBiquadFilter(); sh.type = 'highshelf'; sh.frequency.value = 1500; sh.gain.value = 4;
+  src.connect(hp); hp.connect(sh); sh.connect(ctx.destination); src.start();
+  const d = (await ctx.startRendering()).getChannelData(0);
+  const bl = Math.floor(0.4 * buffer.sampleRate), hop = bl >> 2, e = [];
+  for (let i = 0; i + bl <= d.length; i += hop) { let q = 0; for (let j = i; j < i + bl; j++) q += d[j] * d[j]; e.push(q / bl); }
+  const L = (x) => -0.691 + 10 * Math.log10(x + 1e-12);
+  let g = e.filter((x) => L(x) > -70);
+  if (!g.length) return null;
+  const mean = g.reduce((a, x) => a + x, 0) / g.length;
+  g = g.filter((x) => L(x) > L(mean) - 10);
+  return L(g.reduce((a, x) => a + x, 0) / g.length);
+}
+
+async function levelPattern(pi, quiet = false) {
+  const ptn = P().patterns[pi];
+  if (!Object.values(ptn.steps).some((a) => a.slice(0, ptn.len).some((v) => v > 0))) return null;
+  let gain = ptn.gain || 0;
+  for (let k = 0; k < 2; k++) {
+    const l = await patternLoudness(pi, gain);
+    if (l == null) return null;
+    const ng = clamp(+(gain + PTN_TARGET - l).toFixed(1), -18, 12);
+    const big = Math.abs(ng - gain) > 3; // Limiter/Kompressor: bei großen Sprüngen einmal nachmessen
+    gain = ng;
+    if (!big) break;
+  }
+  ptn.gain = gain;
+  if (!quiet) toast(`Pattern ${pi + 1}: Pegel ${gain >= 0 ? '+' : ''}${gain} dB`);
+  return gain;
+}
+
+function levelPatterns(all = false) {
+  return runBusy(all ? 'Alle Patterns angleichen' : 'Pattern angleichen', async () => {
+    pushUndo(true);
+    const list = all ? Array.from({ length: NUM_PATTERNS }, (_, i) => i) : [P().cur.ptn];
+    let n = 0;
+    for (const i of list) if ((await levelPattern(i, all)) != null) n++;
+    if (all) toast(`${n} Patterns auf gleiche Lautheit gebracht`);
+    refreshSeq();
+    dirty();
+  });
 }
 
 // =====================================================================

@@ -382,7 +382,8 @@ export class Engine {
 
   // ---------- Stimmen ----------
   // tuneOfs: zusätzliche Halbtöne (16 Levels / Step-Tune), velo 1..127
-  trigger(i, velo, when = 0, tuneOfs = 0, over = null) {
+  // gainDb: Pattern-Pegel (dB) – macht Patterns unterschiedlicher Dichte gleich laut
+  trigger(i, velo, when = 0, tuneOfs = 0, over = null, gainDb = 0) {
     const p = this.project.pads[i];
     if (!p || !p.s) return null;
     const buf = this.catalog.get(p.s, p.vint, p.rev);
@@ -402,7 +403,7 @@ export class Engine {
     const en = clamp(Math.max(p.end, p.start + 0.01), 0, 1) * dur;
     const playLen = (en - st) / rate;
     const len = Math.max(0.005, playLen * clamp(p.dec, 0.02, 1));
-    const g = Math.pow(clamp(velo, 1, 127) / 127, 1.5);
+    const g = Math.pow(clamp(velo, 1, 127) / 127, 1.5) * (gainDb ? Math.pow(10, gainDb / 20) : 1);
 
     const src = c.createBufferSource();
     src.buffer = buf;

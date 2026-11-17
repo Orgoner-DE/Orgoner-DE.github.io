@@ -1,6 +1,6 @@
-/* BAP-50 Service Worker 2.1.0
+/* BAP-50 Service Worker 2.2.0
    Seite und Code: network-first (offline -> Cache). Samples und Icons: cache-first. */
-const VERSION = '2.1.0';
+const VERSION = '2.2.0';
 const CACHE = 'bap50-v' + VERSION;
 const SHELL = [
   './', './index.html', './app.css', './manifest.webmanifest', './icon.svg', './icon-192.png', './icon-512.png',

@@ -1,11 +1,22 @@
 # BAP-50 – Boom-Bap-Sampler im Browser
 
-Version **2.1.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+Version **2.2.0** · läuft unter `/boombap/` dieser Seite, als PWA installierbar und offline nutzbar.
+
+## Neu in 2.2 – Klang-Update: alles gestimmt, alles gleich laut
+
+- **Alle tonalen Samples gestimmt (A = 440 Hz):** `tools/retune_samples.py` misst jede Aufnahme mit Grundton zweifach (Grundfrequenz-Verfolgung YIN und Teiltöne relativ zu den Akkordtönen) und resampelt nur, wenn beide Messungen übereinstimmen. 20 Samples korrigiert, u. a. Dusty-Bap-Keys (−15 bis −20 Cent), Sax-Hits (+19 bis +39 Cent), Tuba C (−25 Cent). Ergebnis: kein gemessenes Sample weicht mehr als 15 Cent ab.
+- **Gleiche Lautheit:** `tools/analyze_samples.py` misst die Lautheit jedes Klangs (K-gewichtet, Anschlag bzw. eingeschwungener Teil). Neue Pads werden danach eingepegelt – je Kategorie gleich laut, egal aus welchem Pack. Für bestehende Projekte: Menü Pads → „Pegel & Stimmung angleichen“ (Bank oder alle) oder im Mixer „⚖ Bank angleichen“.
+- **Kiez 808 neu gebaut (66 Klänge):** 808-Drums, Toms, Congas, Cowbells und Clave auf C-Moll gestimmt; bandbegrenzte 808-Metallklänge (klarere Hats/Becken); 808-Bässe mit Obertönen für Handy-Lautsprecher. Orchester-Hit jetzt aus echtem Cello-Staccato-Akkord, gesungenem „Ah“, Pauke, Crash und Konzert-Bassdrum; Bläser-Stab mit echtem Tenorsax-Akkord; Klavier-Stab aus vier Flügeltönen; Streicher-Pad mit String-Cyborgs-Streichern; Chor „Ah“ aus gesungenen Tönen; Scratch auf einem gesungenen „Ahh“. Neu: **Bank S „Kiez Shouts & Extras“** mit echten Shouts (Hey, Ey, Oi, Ugh, Yeah, Let's Go, Here We Go, Gang Hey, Ey Tief, 1-2-3-4), Streicher-Stab, echter Kuhglocke, Pauke, Konzert-Bassdrum, Crash und Sirene. Alle Aufnahmen werden vor dem Schichten exakt gestimmt.
+- **Pattern-Pegel und gleich laute Patterns:** jedes Pattern hat einen eigenen Pegel (SEQ → „Pegel“). „⚖“ misst das Pattern (K-gewichtet, gegatet wie Streaming-Lautheit) und bringt es auf −13; Menü Pattern → „Alle Patterns angleichen“. Die 15 Werks-Grooves liegen damit innerhalb von etwa 2 dB statt vorher 9 dB.
+- **Mix-Verhältnisse:** Pads werden relativ zur Kick eingepegelt (Snare/Clap −1, Bass −2, Tom/Shouts −4, Keys −6, Perc −8, FX −9, Hats −10, Becken −12 dB, gemessen als lautestes 100-ms-Fenster). Synth-Klänge und eigene Samples misst die App selbst (gleiche Methode, ±0,4 dB zum Python-Werkzeug).
+- **Neue Kategorie „Vocal“** (Sample-Bank-Filter, Import erkennt „vocal/shout/hey …“).
+- **Beat-Generator mit Tonart:** Bass, Keys, Stabs und Melodie werden anhand ihres gemessenen Grundtons (plus Pad-Tune) in die gewählte Moll-Tonart gesetzt; Kiez nimmt automatisch Q + R + S; Crunk/Bounce setzen Gang-Shouts.
+- **Presets mit Shouts:** Kiez Bounce und Hinterhof Crunk mit „Hey“/„Yeah“/„Ugh“, Plattenbau Nacht mit Streicher-Stab, Pauke und „Ey Tief“.
 
 ## Neu in 2.1 – Kiez 808
 
 - **Pack „Kiez 808“ (50 Klänge)** im Sound des Großstadt-Straßenraps der 2000er: 808-Boom-Kicks, 808-Snares, Claps, Snaps, Rim, Clave, Cowbells, Hats, Toms, Congas, 808-Subbässe mit Slide und Distortion, Miami Boom, Orchester-Hits, Bläser-Stabs, Crunk-Stabs, Electro- und Pluck-Lead, Klavier-Stab, Streicher- und Chor-Pad, Air Horn, Martinshorn, Sirene, Laser, Peitsche, Scratches, Tape Stop, Sub Drop. Eigene Klänge (`tools/build_pack_kz.py`): 808-Synthese, Hits und Stabs zusätzlich mit vorhandenen CC0-Aufnahmen geschichtet. Keine Samples von Platten, keine nachgebauten Songs, keine Künstlernamen.
-- **20 Bänke (A–T, 320 Pads):** Q = Kiez 808 Drums, R = Kiez 808 Hits & Bass, S/T frei. Bestehende Projekte bekommen Q/R automatisch dazu; der Pack-Import überspringt belegte Bänke.
+- **20 Bänke (A–T, 320 Pads):** Q = Kiez 808 Drums, R = Kiez 808 Hits & Bass, S (ab 2.2 Kiez Shouts & Extras), T frei. Bestehende Projekte bekommen Q/R automatisch dazu; der Pack-Import überspringt belegte Bänke.
 - **Style-Presets** (Pattern 13–15, Menü Pattern → Style-Presets): „Kiez Bounce“ (128 BPM, Miami-Bass-Bounce), „Hinterhof Crunk“ (78 BPM), „Plattenbau Nacht“ (92 BPM, düster).
 - **Beat-Generator:** neue Stile „Kiez Bounce“ und „Crunk“; nimmt automatisch die Nachbarbank dazu (Q + R, M + N), Zusatz-Bank frei wählbar.
 - **APC mini mk2:** fünfte Bankseite (Q–T) im PADS-Modus, im MENÜ mit Shift Bänke E–T.
@@ -76,7 +87,9 @@ python3 -m http.server 8000   # im Repo-Wurzelordner
 python3 boombap/tools/build_samples.py --cache /tmp/bap-cache   # Core 50
 python3 boombap/tools/build_packs.py --cache /tmp/bap-cache     # Dusty Bap + Dark Hill
 python3 boombap/tools/build_pack_cd.py --cache /tmp/bap-cache   # Crate Diggers
-python3 boombap/tools/build_pack_kz.py                          # Kiez 808 (Synthese + Layer aus vorhandenen Samples)
+python3 boombap/tools/retune_samples.py                         # tonale Samples stimmen (vor Kiez 808)
+python3 boombap/tools/build_pack_kz.py                          # Kiez 808 (Synthese + gestimmte CC0-Aufnahmen)
+python3 boombap/tools/analyze_samples.py --report               # Lautheit + Stimmung messen → samples.json
 ```
 
 Das Skript lädt die Originale von raw.githubusercontent.com, braucht `ffmpeg` und `numpy`.

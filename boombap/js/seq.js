@@ -52,7 +52,7 @@ export function patternEvents(project, ptnIdx, t0, seed = 1) {
       const [v, th] = humanize(project.feel, v0, t, rnd);
       const tune = (ptn.tune[k] && ptn.tune[k][i]) || 0;
       const roll = (ptn.roll && ptn.roll[k] && ptn.roll[k][i]) || 1;
-      for (let r = 0; r < roll; r++) ev.push({ pad: +k, v: rollVelo(v, r, roll), t: Math.max(t0, th) + (r * sd) / roll, tune });
+      for (let r = 0; r < roll; r++) ev.push({ pad: +k, v: rollVelo(v, r, roll), t: Math.max(t0, th) + (r * sd) / roll, tune, g: ptn.gain || 0 });
     }
   }
   return { events: ev, dur: ptn.len * sd };
@@ -190,7 +190,7 @@ export class Sequencer {
         const [hv, ht] = humanize(p.feel, v, ts, Math.random);
         const tune = (ptn.tune[k] && ptn.tune[k][i]) || 0;
         const roll = (ptn.roll && ptn.roll[k] && ptn.roll[k][i]) || 1;
-        for (let r = 0; r < roll; r++) this.engine.trigger(+k, rollVelo(hv, r, roll), Math.max(t, ht) + (r * sd) / roll, tune);
+        for (let r = 0; r < roll; r++) this.engine.trigger(+k, rollVelo(hv, r, roll), Math.max(t, ht) + (r * sd) / roll, tune, null, ptn.gain || 0);
       }
       if (p.metro && i % 4 === 0) this.engine.click(ts, i % 16 === 0);
       this.queue.push({ t: ts, step: i, ptn: p.cur.ptn });

@@ -51,6 +51,7 @@ export function pickRoles(items) {
     lead: first(items.filter((x) => x.cat === 'keys' && /lead|pluck|square|synth/i.test(x.name))),
     horn: first(items.filter((x) => x.cat === 'fx' && /horn|sirene|siren/i.test(x.name))),
     whip: first(items.filter((x) => x.cat === 'fx' && /peitsche|whip/i.test(x.name))),
+    shout: first(items.filter((x) => x.cat === 'vox' && /gang/i.test(x.name))) ?? first(items.filter((x) => x.cat === 'vox' && /hey/i.test(x.name))) ?? first(items.filter((x) => x.cat === 'vox')),
     bass: first(by('bass')),
     keys: first(by('keys')),
     fx: first(by('fx')),
@@ -58,7 +59,11 @@ export function pickRoles(items) {
 }
 
 // Liefert { len, lanes: { pad: { v: [], tune: [], roll: [] } }, bpm, swing, roles }
-export function generate(items, { style = 'boombap', density = 2, bars = 2, seed = Date.now() } = {}) {
+const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+export const KEYS = NOTES;
+
+// key: Tonart (0 = C … 11 = B, Moll). items: [{ i, cat, name, root?, ptune? }]
+export function generate(items, { style = 'boombap', density = 2, bars = 2, seed = Date.now(), key = 0 } = {}) {
   const r = rng(seed);
   const pick = (arr) => arr[Math.floor(r() * arr.length)];
   const chance = (p) => r() < p;
@@ -67,8 +72,19 @@ export function generate(items, { style = 'boombap', density = 2, bars = 2, seed
   const R = pickRoles(items);
   const len = bars * 16;
   const lanes = {};
+  // Tonale Pads in die Tonart transponieren: Grundton des Samples + Pad-Tune → Tonart
+  const byPad = new Map(items.map((x) => [x.i, x]));
+  const tonal = new Set([R.bass, R.keys, R.stab, R.lead, R.bell].filter((x) => x != null));
+  const shiftOf = (pad) => {
+    const it = byPad.get(pad);
+    if (!it || !it.root || NOTES.indexOf(it.root) < 0) return 0;
+    let d = (((key - NOTES.indexOf(it.root) - (it.ptune || 0)) % 12) + 12) % 12;
+    if (d > 6) d -= 12;
+    return d;
+  };
   const put = (pad, step, v, tune = 0, roll = 0) => {
     if (pad == null || step < 0 || step >= len) return;
+    if (tonal.has(pad)) tune += shiftOf(pad);
     if (!lanes[pad]) lanes[pad] = { v: new Array(64).fill(0), tune: new Array(64).fill(0), roll: new Array(64).fill(0) };
     lanes[pad].v[step] = Math.max(1, Math.min(127, v));
     lanes[pad].tune[step] = tune;
@@ -157,6 +173,7 @@ export function generate(items, { style = 'boombap', density = 2, bars = 2, seed
       }
       if (R.stab != null && (b % 2 === 0 || (last && chance(0.6)))) put(R.stab, o + (b % 2 === 0 ? 0 : 10), vel(96, 118), chord);
       if (R.fx != null && last && density >= 2 && chance(0.4)) put(R.fx, o + 12, vel(80, 100));
+      if (R.shout != null && last && chance(0.5)) put(R.shout, o + 12, vel(96, 118));
     } else if (style === 'crunk') {
       const lead = R.stab ?? R.lead ?? R.keys;
       if (lead != null) {
@@ -165,6 +182,7 @@ export function generate(items, { style = 'boombap', density = 2, bars = 2, seed
         motif.forEach((s, k) => put(lead, o + s, vel(92, 114), chord + mel[k]));
       }
       if (R.horn != null && b === 0 && chance(0.6)) put(R.horn, o, vel(80, 100));
+      if (R.shout != null && (last || bars === 1) && chance(0.7)) put(R.shout, o + 12, vel(96, 118));
       if (R.whip != null && density >= 2 && chance(0.4)) put(R.whip, o + 12, vel(76, 96));
     } else if (style === 'phonk' && (R.bell ?? R.keys) != null) {
       const lead = R.bell ?? R.keys;

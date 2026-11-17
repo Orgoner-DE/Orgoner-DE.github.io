@@ -23,7 +23,7 @@ export const PAL = {
   0: '#000000', 1: '#1e1e1e', 2: '#7f7f7f', 3: '#ffffff', 5: '#ff0000', 8: '#ffbd6c', 9: '#ff5400', 13: '#ffff00',
   17: '#54ff00', 21: '#00ff00', 33: '#00ff99', 37: '#00a9ff', 41: '#0055ff', 45: '#0000ff', 49: '#5400ff', 53: '#ff00ff', 57: '#ff0054',
 };
-export const CAT_COLOR = { kick: 5, snare: 9, clap: 13, hat: 37, cymbal: 41, tom: 49, perc: 21, bass: 8, keys: 53, fx: 57, user: 3 };
+export const CAT_COLOR = { kick: 5, snare: 9, clap: 13, hat: 37, cymbal: 41, tom: 49, perc: 21, bass: 8, keys: 53, fx: 57, vox: 33, user: 3 };
 const BRIGHT = [0x90, 0x91, 0x92, 0x93, 0x94, 0x95, 0x96]; // 10 25 50 65 75 90 100 %
 const PULSE = 0x99;
 const BLINK = 0x9d;

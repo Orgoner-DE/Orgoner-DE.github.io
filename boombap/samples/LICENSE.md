@@ -1,6 +1,6 @@
 # Samples – Quellen und Lizenz
 
-Die 250 Samples der Packs Core 50, Dusty Bap, Dark Hill und Crate Diggers beruhen auf **echten Aufnahmen** (nichts von Grund auf synthetisiert). Das Pack **Kiez 808** (50 Klänge, unten) ist überwiegend synthetisiert und teils mit diesen Aufnahmen geschichtet. Alle Quellen stehen unter **CC0 1.0 Universal**:
+Die 250 Samples der Packs Core 50, Dusty Bap, Dark Hill und Crate Diggers beruhen auf **echten Aufnahmen** (nichts von Grund auf synthetisiert). Das Pack **Kiez 808** (66 Klänge, unten) kombiniert 808-Synthese mit gestimmten echten CC0-Aufnahmen (u. a. Cello, gesungene Vokale, Shouts, Kuhglocken). Seit 2.2 sind 20 tonale Aufnahmen per Resampling auf A = 440 Hz gestimmt (`../tools/retune_samples.py`, Wert `retuned` in `samples.json`). Alle Quellen stehen unter **CC0 1.0 Universal**:
 
 - **Virtuosity Drums (Versilian Studios / sfzinstruments)** – CC0-1.0 – https://github.com/sfzinstruments/virtuosity_drums
 - **VCSL - Versilian Community Sample Library** – CC0-1.0 – https://github.com/sgossner/VCSL
@@ -293,7 +293,16 @@ Alle Dateien: 44,1 kHz, 16 Bit, Mono. Die bearbeiteten Dateien stehen ebenfalls 
 
 ## Kiez 808
 
-Eigene Klänge im Sound des Großstadt-Straßenraps der 2000er (808, Miami Bass, Crunk). 808-Drums, Bässe, Synth-Stabs und FX sind in `../tools/build_pack_kz.py` synthetisiert; Orchester-Hits, Bläser, Klavier, Claps, Snaps und Scratches sind zusätzlich mit vorhandenen BAP-50-Aufnahmen (CC0, siehe oben) geschichtet. Keine Samples von Platten, keine nachgebauten Songs. CC0 1.0.
+Eigene Klänge im Sound des Großstadt-Straßenraps der 2000er (808, Miami Bass, Crunk), gebaut mit `../tools/build_pack_kz.py`. 808-Drums, Bässe, Synth-Stabs und FX sind synthetisiert und auf C (Moll) gestimmt. Orchester-Hit, Streicher-Stab, Bläser, Klavier, Chor, Kuhglocke, Pauke, Crash, Sirene und die Shouts beruhen auf echten CC0-Aufnahmen, die vor dem Schichten per Tonhöhenmessung exakt gestimmt werden. Keine Samples von Platten, keine nachgebauten Songs, keine Künstlernamen. Ergebnis: CC0 1.0.
+
+Zusätzliche Quellen (alle CC0 1.0):
+
+- **VCSL – Versilian Community Sample Library** – https://github.com/sgossner/VCSL
+- **Karoryfer & Bigcat Cello (sfzinstruments)** – https://github.com/sfzinstruments/karoryfer-bigcat.cello
+- **Karoryfer 272 Merry Orks – Stimmen (sfzinstruments)** – https://github.com/sfzinstruments/karoryfer.272-merry-orks
+- **Legato Vocal Tutorial – gesungene Vokale (sfzinstruments)** – https://github.com/sfzinstruments/legato_vocal_tutorial
+- **Karoryfer Cowsynth – Kuhglocken (sfzinstruments)** – https://github.com/sfzinstruments/karoryfer.cowsynth
+- **Karoryfer String Cyborgs (sfzinstruments)** – https://github.com/sfzinstruments/karoryfer.string-cyborgs
 
 | ID | Name | Kategorie | Dauer | Aufbau |
 |---|---|---|---|---|
@@ -304,11 +313,11 @@ Eigene Klänge im Sound des Großstadt-Straßenraps der 2000er (808, Miami Bass,
 | kz05 | Kick Layer Boom | kick | 1.60 s | db04 Kick Low Boom |
 | kz06 | 808 Snare | snare | 0.50 s | nur Synthese |
 | kz07 | 808 Snare Snappy | snare | 0.60 s | nur Synthese |
-| kz08 | Crunk Snare Stack | snare | 0.82 s | cd24 Clap Stack, db09 Snare Crack 12 |
-| kz09 | 808 Clap | clap | 0.88 s | nur Synthese |
-| kz10 | Clap Wall | clap | 1.03 s | c01 Clap Crowd, cd24 Clap Stack, cd25 Clap Person, cd26 Handclap Body, db21 Clap Stack |
+| kz08 | Crunk Snare Stack | snare | 0.86 s | cd24 Clap Stack, db09 Snare Crack 12 |
+| kz09 | 808 Clap | clap | 0.89 s | nur Synthese |
+| kz10 | Clap Wall | clap | 1.10 s | c01 Clap Crowd, cd24 Clap Stack, cd25 Clap Person, cd26 Handclap Body, db21 Clap Stack |
 | kz11 | Snap Room | clap | 0.64 s | cd28 Finger Snap |
-| kz12 | 808 Rim | snare | 0.09 s | nur Synthese |
+| kz12 | 808 Rim | snare | 0.08 s | nur Synthese |
 | kz13 | 808 Clave | perc | 0.18 s | nur Synthese |
 | kz14 | 808 Cowbell | perc | 0.60 s | nur Synthese |
 | kz15 | Cowbell Dirty | perc | 0.60 s | nur Synthese |
@@ -327,23 +336,39 @@ Eigene Klänge im Sound des Großstadt-Straßenraps der 2000er (808, Miami Bass,
 | kz28 | Miami Boom C | bass | 2.60 s | nur Synthese |
 | kz29 | Square Bass C | bass | 0.90 s | nur Synthese |
 | kz30 | Tuba 808 Bass C | bass | 1.60 s | cd91 Tuba Hit C |
-| kz31 | Orchester-Hit Cm | keys | 1.53 s | cd66 Upright Bass Arco C, cd91 Tuba Hit C |
-| kz32 | Orchester-Hit Dark | keys | 2.20 s | cd66 Upright Bass Arco C, cd91 Tuba Hit C |
-| kz33 | Bläser-Stab Cm | keys | 1.03 s | cd94 Tuba Stab G, m04 Tenor Sax Stab C |
+| kz31 | Orchester-Hit Cm | keys | 1.60 s | cello: C2_f_1.wav, cello: C3_f_1.wav, cello: Eb3_f_1.wav, cello: Gb2_f_1.wav, vcsl: Timpani1B_hit_v5_rr1_main.wav, vcsl: bassdrum_hit_ff.wav, vcsl: cymbal_crash1_short1.wav, vocal: vowel_a_c4_short_rr1.wav, vocal: vowel_a_eb4_short_rr1.wav, vocal: vowel_a_g4_short_rr1.wav |
+| kz32 | Orchester-Hit Dark | keys | 2.20 s | cello: C2_f_1.wav, cello: C3_f_1.wav, cello: Eb3_f_1.wav, cello: Gb2_f_1.wav, vcsl: Timpani1B_hit_v5_rr1_main.wav, vcsl: bassdrum_hit_ff.wav, vcsl: cymbal_crash1_short1.wav, vocal: vowel_a_c4_short_rr1.wav, vocal: vowel_a_eb4_short_rr1.wav, vocal: vowel_a_g4_short_rr1.wav |
+| kz33 | Bläser-Stab Cm | keys | 1.07 s | cd91 Tuba Hit C, vcsl: BrettTenor_Staccato_Main_C3_vl2_rr4.wav, vcsl: BrettTenor_Staccato_Main_C4_vl2_rr3.wav, vcsl: BrettTenor_Staccato_Main_D3_vl2_rr5.wav |
 | kz34 | Crunk Stab Cm | keys | 0.50 s | nur Synthese |
 | kz35 | Electro Lead C | keys | 1.30 s | nur Synthese |
-| kz36 | Piano Stab Dark Cm | keys | 2.00 s | dh44 Piano Bbm Stab |
-| kz37 | Streicher Pad Cm | keys | 3.50 s | cd66 Upright Bass Arco C |
+| kz36 | Piano Stab Dark Cm | keys | 1.90 s | vcsl: JHPiano_NoSus_Close_C2_vl3_rr1.wav, vcsl: JHPiano_NoSus_Close_C3_vl3_rr1.wav, vcsl: JHPiano_NoSus_Close_D3_vl3_rr1.wav, vcsl: JHPiano_NoSus_Close_F#3_vl3_rr1.wav |
+| kz37 | Streicher Pad Cm | keys | 3.50 s | cyborg: C3.wav, cyborg: C4.wav, cyborg: Eb3.wav, cyborg: Gb3.wav |
 | kz38 | Glocke Dark C | keys | 3.00 s | nur Synthese |
 | kz39 | Pluck Lead C | keys | 0.60 s | nur Synthese |
-| kz40 | Chor Pad Cm | keys | 3.50 s | nur Synthese |
-| kz41 | Air Horn | fx | 1.29 s | nur Synthese |
+| kz40 | Chor Ah Cm | keys | 3.50 s | vocal: vowel_a_c3.wav, vocal: vowel_a_c4.wav, vocal: vowel_a_eb4.wav, vocal: vowel_a_g3.wav, vocal: vowel_a_g4.wav |
+| kz41 | Air Horn | fx | 1.50 s | nur Synthese |
 | kz42 | Martinshorn | fx | 3.20 s | nur Synthese |
 | kz43 | Sirene Wail | fx | 3.50 s | nur Synthese |
 | kz44 | Laser Zap | fx | 0.35 s | nur Synthese |
 | kz45 | Peitsche | fx | 0.62 s | nur Synthese |
-| kz46 | Scratch Baby | fx | 0.60 s | m04 Tenor Sax Stab C |
-| kz47 | Scratch Chirp | fx | 0.50 s | cd95 Tuba Woo |
-| kz48 | Reverse Becken | fx | 2.00 s | nur Synthese |
-| kz49 | Tape Stop | fx | 1.00 s | cd66 Upright Bass Arco C, cd91 Tuba Hit C |
+| kz46 | Scratch Ahh | fx | 0.60 s | vocal: vowel_a_c4_short_rr1.wav |
+| kz47 | Scratch Chirp | fx | 0.50 s | orks: hey_rr2.wav |
+| kz48 | Reverse Becken | fx | 1.96 s | vcsl: cymbal_crash1_ff2.wav |
+| kz49 | Tape Stop | fx | 1.00 s | cello: C2_f_1.wav, cello: C3_f_1.wav, cello: Eb3_f_1.wav, cello: Gb2_f_1.wav, vcsl: Timpani1B_hit_v5_rr1_main.wav, vcsl: bassdrum_hit_ff.wav, vcsl: cymbal_crash1_short1.wav, vocal: vowel_a_c4_short_rr1.wav, vocal: vowel_a_eb4_short_rr1.wav, vocal: vowel_a_g4_short_rr1.wav |
 | kz50 | Sub Drop | fx | 2.20 s | nur Synthese |
+| kz51 | Shout Hey | vox | 1.00 s | orks: hey_rr1.wav |
+| kz52 | Shout Ey | vox | 1.00 s | orks: ey_rr1.wav |
+| kz53 | Shout Oi | vox | 1.00 s | orks: oi_rr2.wav |
+| kz54 | Shout Ugh | vox | 0.94 s | orks: ugh_rr1.wav |
+| kz55 | Shout Yeah | vox | 1.40 s | orks: yeah.wav |
+| kz56 | Shout Let's Go | vox | 1.60 s | orks: lets_go.wav |
+| kz57 | Shout Here We Go | vox | 1.80 s | orks: here_we_go.wav |
+| kz58 | Gang Hey | vox | 1.20 s | orks: hey_rr1.wav, orks: hey_rr2.wav, orks: hey_rr3.wav |
+| kz59 | Ey Tief | vox | 1.19 s | orks: ey_rr2.wav |
+| kz60 | Streicher-Stab Cm | keys | 1.25 s | cello: C2_f_1.wav, cello: C3_f_1.wav, cello: Eb3_f_1.wav, cello: Gb2_f_1.wav, cello: Gb3_f_1.wav, cyborg: C3.wav, cyborg: C4.wav, cyborg: Eb3.wav, cyborg: Gb3.wav |
+| kz61 | Kuhglocke Echt C | perc | 1.20 s | cows: c4.wav |
+| kz62 | Pauke C | tom | 2.79 s | vcsl: Timpani1B_hit_v5_rr1_main.wav |
+| kz63 | Konzert-Bassdrum | kick | 2.39 s | vcsl: bassdrum_hit_ff.wav |
+| kz64 | Crash Echt | cymbal | 3.00 s | vcsl: cymbal_crash1_ff2.wav |
+| kz65 | Sirene Echt | fx | 3.50 s | vcsl: Main_SirenWhistle-002.wav |
+| kz66 | Count 1-2-3-4 | vox | 2.50 s | orks: one_two_three_four.wav |

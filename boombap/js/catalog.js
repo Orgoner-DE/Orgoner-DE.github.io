@@ -10,10 +10,49 @@ export const VINTAGE = {
 
 export const CATS = {
   kick: 'Kick', snare: 'Snare', clap: 'Clap', hat: 'HiHat', cymbal: 'Becken',
-  tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', bass: 'Bass', fx: 'FX', user: 'Eigene',
+  tom: 'Tom', perc: 'Perc', keys: 'Keys/Horn', bass: 'Bass', fx: 'FX', vox: 'Vocal', user: 'Eigene',
 };
 
 export const PACKS = { core: 'Core 50', db: 'Dusty Bap', dh: 'Dark Hill', cd: 'Crate Diggers', kz: 'Kiez 808', synth: 'Synth', user: 'Eigene' };
+
+// Schlag-Lautheit wie tools/analyze_samples.py: K-Gewichtung (Hochpass 60 Hz + High-Shelf +4 dB ab 1,5 kHz),
+// lautestes 100-ms-Fenster in der ersten Sekunde nach dem Einsatz. Damit pegelt die App auch Synth-Klänge
+// und eigene Samples genauso ein wie die eingebauten.
+function biquad(x, b0, b1, b2, a1, a2) {
+  const y = new Float32Array(x.length);
+  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
+  for (let i = 0; i < x.length; i++) {
+    const v = b0 * x[i] + b1 * x1 + b2 * x2 - a1 * y1 - a2 * y2;
+    x2 = x1; x1 = x[i]; y2 = y1; y1 = v; y[i] = v;
+  }
+  return y;
+}
+export function measureLoud(d, sr) {
+  let pk = 0;
+  for (let i = 0; i < d.length; i++) { const a = Math.abs(d[i]); if (a > pk) pk = a; }
+  if (pk <= 0) return -60;
+  let o = 0;
+  while (o < d.length && Math.abs(d[o]) < pk * 0.05) o++;
+  let seg = d.subarray(o, Math.min(d.length, o + sr));
+  // Hochpass 60 Hz (Butterworth)
+  let w = 2 * Math.PI * 60 / sr, cs = Math.cos(w), al = Math.sin(w) / (2 * Math.SQRT1_2), a0 = 1 + al;
+  seg = biquad(seg, (1 + cs) / 2 / a0, -(1 + cs) / a0, (1 + cs) / 2 / a0, -2 * cs / a0, (1 - al) / a0);
+  // High-Shelf 1,5 kHz +4 dB (RBJ)
+  const A = Math.pow(10, 4 / 40);
+  w = 2 * Math.PI * 1500 / sr; cs = Math.cos(w); al = Math.sin(w) / 2 * Math.SQRT2;
+  const sq = 2 * Math.sqrt(A) * al;
+  a0 = (A + 1) - (A - 1) * cs + sq;
+  seg = biquad(seg, A * ((A + 1) + (A - 1) * cs + sq) / a0, -2 * A * ((A - 1) + (A + 1) * cs) / a0, A * ((A + 1) + (A - 1) * cs - sq) / a0,
+    2 * ((A - 1) - (A + 1) * cs) / a0, ((A + 1) - (A - 1) * cs - sq) / a0);
+  const win = Math.floor(sr * 0.1);
+  let acc = 0, best = 0;
+  for (let i = 0; i < seg.length; i++) {
+    acc += seg[i] * seg[i];
+    if (i >= win) acc -= seg[i - win] * seg[i - win];
+    if (acc > best) best = acc;
+  }
+  return +(10 * Math.log10(best / win + 1e-12)).toFixed(1);
+}
 
 const DB_NAME = 'bap50';
 const STORE = 'samples';
@@ -120,7 +159,7 @@ export class Catalog {
     buf.copyToChannel(data, 0);
     this.buffers.set(rec.id, buf);
     this.userRecs.set(rec.id, rec);
-    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', group: rec.group || '', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false, synth: rec.synth || null, root: rec.root || undefined });
+    this.add({ id: rec.id, name: rec.name, cat: rec.cat || 'user', pack: 'user', group: rec.group || '', dur: +(data.length / rec.sr).toFixed(3), tags: rec.tags || 'eigene', builtin: false, synth: rec.synth || null, root: rec.root || undefined, loud: measureLoud(data, rec.sr) });
   }
 
   // Im Browser berechneter Werks-Klang (Synth), nicht gespeichert, bei jedem Start neu.
@@ -130,7 +169,7 @@ export class Catalog {
     this.buffers.set(meta.id, buf);
     for (const k of Array.from(this.cache.keys())) if (k.startsWith(meta.id + '|')) this.cache.delete(k);
     for (const k of Array.from(this.peaks.keys())) if (k.startsWith(meta.id + ':')) this.peaks.delete(k);
-    this.add({ ...meta, dur: +(data.length / sr).toFixed(3), builtin: true });
+    this.add({ ...meta, dur: +(data.length / sr).toFixed(3), builtin: true, loud: measureLoud(data, sr) });
   }
 
   // Speichert ein eigenes Sample (mono Float32) und gibt die ID zurück.

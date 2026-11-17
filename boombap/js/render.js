@@ -15,7 +15,7 @@ export async function renderPatterns(project, catalog, order, { tail = 1.5, samp
   let t = 0.02;
   order.forEach((i, n) => {
     const { events, dur } = patternEvents(proj, i, t, seed + n);
-    for (const e of events) eng.trigger(e.pad, e.v, e.t, e.tune);
+    for (const e of events) eng.trigger(e.pad, e.v, e.t, e.tune, null, e.g || 0);
     t += dur;
   });
   if (vox && proj.vox) eng.playVox(0.02);

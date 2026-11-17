@@ -1,7 +1,7 @@
 {
   "name": "BAP-50 Boom Bap Sampler",
   "short_name": "BAP-50",
-  "description": "Boom-Bap-Sampler mit 320 Pads, Step-Sequencer, Mixer, Vocal-Aufnahme, Beat-Generator und 300 CC0-Klängen.",
+  "description": "Boom-Bap-Sampler mit 320 Pads, Step-Sequencer, Mixer, Vocal-Aufnahme, Beat-Generator und 316 CC0-Klängen.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
