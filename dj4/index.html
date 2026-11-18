@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-KLEiashfJXrE+ctvC7hpeE5r+rPOmLx8dzxhzN9jj00=' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob: mediastream:; connect-src blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W+TNnTzUZcWkGnTd6xrIQddMEYpkDEA75g/cjdg+NT8=' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob: mediastream:; connect-src blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0a0c10">
@@ -98,6 +98,16 @@ select { background: var(--panel3); border: 1px solid var(--line); border-radius
 #toast.show { opacity: 1; transform: translateX(-50%); }
 body.midilearn [data-ctl] { outline: 1px dashed #ffb02088; outline-offset: 1px; }
 body.midilearn .learn-target { outline: 2px solid var(--warn) !important; }
+body.midilearn .learned { outline: 2px solid var(--ok) !important; }
+.pickup { outline: 2px dashed var(--warn); outline-offset: 2px; }
+#learnbar { position: fixed; left: 0; right: 0; top: 0; z-index: 90; display: flex; gap: 10px; align-items: center; justify-content: space-between; padding: calc(6px + var(--safe-t)) 12px 6px; background: #3a2a00f2; border-bottom: 2px solid var(--warn); color: #ffe7a8; font-weight: 700; font-size: 13px; }
+.midimon { font: 600 13px/1.4 "Courier New", monospace; padding: 8px; border: 1px solid var(--line); border-radius: 6px; background: #0b0c0e; color: #9cff00; }
+.midimon.hit { border-color: #9cff00; }
+.chk { display: inline-flex; align-items: center; gap: 4px; padding: 4px 6px; }
+.chk input { width: 20px; height: 20px; accent-color: var(--acc); }
+.maplist { display: flex; flex-direction: column; gap: 2px; }
+.maprow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; align-items: center; padding: 4px 6px; border-bottom: 1px solid #1d2128; }
+.dim { color: var(--dim); }
 
 /* ---------- App-Gerüst (Desktop/Tablet) ---------- */
 #app { position: fixed; inset: 0; padding: var(--safe-t) var(--safe-r) var(--safe-b) var(--safe-l); display: grid; grid-template-rows: auto auto minmax(0, 1fr) auto minmax(150px, 30vh) auto; grid-template-areas: "top" "fx" "stage" "mini" "browser" "nav"; gap: 4px; }
@@ -373,7 +383,6 @@ kbd { background: var(--panel3); border: 1px solid var(--line); border-bottom-wi
   .navb { flex: 1; min-height: 38px; font-size: 12px; min-width: 0; padding: 4px 2px; }
   .navb.on { --dc: #cfd6e0; }
   #navpair { display: flex; gap: 3px; }
-  body.d2 #navpair { display: none; }
   #navpair .b { min-height: 38px; padding: 2px 6px; }
   .bside { flex-direction: row; overflow-x: auto; padding: 3px; }
   .bl { flex: none; min-height: 30px; }
@@ -398,6 +407,43 @@ kbd { background: var(--panel3); border: 1px solid var(--line); border-bottom-wi
 @media (hover: hover) { .b:hover { border-color: #4a5463; } }
 
 body.inapp a[href$='.apk'], body.inapp .apkline { display: none; }
+/* ---------- Touch: größere Bedienelemente auf Handys ---------- */
+@media (max-width: 760px), (max-height: 520px), (orientation: portrait) and (max-width: 1100px) {
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  .bsearch { font-size: 16px; padding: 8px 10px; }
+  .b { min-height: 34px; } .b.xs { min-height: 32px; } .b.xxs { min-height: 28px; min-width: 28px; font-size: 11px; }
+  .fh { --capW: 38px; height: 40px; }
+  .sfad .chfader { width: 40px; --capH: 32px; }
+  .knob { --ks: 40px; } .knob.eq { --ks: 36px; } .knob .kl { font-size: 10px; } .knob .kval { top: -22px; font-size: 13px; }
+  .strip { gap: 4px; }
+  #top .cgrp2 .b:not(:last-child), #top .b[data-ctl="deckcount"], #top .clock .lbl { display: none; }
+  .mitem { min-height: 48px; } .srow { min-height: 44px; }
+  .fxsel { font-size: 13px; padding: 4px; } .fxpre { font-size: 12px; max-width: 120px; }
+  .tr .ld .b { min-width: 36px; min-height: 36px; }
+  #navpair .b { min-width: 38px; }
+  #mixer { grid-template-columns: minmax(0, 1fr) auto; } .mxch, .strip { min-width: 0; }
+  .kills { gap: 1px; } .kills .b.xxs { min-width: 20px; padding: 0 1px; font-size: 10px; }
+  .fxa .b.xxs { min-width: 24px; } .sbot .b { padding: 2px 3px; }
+  .mxmaster { width: 62px; }
+  body.view-decks.solo #stage { grid-template-columns: minmax(0, 1fr) !important; grid-template-rows: minmax(0, 1fr) !important; grid-template-areas: none !important; }
+  body.view-decks.solo .deck { display: none !important; grid-area: auto !important; }
+  body.view-decks.solo .deck.focus { display: flex !important; }
+}
+@container deck (min-height: 280px) and (max-width: 760px) {
+  .trow .b { min-height: 34px; } .trow.big .b { min-height: 46px; font-size: 14px; }
+  .tbtns .b { min-height: 30px; font-size: 11px; } .lgrp .b { min-height: 32px; }
+  .pad { min-height: 40px; font-size: 13px; } .ptabs .tab { min-height: 26px; font-size: 10px; }
+  .tfwrap .fader { width: 36px; --capH: 26px; }
+  .wz .b { min-height: 28px; min-width: 30px; }
+}
+@container deck (max-width: 540px) and (min-height: 520px) {
+  .dmain { grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: "tr jog te" "pa pa pa"; row-gap: 10px; }
+  .dtrans { grid-area: tr; } .djog { grid-area: jog; display: flex !important; } .dpads { grid-area: pa; } .dtempo { grid-area: te; }
+  .jog { width: min(40cqw, 190px); height: min(40cqw, 190px); }
+  .pad { min-height: 56px; font-size: 15px; } .ptabs .tab { min-height: 32px; font-size: 11px; }
+  .wavebox { flex-basis: 150px; } .ovw { height: 34px; }
+  .tfwrap .fader { min-height: 150px; }
+}
 </style>
 </head>
 <body class="view-decks d4">
@@ -535,6 +581,7 @@ const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 function h(tag, cls, html) { const e = document.createElement(tag); if (cls) e.className = cls; if (html !== undefined) e.innerHTML = html; return e; }
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
+const cap = (el, id) => { try { cap(el, id); } catch (e) {} };
 const SVGNS = 'http://www.w3.org/2000/svg';
 
 function reg(id, o) { if (!id) return; CTL[id] = o; if (o.el) o.el.dataset.ctl = id; }
@@ -554,13 +601,13 @@ class Knob {
       if (document.body.classList.contains('midilearn')) return;
       e.preventDefault(); const now = performance.now();
       if (now - lastTap < 320) { this.set(this.o.def, true); lastTap = 0; return; }
-      lastTap = now; pid = e.pointerId; el.setPointerCapture(pid); sy = e.clientY; sx = e.clientX; sv = this.norm(); el.classList.add('drag');
+      lastTap = now; pid = e.pointerId; cap(el, pid); sy = e.clientY; sx = e.clientX; sv = this.norm(); el.classList.add('drag');
     });
     el.addEventListener('pointermove', e => {
       if (e.pointerId !== pid) return;
       const fine = e.shiftKey || window.APP?.shift ? 0.2 : 1;
       const d = ((sy - e.clientY) + (e.clientX - sx) * 0.6) / (170 / this.o.sens) * fine;
-      this.setNorm(clamp(sv + d, 0, 1), true);
+      this.setNorm(clamp(sv + d, 0, 1), true, true);
     });
     const up = e => { if (e.pointerId !== pid) return; pid = null; el.classList.remove('drag'); };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
@@ -574,10 +621,10 @@ class Knob {
     return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 ${large} ${sw} ${x1.toFixed(2)} ${y1.toFixed(2)}`;
   }
   norm() { return (this.v - this.o.min) / (this.o.max - this.o.min); }
-  setNorm(n, emit) { this.set(this.o.min + n * (this.o.max - this.o.min), emit); }
-  set(v, emit) {
+  setNorm(n, emit, snap) { this.set(this.o.min + n * (this.o.max - this.o.min), emit, snap); }
+  set(v, emit, snap) {
     v = clamp(v, this.o.min, this.o.max);
-    if (this.o.snap && Math.abs(v - this.o.def) < (this.o.max - this.o.min) * 0.02) v = this.o.def;
+    if (snap && this.o.snap && Math.abs(v - this.o.def) < (this.o.max - this.o.min) * 0.02) v = this.o.def;
     if (v === this.v && !emit) return; this.v = v; this.draw(); if (emit && this.o.onChange) this.o.onChange(v);
   }
   draw() {
@@ -608,7 +655,7 @@ class Fader {
       e.preventDefault(); const now = performance.now();
       if (now - lastTap < 300) { this.set(this.o.def, true); lastTap = 0; return; }
       lastTap = now;
-      pid = e.pointerId; el.setPointerCapture(pid); el.classList.add('drag');
+      pid = e.pointerId; cap(el, pid); el.classList.add('drag');
       start = this.o.vertical ? e.clientY : e.clientX; sv = this.norm();
       if (!this.o.relative && e.target !== this.cap) { this.setNorm(posOf(e), true); sv = this.norm(); }
     });
@@ -644,13 +691,15 @@ function btn(parent, o) {
   parent && parent.appendChild(el);
   let down = false, lp = null;
   const press = (d, src) => {
-    if (d) { if (down) return; down = true; el.classList.add('pressed'); o.onDown && o.onDown(src);
+    if (d) { if (down) return; down = true; el.classList.add('pressed');
+      if (src && navigator.vibrate && window.APP?.settings?.haptic !== false) { try { navigator.vibrate(el.classList.contains('spad') || el.classList.contains('pad') ? 12 : 7); } catch (e) {} }
+      o.onDown && o.onDown(src);
       if (o.onLong) lp = setTimeout(() => { lp = null; o.onLong(); }, 550); }
     else { if (!down) return; down = false; el.classList.remove('pressed'); if (lp) { clearTimeout(lp); lp = null; } o.onUp && o.onUp(src); }
   };
   el.addEventListener('pointerdown', e => {
     if (document.body.classList.contains('midilearn')) return;
-    e.preventDefault(); el.setPointerCapture?.(e.pointerId); press(true, e);
+    e.preventDefault(); cap(el, e.pointerId); press(true, e);
   });
   el.addEventListener('pointerup', e => press(false, e));
   el.addEventListener('pointercancel', e => press(false, e));
@@ -670,22 +719,33 @@ function toast(msg, ms = 2200) {
 
 /* ---------------- MIDI ---------------- */
 const MIDI = {
-  map: {}, learning: false, target: null, access: null, inputs: [], last: '',
-  load() { try { let raw = localStorage.getItem('djp4.midi'); if (window.AndroidMidi?.loadMappings) raw = window.AndroidMidi.loadMappings() || raw; const m = JSON.parse(raw || '{}'); this.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { this.map = {}; } },
+  map: {}, learning: false, target: null, access: null, inputs: [], outputs: [], last: '', connected: false, fbState: {}, learnBuf: null, monitor: null, pick: {},
+  opts: { soft: true, led: true },
+  load() {
+    try { let raw = localStorage.getItem('djp4.midi'); if (window.AndroidMidi?.loadMappings) raw = window.AndroidMidi.loadMappings() || raw; const m = JSON.parse(raw || '{}'); this.map = m && typeof m === 'object' && !Array.isArray(m) ? m : {}; } catch (e) { this.map = {}; }
+    try { Object.assign(this.opts, JSON.parse(localStorage.getItem('djp4.midiopts') || '{}')); } catch (e) {}
+  },
   save() { const s = JSON.stringify(this.map); try { localStorage.setItem('djp4.midi', s); } catch (e) {} try { window.AndroidMidi?.saveMappings?.(s); } catch (e) {} },
+  saveOpts() { try { localStorage.setItem('djp4.midiopts', JSON.stringify(this.opts)); } catch (e) {} },
   async connect() {
+    if (this.connected) return true;
     this.load();
     if (window.AndroidMidi?.connect) {
       window.DJP4_MIDI_receive = ev => this.onMsg(ev.bytes);
       window.DJP4_MIDI_devices = list => { this.inputs = list.map(d => d.name); this.onDevices && this.onDevices(); };
       try { window.AndroidMidi.connect(); } catch (e) {}
-      return true;
+      return (this.connected = true);
     }
     if (!navigator.requestMIDIAccess) return false;
     try {
       this.access = await navigator.requestMIDIAccess({ sysex: false });
-      const bind = () => { this.inputs = []; this.access.inputs.forEach(i => { i.onmidimessage = e => this.onMsg(e.data); this.inputs.push(i.name); }); this.onDevices && this.onDevices(); };
-      this.access.onstatechange = bind; bind(); return true;
+      const bind = () => {
+        this.inputs = []; this.outputs = [];
+        this.access.inputs.forEach(i => { i.onmidimessage = e => this.onMsg(e.data); this.inputs.push(i.name); });
+        this.access.outputs.forEach(o => this.outputs.push(o)); this.fbState = {};
+        this.onDevices && this.onDevices();
+      };
+      this.access.onstatechange = bind; bind(); return (this.connected = true);
     } catch (e) { return false; }
   },
   keyOf(b) {
@@ -695,42 +755,91 @@ const MIDI = {
     if (st === 0xe0) return 'p' + ch;
     return null;
   },
+  pretty(k) { const m = /^([ncp])(\d+)(?::(\d+))?$/.exec(k); if (!m) return k; const ch = 'Kanal ' + (Number(m[2]) + 1); return m[1] === 'n' ? `Note ${m[3]} · ${ch}` : m[1] === 'c' ? `CC ${m[3]} · ${ch}` : `Pitchbend · ${ch}`; },
+  label(id) {
+    return String(id).replace(/^deck([A-D])\./, 'Deck $1 · ').replace(/^mix([A-D])\./, 'Mixer $1 · ').replace(/^fx(\d)\./, 'FX $1 · ').replace(/^pads\./, 'Pads · ')
+      .replace(/^mix\./, 'Master · ').replace(/^xf$/, 'Crossfader').replace(/^xf\./, 'Crossfader · ').replace(/^clock\./, 'Master-Clock · ');
+  },
+  rel(v, enc) { return enc === 'center' ? v - 64 : (v > 63 ? v - 128 : v); },
   onMsg(b) {
     const k = this.keyOf(b); if (!k) return;
     const st = b[0] & 0xf0;
-    this.last = k;
-    if (this.learning && this.target) {
-      const rel = st === 0xb0 && (b[2] === 1 || b[2] === 127 || b[2] === 63 || b[2] === 65) && CTL[this.target]?.kind !== 'btn';
-      this.map[k] = { id: this.target, rel };
-      this.save(); toast(`MIDI zugewiesen: ${k} → ${this.target}${rel ? ' (relativ)' : ''}`);
-      $$('.learn-target').forEach(e => e.classList.remove('learn-target'));
-      this.target = null; return;
-    }
+    this.last = k; if (this.monitor) this.monitor(k, b);
+    if (this.learning && this.target) { this.learnMsg(k, st, b); return; }
     const m = this.map[k]; if (!m) return;
     const c = CTL[m.id]; if (!c) return;
     if (c.kind === 'btn') {
       if (st === 0x90) c.press(b[2] > 0); else if (st === 0x80) c.press(false); else if (st === 0xb0) c.press(b[2] > 63);
     } else if (c.kind === 'jog') {
-      const v = st === 0xe0 ? ((b[2] << 7 | b[1]) - 8192) / 64 : (b[2] > 63 ? b[2] - 128 : b[2]); c.delta(v);
-    } else {
-      if (st === 0xe0) c.set((b[2] << 7 | b[1]) / 16383);
-      else if (m.rel) { const d = b[2] > 63 ? b[2] - 128 : b[2]; c.nudge(d / 100); }
-      else if (st === 0xb0) c.set(b[2] / 127);
-      else if (st === 0x90) c.set(b[2] / 127);
+      c.delta(st === 0xe0 ? ((b[2] << 7 | b[1]) - 8192) / 64 : this.rel(b[2], m.enc));
+    } else if (st === 0xe0) this.abs(k, c, (b[2] << 7 | b[1]) / 16383);
+    else if (m.rel) c.nudge(this.rel(b[2], m.enc) / 100);
+    else if (st === 0xb0 || st === 0x90) this.abs(k, c, b[2] / 127);
+  },
+  abs(k, c, nv) { // Soft-Takeover: erst übernehmen, wenn der Hardware-Regler den aktuellen Wert erreicht/kreuzt
+    if (this.opts.soft && c.get) {
+      const cur = c.get(), prev = this.pick[k];
+      if (!(Math.abs(nv - cur) <= 0.05 || (prev != null && (prev - cur) * (nv - cur) <= 0))) {
+        this.pick[k] = nv;
+        if (c.el) { c.el.classList.add('pickup'); clearTimeout(c.el._pk); c.el._pk = setTimeout(() => c.el.classList.remove('pickup'), 700); }
+        return;
+      }
+    }
+    this.pick[k] = nv; c.set(nv);
+  },
+  learnMsg(k, st, b) {
+    const c = CTL[this.target]; if (!c) return;
+    if (st === 0x80 || (st === 0x90 && b[2] === 0)) return;
+    if (c.kind === 'btn' || st !== 0xb0) { this.assign(k, {}); return; }
+    const L = this.learnBuf && this.learnBuf.k === k ? this.learnBuf : (this.learnBuf = { k, vals: [] });
+    L.vals.push(b[2]); clearTimeout(L.tm); L.tm = setTimeout(() => this.finishLearn(), 320);
+  },
+  finishLearn() {
+    const L = this.learnBuf; this.learnBuf = null; if (!L || !this.target) return;
+    const c = CTL[this.target], v = L.vals, few = new Set(v).size <= 2;
+    let enc = null;
+    if (few && v.every(x => x <= 15 || x >= 113)) enc = 'twos';
+    else if (few && v.every(x => x >= 56 && x <= 72) && v.some(x => x !== 64)) enc = 'center';
+    if (c && c.kind === 'jog' && !enc) enc = v.every(x => x >= 40 && x <= 88) ? 'center' : 'twos';
+    this.assign(L.k, enc ? { rel: true, enc } : {});
+  },
+  assign(k, extra) {
+    this.map[k] = Object.assign({ id: this.target }, extra); this.save(); this.fbState = {};
+    toast(`Gelernt: ${this.pretty(k)} → ${this.label(this.target)}${extra.enc ? ' (Endlos-Regler)' : ''}`);
+    const el = $('.learn-target'); if (el) { el.classList.remove('learn-target'); el.classList.add('learned'); setTimeout(() => el.classList.remove('learned'), 900); }
+    this.target = null; this.updateBar();
+  },
+  startLearn() { this.learning = true; document.body.classList.add('midilearn'); this.updateBar(); },
+  stopLearn() { this.learning = false; this.target = null; this.learnBuf = null; document.body.classList.remove('midilearn'); $$('.learn-target').forEach(e => e.classList.remove('learn-target')); this.updateBar(); },
+  updateBar() {
+    let bar = $('#learnbar');
+    if (!this.learning) { if (bar) bar.remove(); return; }
+    if (!bar) {
+      bar = h('div'); bar.id = 'learnbar'; bar.innerHTML = '<span class="lt"></span><button class="b xs lstop">Fertig</button>'; document.body.appendChild(bar);
+      $('.lstop', bar).addEventListener('click', () => { this.stopLearn(); if (window.APP) setOn(APP.bMidi, false); toast(`MIDI-Learn beendet (${Object.keys(this.map).length} Zuordnungen)`); });
+    }
+    $('.lt', bar).textContent = this.target ? `Lernt: ${this.label(this.target)} – jetzt Taste/Regler am Controller bewegen` : 'MIDI-Learn: Bedienelement antippen, dann am Controller bewegen';
+  },
+  remove(k) { delete this.map[k]; this.save(); },
+  feedback() { // LED-Rückmeldung an den Controller (Note/CC mit 127 = an, 0 = aus)
+    if (!this.opts.led || !this.outputs.length) return;
+    for (const [k, m] of Object.entries(this.map)) {
+      if (k[0] !== 'n' && k[0] !== 'c') continue;
+      const c = CTL[m.id]; if (!c || c.kind !== 'btn' || !c.el) continue;
+      const on = c.el.classList.contains('on') || c.el.classList.contains('set') || c.el.classList.contains('pressed');
+      if (this.fbState[k] === on) continue; this.fbState[k] = on;
+      const r = /^([nc])(\d+):(\d+)$/.exec(k); const msg = [(r[1] === 'n' ? 0x90 : 0xb0) | Number(r[2]), Number(r[3]), on ? 127 : 0];
+      this.outputs.forEach(o => { try { o.send(msg); } catch (e) {} });
     }
   },
-  startLearn() {
-    this.learning = true; document.body.classList.add('midilearn');
-    toast('MIDI-Learn: Bedienelement antippen, dann Controller bewegen. Erneut „MIDI“ zum Beenden.', 4000);
-  },
-  stopLearn() { this.learning = false; this.target = null; document.body.classList.remove('midilearn'); $$('.learn-target').forEach(e => e.classList.remove('learn-target')); },
 };
 document.addEventListener('pointerdown', e => {
   if (!MIDI.learning) return;
+  if (e.target.closest('#learnbar')) return;
   const el = e.target.closest('[data-ctl]'); if (!el || el.closest('#midiBtn')) return;
   e.preventDefault(); e.stopPropagation();
   $$('.learn-target').forEach(x => x.classList.remove('learn-target'));
-  el.classList.add('learn-target'); MIDI.target = el.dataset.ctl; toast('Ziel: ' + MIDI.target + ' – jetzt Controller bewegen');
+  el.classList.add('learn-target'); MIDI.target = el.dataset.ctl; MIDI.learnBuf = null; MIDI.updateBar();
 }, true);
 
 Object.assign(window, { CTL, $, $$, h, clamp, reg, Knob, Fader, btn, setOn, toast, MIDI });
@@ -1899,6 +2008,7 @@ class Deck {
     btn(g2, { id: id('reloop'), label: 'ACT', cls: 'xs', onDown: () => this.reloop(), title: 'Reloop / Loop aktivieren' });
     // Interaktionen
     $('.dmenu', d).addEventListener('click', () => this.menu());
+    $('.dtitle', d).addEventListener('click', () => { if (matchMedia('(max-width: 760px), (max-height: 520px), (orientation: portrait) and (max-width: 1100px)').matches) { this.app.focusDeck(this.i); this.app.setView('browser'); toast(`Track für Deck ${this.L} wählen`); } });
     $('.wzm', d).addEventListener('click', () => { this.zoom = Math.min(ZOOMS.length - 1, this.zoom + 1); });
     $('.wzp', d).addEventListener('click', () => { this.zoom = Math.max(0, this.zoom - 1); });
     this.bindWave(); this.bindOverview(); this.bindJog();
@@ -1979,25 +2089,29 @@ class Deck {
   }
   /* --- Wellenform-Interaktion: Ziehen = Scratch (läuft) / Suchen (Pause) --- */
   bindWave() {
-    const cv = this.det; let pid = null, lx = 0;
+    const cv = this.det, pts = new Map(); let pid = null, lx = 0, pinch = null;
     cv.addEventListener('pointerdown', e => {
       if (!this.track || document.body.classList.contains('midilearn')) return;
-      e.preventDefault(); pid = e.pointerId; cv.setPointerCapture(pid); lx = e.clientX;
+      e.preventDefault(); cap(cv, e.pointerId); pts.set(e.pointerId, e.clientX);
+      if (pts.size >= 2) { if (this.scratching) this.endScratch(); pid = null; const [a, b] = [...pts.values()]; pinch = { d: Math.abs(a - b) || 1, z: this.zoom }; return; }
+      pid = e.pointerId; lx = e.clientX;
       if (this.playing) this.startScratch();
     });
     cv.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, e.clientX);
+      if (pinch && pts.size >= 2) { const [a, b] = [...pts.values()]; const r = (Math.abs(a - b) || 1) / pinch.d; this.zoom = clamp(Math.round(pinch.z - Math.log2(r) * 2.5), 0, ZOOMS.length - 1); return; }
       if (e.pointerId !== pid) return; const dx = e.clientX - lx; lx = e.clientX;
-      const secPerPx = ZOOMS[this.zoom] / cv.clientWidth; const ds = -dx * secPerPx * (this.playing ? 1 : 1);
+      const secPerPx = ZOOMS[this.zoom] / cv.clientWidth; const ds = -dx * secPerPx;
       if (this.scratching) this.scrAcc += ds; else this.seek(this.rawPos() + ds);
     });
-    const up = e => { if (e.pointerId !== pid) return; pid = null; if (this.scratching) this.endScratch(); };
+    const up = e => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (e.pointerId !== pid) return; pid = null; if (this.scratching) this.endScratch(); };
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
     cv.addEventListener('wheel', e => { e.preventDefault(); if (e.ctrlKey || Math.abs(e.deltaY) > Math.abs(e.deltaX)) { this.zoom = clamp(this.zoom + Math.sign(e.deltaY), 0, ZOOMS.length - 1); } else if (!this.playing) this.seek(this.rawPos() + e.deltaX * 0.002); }, { passive: false });
   }
   bindOverview() {
     const cv = this.ovw; let pid = null;
     const go = e => { const r = cv.getBoundingClientRect(); const x = clamp((e.clientX - r.left) / r.width, 0, 1); this.jumpTo(x * this.duration); };
-    cv.addEventListener('pointerdown', e => { if (!this.track || document.body.classList.contains('midilearn')) return; e.preventDefault(); pid = e.pointerId; cv.setPointerCapture(pid); go(e); });
+    cv.addEventListener('pointerdown', e => { if (!this.track || document.body.classList.contains('midilearn')) return; e.preventDefault(); pid = e.pointerId; cap(cv, pid); go(e); });
     cv.addEventListener('pointermove', e => { if (e.pointerId === pid && !this.playing) go(e); });
     cv.addEventListener('pointerup', () => pid = null); cv.addEventListener('pointercancel', () => pid = null);
   }
@@ -2006,7 +2120,7 @@ class Deck {
     const ang = e => { const r = cv.getBoundingClientRect(); return Math.atan2(e.clientY - r.top - r.height / 2, e.clientX - r.left - r.width / 2); };
     cv.addEventListener('pointerdown', e => {
       if (!this.track || document.body.classList.contains('midilearn')) return;
-      e.preventDefault(); pid = e.pointerId; cv.setPointerCapture(pid); la = ang(e);
+      e.preventDefault(); pid = e.pointerId; cap(cv, pid); la = ang(e);
       const r = cv.getBoundingClientRect(); const dist = Math.hypot(e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2) / (r.width / 2);
       mode = (this.vinyl && dist < 0.82) ? 'scratch' : 'bend';
       if (mode === 'scratch') this.startScratch();
@@ -2163,7 +2277,7 @@ window.Deck = Deck; window.DeckConst = { LETTERS, DECK_COLORS, fmtT };
 const VERSION = '4.0.0';
 
 const DEFAULT_SETTINGS = {
-  deckCount: 4, routing: 'stereo', xfCurve: 'smooth', xfReverse: false, tempoUpFaster: false, defRange: 2,
+  deckCount: 4, haptic: true, routing: 'stereo', xfCurve: 'smooth', xfReverse: false, tempoUpFaster: false, defRange: 2,
   loadLock: true, autoGain: true, keylock: true, jogSens: 1, brake: 0, start: 0, cruise: false,
   minBpm: 85, waveColor: 'spectrum', keyNotation: 'camelot', recFormat: 'auto', masterSink: '', cueSink: '', fxVisible: true, browserVisible: true,
 };
@@ -2219,7 +2333,7 @@ const APP = window.APP = {
     this.bBrV = btn(g1, { label: 'BROWSER', cls: 'xs dsk', onDown: () => { this.settings.browserVisible = !this.settings.browserVisible; this.applyPanels(); } });
     this.bRec = btn($('.rec', t), { id: 'rec', label: '● REC', cls: 'xs recb', onDown: () => Rec.toggle(), title: 'Mix aufnehmen' });
     this.recTime = $('.rtime', t);
-    this.bMidi = btn(g2, { id: 'midiBtn', label: 'MIDI', cls: 'xs', onDown: () => this.midiToggle(), onLong: () => this.midiMenu() });
+    this.bMidi = btn(g2, { id: 'midiBtn', label: 'MIDI', cls: 'xs', onDown: () => this.midiToggle(), title: 'MIDI-Steuerung: Geräte, Learn, Zuordnungen' });
     this.bMidi.id = 'midiBtn';
     btn(g2, { label: '⚙', cls: 'xs', onDown: () => this.openSettings(), title: 'Einstellungen' });
     btn(g2, { label: '⛶', cls: 'xs', onDown: () => this.fullscreen(), title: 'Vollbild' });
@@ -2229,25 +2343,54 @@ const APP = window.APP = {
     if (!document.fullscreenElement) (d.requestFullscreen || d.webkitRequestFullscreen)?.call(d).catch?.(() => {});
     else document.exitFullscreen?.();
   },
-  async midiToggle() {
-    if (!MIDI.connected) { MIDI.connected = await MIDI.connect(); if (!MIDI.connected) { toast('Web-MIDI nicht verfügbar (Chrome/Edge am PC/Android nutzen)', 3500); return; } toast('MIDI verbunden: ' + (MIDI.inputs.join(', ') || 'kein Gerät gefunden')); }
-    if (MIDI.learning) { MIDI.stopLearn(); setOn(this.bMidi, false); toast(`MIDI-Learn beendet (${Object.keys(MIDI.map).length} Zuordnungen)`); }
-    else { MIDI.startLearn(); setOn(this.bMidi, true); }
+  midiToggle() {
+    if (MIDI.learning) { MIDI.stopLearn(); setOn(this.bMidi, false); toast(`MIDI-Learn beendet (${Object.keys(MIDI.map).length} Zuordnungen)`); return; }
+    this.openMidi();
   },
-  midiMenu() {
-    this.popMenu('MIDI', [
-      ['Zuordnungen exportieren', () => saveFile(new Blob([JSON.stringify(MIDI.map, null, 1)], { type: 'application/json' }), '1312er-Brett-MIDI.json')],
-      ['Zuordnungen importieren', () => pickFile('.json', async f => {
-        try {
-          if (f.size > 200000) throw new Error('zu groß');
-          const raw = JSON.parse(await f.text()), map = {};
-          if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Format');
-          for (const [k, v] of Object.entries(raw)) if (/^(n\d{1,2}:\d{1,3}|c\d{1,2}:\d{1,3}|p\d{1,2})$/.test(k) && v && typeof v.id === 'string' && /^[\w.]{1,40}$/.test(v.id)) map[k] = { id: v.id, rel: !!v.rel };
-          MIDI.map = map; MIDI.save(); toast(`Importiert: ${Object.keys(map).length} Zuordnungen`);
-        } catch (e) { toast('Ungültige Datei'); }
-      })],
-      ['Alle Zuordnungen löschen', () => { MIDI.map = {}; MIDI.save(); toast('Gelöscht'); }],
-    ]);
+  midiMenu() { this.openMidi(); },
+  async openMidi() {
+    if (this._midiOpen) return; this._midiOpen = true;
+    const ok = await MIDI.connect();
+    const m = h('div', 'modal'); m.innerHTML = '<div class="mbox wide"><div class="mt">MIDI-Steuerung</div><div class="set midip"></div><button class="b mclose">Schließen</button></div>';
+    const S = $('.midip', m);
+    const dev = h('div', 'keys'), mon = h('div', 'midimon'), opts = h('div', 'sbtns'), acts = h('div', 'sbtns'), list = h('div', 'maplist');
+    mon.textContent = 'Monitor: Taste drücken oder Regler bewegen …';
+    const chk = (key, label) => { const l = h('label', 'chk'); const c = h('input'); c.type = 'checkbox'; c.checked = !!MIDI.opts[key]; c.onchange = () => { MIDI.opts[key] = c.checked; MIDI.saveOpts(); MIDI.fbState = {}; }; l.appendChild(c); l.appendChild(document.createTextNode(' ' + label)); return l; };
+    opts.append(chk('soft', 'Soft-Takeover (kein Springen)'), chk('led', 'LED-Rückmeldung an Controller'));
+    const act = (label, fn) => { const b = h('button', 'b xs'); b.textContent = label; b.onclick = fn; acts.appendChild(b); };
+    act('▶ Learn starten', () => { m.remove(); this._midiOpen = false; MIDI.monitor = null; MIDI.onDevices = null; MIDI.startLearn(); setOn(this.bMidi, true); });
+    act('Exportieren', () => saveFile(new Blob([JSON.stringify(MIDI.map, null, 1)], { type: 'application/json' }), '1312er-Brett-MIDI.json'));
+    act('Importieren', () => pickFile('.json', async f => {
+      try {
+        if (f.size > 200000) throw new Error('zu groß');
+        const raw = JSON.parse(await f.text()), map = {};
+        if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('Format');
+        for (const [k, v] of Object.entries(raw)) if (/^(n\d{1,2}:\d{1,3}|c\d{1,2}:\d{1,3}|p\d{1,2})$/.test(k) && v && typeof v.id === 'string' && /^[\w.]{1,40}$/.test(v.id)) map[k] = { id: v.id, rel: !!v.rel, ...(v.enc === 'twos' || v.enc === 'center' ? { enc: v.enc } : {}) };
+        MIDI.map = map; MIDI.save(); toast(`Importiert: ${Object.keys(map).length} Zuordnungen`); render();
+      } catch (e) { toast('Ungültige Datei'); }
+    }));
+    act('Alle löschen', () => { if (confirm('Alle MIDI-Zuordnungen löschen?')) { MIDI.map = {}; MIDI.save(); render(); } });
+    const render = () => {
+      dev.innerHTML = ''; const p = h('p');
+      if (!ok) p.textContent = /iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Safari auf iPhone/iPad unterstützt kein Web-MIDI. MIDI geht mit Chrome/Edge am PC/Mac, mit Chrome auf Android oder in der Android-App (USB-OTG oder Bluetooth-MIDI).' : 'Web-MIDI nicht verfügbar. Bitte Chrome oder Edge verwenden (die Seite muss über https oder als Android-App laufen).';
+      else p.textContent = `Eingänge: ${MIDI.inputs.join(', ') || 'kein Controller erkannt – Gerät anschließen'}${MIDI.outputs.length ? ' · LED-Ausgänge: ' + MIDI.outputs.map(o => o.name).join(', ') : ''}`;
+      dev.appendChild(p);
+      list.innerHTML = '';
+      const ents = Object.entries(MIDI.map).sort((a, b) => MIDI.label(a[1].id).localeCompare(MIDI.label(b[1].id)));
+      if (!ents.length) { const e = h('p', 'dim'); e.textContent = 'Noch keine Zuordnungen. „Learn starten“, Bedienelement antippen, am Controller bewegen.'; list.appendChild(e); }
+      ents.forEach(([k, v]) => {
+        const r = h('div', 'maprow'); const a = h('span'); a.textContent = MIDI.label(v.id); const b = h('span', 'dim'); b.textContent = MIDI.pretty(k) + (v.enc ? ' · endlos' : '');
+        const d = h('button', 'b xxs'); d.textContent = '✕'; d.title = 'Zuordnung entfernen'; d.onclick = () => { MIDI.remove(k); render(); };
+        r.append(a, b, d); list.appendChild(r);
+      });
+    };
+    const sec = t => { const e = h('h3'); e.textContent = t; S.appendChild(e); };
+    sec('Geräte'); S.append(dev, mon); sec('Optionen'); S.append(opts, acts); sec(`Zuordnungen`); S.appendChild(list);
+    MIDI.monitor = (k, b) => { mon.textContent = `${MIDI.pretty(k)} · Wert ${b[2] ?? ''}` + (MIDI.map[k] ? ' → ' + MIDI.label(MIDI.map[k].id) : ' (nicht zugewiesen)'); mon.classList.add('hit'); clearTimeout(mon._t); mon._t = setTimeout(() => mon.classList.remove('hit'), 150); };
+    MIDI.onDevices = render; render();
+    const close = () => { MIDI.monitor = null; MIDI.onDevices = null; m.remove(); this._midiOpen = false; };
+    $('.mclose', m).onclick = close; m.addEventListener('pointerdown', e => { if (e.target === m) close(); });
+    document.body.appendChild(m);
   },
   setClock(on) {
     this.clock.on = on; setOn(this.bClock, on); this.bClock.textContent = on ? 'CLOCK' : 'AUTO';
@@ -2307,6 +2450,7 @@ const APP = window.APP = {
   buildStage() {
     const st = $('#stage');
     for (let i = 0; i < 4; i++) { this.decks.push(new Deck(this, i, st)); this.decks[i].el.style.gridArea = 'd' + LETTERS[i]; }
+    this.decks[0].el.classList.add('focus');
     const mx = h('div'); mx.id = 'mixer'; st.appendChild(mx);
     this.mixer.build(this, mx);
     this.decks.forEach(d => { d.rangeI = this.settings.defRange; d.keylock = this.settings.keylock; d.send({ t: 'keylock', on: d.keylock }); d.send({ t: 'ramp', brake: this.settings.brake, start: this.settings.start }); d.sendState(); });
@@ -2325,19 +2469,31 @@ const APP = window.APP = {
     this.bDecks.textContent = this.deckCount + ' DECKS';
     this.decks.forEach(d => { d.el.classList.toggle('hidden', d.i >= this.deckCount); if (d.i >= this.deckCount && d.playing) { d.setPlay(false); toast(`Deck ${d.L} pausiert (ausgeblendet)`); } });
     if (this.masterDeck() === null && this.decks.some(d => d.master)) this.decks.forEach(d => { if (d.i >= this.deckCount) d.master = false; });
-    if (this.deckCount === 2) { this.pair = 0; this.applyPair(); }
+    if (this.focus >= this.deckCount) this.focusDeck(0);
+    if (this.deckCount === 2) this.pair = 0;
+    if ($('#navpair')) this.applyPair();
     this.mixer.order(this.deckCount);
     if (this.units.length && $('.fxunit .fxh')) for (let u = 0; u < 4; u++) this.renderFxUnit(u);
     this.browser?.refresh(); this.applyPanels();
     setTimeout(() => this.decks.forEach(d => d.resize()), 50);
   },
-  applyPair() { document.body.classList.toggle('pair-cd', this.pair === 1); $$('#navpair .b').forEach((b, i) => setOn(b, i === this.pair)); setTimeout(() => this.decks.forEach(d => d.resize()), 30); },
+  applyPair() {
+    document.body.classList.toggle('pair-cd', this.pair === 1); this.renderPair();
+    if (this.mini) { this.mini.a.set(this.mixer.vol[this.pairDecks()[0]].v); this.mini.b.set(this.mixer.vol[this.pairDecks()[1]].v); }
+    setTimeout(() => this.decks.forEach(d => d.resize()), 30);
+  },
+  renderPair() {
+    const p = $('#navpair'); if (!p) return; p.innerHTML = ''; const solo = document.body.classList.contains('solo');
+    if (solo) { const d = this.decks[this.focus] || this.decks[0]; const b = h('button', 'b xs on'); b.textContent = d.L + ' ▸'; b.title = 'Nächstes Deck'; b.style.setProperty('--dc', d.color); b.onclick = () => { this.focusDeck((this.focus + 1) % this.deckCount); this.applyPair(); }; p.appendChild(b); }
+    else if (this.deckCount === 4) ['A/B', 'C/D'].forEach((l, i) => { const b = h('button', 'b xs'); b.textContent = l; setOn(b, i === this.pair); b.onclick = () => { this.pair = i; this.applyPair(); }; p.appendChild(b); });
+    const t = h('button', 'b xs solo-t'); t.textContent = solo ? '2×' : '1×'; t.title = solo ? 'Zwei Decks zeigen' : 'Ein Deck groß'; t.onclick = () => { document.body.classList.toggle('solo'); this.applyPair(); }; p.appendChild(t);
+  },
   applyPanels() {
     document.body.classList.toggle('nofx', !this.settings.fxVisible); document.body.classList.toggle('nobrowser', !this.settings.browserVisible);
     setOn(this.bFxV, this.settings.fxVisible); setOn(this.bBrV, this.settings.browserVisible); this.saveSettings();
     setTimeout(() => this.decks.forEach(d => d.resize()), 50);
   },
-  focusDeck(i) { if (this.focus === i) return; this.focus = i; this.decks.forEach(d => d.el.classList.toggle('focus', d.i === i)); },
+  focusDeck(i) { if (this.focus === i) return; this.focus = i; this.decks.forEach(d => d.el.classList.toggle('focus', d.i === i)); if (document.body.classList.contains('solo')) this.applyPair(); },
   onDeckLoaded(d) { this.browser?.markLoaded(); if (this.settings.autoGain && d.track?.analyzed) this.mixer.setTrim(d.i, d.track.gain); },
   cruiseNext(d) {
     const list = this.browser.visibleIds(); const i = list.indexOf(d.track?.id); const next = list[i + 1];
@@ -2484,8 +2640,6 @@ const APP = window.APP = {
     [['decks', 'Decks'], ['mixer', 'Mixer'], ['fx', 'FX'], ['pads', 'Pads'], ['browser', 'Browser']].forEach(([v, l]) => {
       const b = h('button', 'b navb', l); b.dataset.v = v; b.onclick = () => this.setView(v); n.appendChild(b);
     });
-    const p = $('#navpair');
-    ['A/B', 'C/D'].forEach((l, i) => { const b = h('button', 'b xs', l); b.onclick = () => { this.pair = i; this.applyPair(); this.mini.a.set(this.mixer.vol[this.pairDecks()[0]].v); this.mini.b.set(this.mixer.vol[this.pairDecks()[1]].v); }; p.appendChild(b); });
     this.setView('decks'); this.applyPair();
     for (let u = 0; u < 4; u++) this.renderFxUnit(u);
   },
@@ -2545,8 +2699,12 @@ const APP = window.APP = {
     sec('Aufnahme');
     row('Format', select('recFormat', [['auto', 'Komprimiert (WebM/MP4, klein)'], ['wav', 'WAV 16 Bit (verlustfrei)']]));
     sec('MIDI');
-    const mb = h('div', 'sbtns'); [['MIDI verbinden + Learn', () => { m.remove(); this.midiToggle(); }], ['Zuordnungen …', () => { m.remove(); this.midiMenu(); }]].forEach(([l, f]) => { const b = h('button', 'b xs', l); b.onclick = f; mb.appendChild(b); });
-    row(`Zuordnungen: ${Object.keys(MIDI.map).length}`, mb, 'Lerne jedes Bedienelement: MIDI drücken, Element antippen, Controller bewegen');
+    const mb = h('div', 'sbtns'); const mbb = h('button', 'b xs'); mbb.textContent = 'MIDI-Steuerung öffnen'; mbb.onclick = () => { m.remove(); this.openMidi(); }; mb.appendChild(mbb);
+    row(`Zuordnungen: ${Object.keys(MIDI.map).length}`, mb, 'Geräte, Live-Monitor, Learn, Soft-Takeover, LED-Rückmeldung');
+    sec('Touch');
+    row('Vibration bei Tastendruck (Android)', check('haptic'));
+    const ob = h('button', 'b xs'); ob.textContent = 'Querformat fixieren'; ob.onclick = async () => { try { await document.documentElement.requestFullscreen(); await screen.orientation.lock('landscape'); toast('Querformat fixiert'); } catch (e) { toast('Nicht unterstützt – am iPhone die Ausrichtungssperre im Kontrollzentrum nutzen'); } };
+    row('Bildschirm im Querformat halten', ob, 'Android/Chrome im Vollbild');
     sec('Bibliothek');
     const us = await Library.usage();
     const lb = h('div', 'sbtns'); const clr = h('button', 'b xs', 'Bibliothek leeren'); clr.onclick = async () => { if (!confirm('Alle Tracks, Cues und Analysen löschen?')) return; for (const id of [...Library.tracks.keys()]) await Library.remove(id); this.browser.refresh(); toast('Bibliothek geleert'); }; lb.appendChild(clr);
@@ -2638,6 +2796,7 @@ const APP = window.APP = {
     if (Rec.on) { const t = DeckConst.fmtT((performance.now() - Rec.t0) / 1000); if (t !== this._rt) this.recTime.textContent = this._rt = t; }
   },
   slowTick() {
+    MIDI.feedback();
     this.decks.forEach(d => { const b = Math.round(d.bpm() * 20) / 20; if (b !== d._fxBpm) { d._fxBpm = b; this.units.forEach(u => u.inst.get(d.i)?.fx.forEach(f => f.tempo())); } });
     this.browser?.highlight();
   },
