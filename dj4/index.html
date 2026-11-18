@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-W+TNnTzUZcWkGnTd6xrIQddMEYpkDEA75g/cjdg+NT8=' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob: mediastream:; connect-src blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-f1nPfTIgWWw6/auq9oopdzY+MYpuJHH7KBPRE+1I5G0=' blob:; worker-src blob:; style-src 'unsafe-inline'; img-src data: blob:; media-src blob: mediastream:; connect-src blob:; font-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#0a0c10">
@@ -162,6 +162,9 @@ body.showpads #fx { display: none; } body.showpads #pads { display: grid; }
 .spad.hit small { color: #000a; }
 .qb.on { --dc: #9cff00; }
 .fxpre { max-width: 92px; font-size: 10px; padding: 1px 2px; }
+/* Leistung */
+.deck, #mixer, .fxunit, #pads, .bmain { contain: layout style; }
+.meter i, .mmeter i, .phase i { will-change: transform; }
 /* Stage */
 #stage { grid-area: stage; display: grid; gap: 4px; padding: 0 4px; min-height: 0; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
 body.d4 #stage { grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); grid-template-areas: "dA mx dB" "dC mx dD"; }
@@ -499,7 +502,7 @@ body.inapp a[href$='.apk'], body.inapp .apkline { display: none; }
       </g>
       <g filter="url(#rough)"><text x="500" y="430" text-anchor="middle" class="sten" transform="rotate(-2 500 430)">SOUNDSYSTEM</text></g>
     </svg></div>
-    <p class="sub intro-fade">23 Loops + Schranz-Pads inklusive · 4 Track-Decks · Sync & Master-Clock · Keylock & Key-Shift · 8 Hotcues · Loops & Roll · Flux · 4 FX-Units · 4-Kanal-Mixer · Cue/Kopfhörer · Mix-Recorder · MIDI-Learn</p>
+    <p class="sub intro-fade">v5.0 · 23 Loops + Schranz-Pads inklusive · 4 Track-Decks · Sync & Master-Clock · Keylock & Key-Shift · 8 Hotcues · Loops & Roll · Flux · 4 FX-Units · 4-Kanal-Mixer · Cue/Kopfhörer · Mix-Recorder · MIDI-Learn</p>
     <button id="startBtn" class="b start intro-fade">▶ Start</button>
     <p id="splashErr" class="err"></p>
     <p class="hint intro-fade">Deine Musik bleibt auf deinem Gerät (lokale Bibliothek). Unterstützt MP3, WAV, AAC/M4A, FLAC, OGG/Opus.</p>
@@ -887,6 +890,7 @@ class DeckProc extends AudioWorkletProcessor{
  process(_,outs){
   const o=outs[0],oL=o[0],oR=o[1]||o[0],n=oL.length;
   if(!this.L){oL.fill(0);if(oR!==oL)oR.fill(0);this.post();return true;}
+  if(!this.playing&&!this.scr&&this.speed===0&&this.mix<1e-4&&this.xf===0){oL.fill(0);if(oR!==oL)oR.fill(0);this.post();return true;}
   const tgt=this.playing?(this.rate+this.bend+this.adj)*this.dir:0;
   const up=this.startT>0?1/(this.startT*sampleRate):1e9, dn=this.brake>0?1/(this.brake*sampleRate):1e9;
   const sp0=Math.abs(this.scr?this.scrSm:tgt);
@@ -955,7 +959,7 @@ const Engine = {
   async init() {
     if (this.ready) return;
     const AC = window.AudioContext || window.webkitAudioContext;
-    this.ctx = new AC({ latencyHint: 'interactive' });
+    this.ctx = new AC({ latencyHint: this.latencyHint || 'interactive' });
     let ok = false;
     if (this.ctx.audioWorklet && window.AudioWorkletNode) {
       try { await this.ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([WORKLET_SRC], { type: 'application/javascript' }))); ok = true; }
@@ -1780,7 +1784,7 @@ class Deck {
     if (src.loop.on) this.setLoop(src.loop.a, src.loop.b, true);
     if (src.playing) this.setPlay(true);
   }
-  saveTrack() { const t = this.track; if (!t) return; t.cues = this.cues; t.mainCue = this.cuePos; t.grid = { ...this.grid }; Library.save(t); }
+  saveTrack() { this._cv = (this._cv || 0) + 1; const t = this.track; if (!t) return; t.cues = this.cues; t.mainCue = this.cuePos; t.grid = { ...this.grid }; Library.save(t); }
   onEnd() {
     this.sendState();
     if (this.app.settings.cruise) this.app.cruiseNext(this);
@@ -2146,19 +2150,19 @@ class Deck {
     }
   }
   resize() {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
-    [[this.det, 1], [this.ovw, 1], [this.jog, 1]].forEach(([c]) => {
+    const dpr = this.app.canvasDpr ? this.app.canvasDpr() : Math.min(2, window.devicePixelRatio || 1);
+    [this.det, this.ovw, this.jog].forEach(c => {
       const w = Math.round(c.clientWidth * dpr), hh = Math.round(c.clientHeight * dpr);
       if (w && hh && (c.width !== w || c.height !== hh)) { c.width = w; c.height = hh; }
     });
-    this.ovCache = null; this.img = null;
+    this.ovCache = null; this.img = null; this.tiles = null; this.jogBg = null; this._sig = this._jsig = null;
+    this.visible = this.el.clientWidth > 0 && this.el.clientHeight > 0; this.jogVis = this.jog.clientWidth > 0;
   }
   /* --- Zeichnen --- */
   draw(now) {
     this.syncUI();
     const p = this.pos(); this.curPos = p;
-    const vis = this.el.offsetParent !== null;
-    if (!vis) return;
+    if (this.visible === false) return;
     // Kopf
     const bpm = this.bpm();
     const bt = this.track ? (this.grid.bpm ? bpm.toFixed(2) : '–') : '–'; if (bt !== this._bt) { this.bpmEl.textContent = this._bt = bt; }
@@ -2176,31 +2180,24 @@ class Deck {
   drawDetail(pos) {
     const cv = this.det, W = cv.width, H = cv.height; if (!W || !H) return;
     const c = this.dctx;
-    if (!this.img || this.img.width !== W || this.img.height !== H) { this.img = c.createImageData(W, H); this.u32 = new Uint32Array(this.img.data.buffer); }
-    const u = this.u32; u.fill(0xff120e0c);
     const secs = ZOOMS[this.zoom], pps = W / secs, cx = Math.round(W * 0.5), t0 = pos - cx / pps;
-    const bins = this.bins, br = this.binRate, scheme = this.app.settings.waveColor;
-    const dc = this.rgb || (this.rgb = hexRgb(this.color));
-    if (bins) {
-      const nb = bins.length / 4, bpp = br / pps, mid = H >> 1, amp = mid - 2;
-      for (let x = 0; x < W; x++) {
-        const b0 = (t0 + x / pps) * br; let i0 = Math.floor(b0), i1 = Math.max(i0 + 1, Math.floor(b0 + bpp));
-        if (i1 <= 0 || i0 >= nb) continue; if (i0 < 0) i0 = 0; if (i1 > nb) i1 = nb;
-        let pk = 0, lo = 0, md = 0, hi = 0;
-        for (let i = i0; i < i1; i++) { const k = i * 4; if (bins[k] > pk) pk = bins[k]; if (bins[k + 1] > lo) lo = bins[k + 1]; if (bins[k + 2] > md) md = bins[k + 2]; if (bins[k + 3] > hi) hi = bins[k + 3]; }
-        const hgt = Math.round(pk / 255 * amp); if (!hgt) continue;
-        let r, g, b;
-        if (scheme === 'deck') { const k = 0.45 + pk / 510; r = dc[0] * k; g = dc[1] * k; b = dc[2] * k; }
-        else if (scheme === 'mono') { r = g = b = 150 + pk * 0.4; }
-        else { const s = lo + md + hi + 1; r = 60 + 195 * lo / s * 1.4; g = 50 + 205 * md / s * 1.3; b = 70 + 185 * hi / s * 1.8; }
-        const dim = x < cx ? 0.62 : 1;
-        const col = (255 << 24) | (Math.min(255, b * dim) << 16) | (Math.min(255, g * dim) << 8) | Math.min(255, r * dim);
-        const loH = Math.round(Math.min(hgt, lo / 255 * amp * 0.9));
-        const colLo = (255 << 24) | (Math.min(255, b * dim * 0.55) << 16) | (Math.min(255, g * dim * 0.55) << 8) | Math.min(255, r * dim * 0.75);
-        for (let y = mid - hgt; y <= mid + hgt; y++) u[y * W + x] = (Math.abs(y - mid) < loH) ? colLo : col;
+    const sig = Math.round(pos * pps) + '|' + this.zoom + '|' + W + 'x' + H + '|' + this.loop.on + this.loop.a + this.loop.b + (this.loopInPending ?? '') + '|' + (this._cv || 0) + '|' +
+      this.grid.bpm + this.grid.offset + '|' + this.slip + Math.round((this.ps.sh || 0) * pps) + '|' + this.cuePos + '|' + (this.bins ? this.bins.length : 0) + '|' + this.app.settings.waveColor + '|' + (this.track && this.track.id);
+    if (sig === this._sig) return; this._sig = sig;
+    c.fillStyle = '#0c0e12'; c.fillRect(0, 0, W, H);
+    if (this.bins) {
+      const TW = 512, key = this.zoom + '|' + W + 'x' + H + '|' + this.app.settings.waveColor + '|' + this.bins.length + '|' + (this.track && this.track.id);
+      if (!this.tiles || this.tileKey !== key) { this.tiles = new Map(); this.tileKey = key; }
+      const X0 = Math.round(t0 * pps), a = Math.floor(X0 / TW), z = Math.floor((X0 + W) / TW), maxX = this.duration * pps;
+      for (let ti = a; ti <= z; ti++) {
+        if (ti < 0 || ti * TW > maxX) continue;
+        let tile = this.tiles.get(ti);
+        if (tile) { this.tiles.delete(ti); this.tiles.set(ti, tile); }
+        else { tile = this.renderTile(ti, TW, H, pps); this.tiles.set(ti, tile); if (this.tiles.size > 10) this.tiles.delete(this.tiles.keys().next().value); }
+        c.drawImage(tile, ti * TW - X0, 0);
       }
+      c.fillStyle = 'rgba(0,0,0,.38)'; c.fillRect(0, 0, cx, H);
     }
-    c.putImageData(this.img, 0, 0);
     const X = t => (t - t0) * pps;
     // Loop
     if (this.loop.b > this.loop.a && (this.loop.on || this.loopInPending != null)) {
@@ -2223,6 +2220,28 @@ class Deck {
     if (this.track) { const x = X(this.cuePos); c.fillStyle = '#ffb020'; c.beginPath(); c.moveTo(x - 6 * dpr, H); c.lineTo(x + 6 * dpr, H); c.lineTo(x, H - 8 * dpr); c.fill(); }
     if (this.slip && this.track) { const x = X(this.ps.sh); c.fillStyle = 'rgba(255,255,255,.7)'; c.fillRect(x, 0, 1 * dpr, H); }
     c.fillStyle = '#ff3b3b'; c.fillRect(cx - dpr, 0, 2 * dpr, H);
+  }
+  renderTile(ti, TW, H, pps) {
+    const cv = document.createElement('canvas'); cv.width = TW; cv.height = H; const c = cv.getContext('2d');
+    const img = c.createImageData(TW, H), u = new Uint32Array(img.data.buffer);
+    const bins = this.bins, br = this.binRate, scheme = this.app.settings.waveColor, dc = this.rgb || (this.rgb = hexRgb(this.color));
+    const nb = bins.length / 4, bpp = br / pps, mid = H >> 1, amp = mid - 2;
+    for (let x = 0; x < TW; x++) {
+      const b0 = ((ti * TW + x) / pps) * br; let i0 = Math.floor(b0), i1 = Math.max(i0 + 1, Math.floor(b0 + bpp));
+      if (i1 <= 0 || i0 >= nb) continue; if (i0 < 0) i0 = 0; if (i1 > nb) i1 = nb;
+      let pk = 0, lo = 0, md = 0, hi = 0;
+      for (let i = i0; i < i1; i++) { const k = i * 4; if (bins[k] > pk) pk = bins[k]; if (bins[k + 1] > lo) lo = bins[k + 1]; if (bins[k + 2] > md) md = bins[k + 2]; if (bins[k + 3] > hi) hi = bins[k + 3]; }
+      const hgt = Math.round(pk / 255 * amp); if (!hgt) continue;
+      let r, g, b;
+      if (scheme === 'deck') { const k = 0.45 + pk / 510; r = dc[0] * k; g = dc[1] * k; b = dc[2] * k; }
+      else if (scheme === 'mono') { r = g = b = 150 + pk * 0.4; }
+      else { const sm = lo + md + hi + 1; r = 60 + 195 * lo / sm * 1.4; g = 50 + 205 * md / sm * 1.3; b = 70 + 185 * hi / sm * 1.8; }
+      const col = (255 << 24) | (Math.min(255, b) << 16) | (Math.min(255, g) << 8) | Math.min(255, r);
+      const loH = Math.round(Math.min(hgt, lo / 255 * amp * 0.9));
+      const colLo = (255 << 24) | (Math.min(255, b * 0.55) << 16) | (Math.min(255, g * 0.55) << 8) | Math.min(255, r * 0.75);
+      for (let y = mid - hgt; y <= mid + hgt; y++) u[y * TW + x] = (Math.abs(y - mid) < loH) ? colLo : col;
+    }
+    c.putImageData(img, 0, 0); return cv;
   }
   drawOverview(pos) {
     const cv = this.ovw, W = cv.width, H = cv.height; if (!W || !H) return;
@@ -2252,13 +2271,18 @@ class Deck {
     c.fillStyle = '#ff3b3b'; c.fillRect(X(pos) - 1, 0, 2, H);
   }
   drawJog(pos) {
-    const cv = this.jog, W = cv.width, H = cv.height; if (!W || !H || cv.offsetParent === null) return;
+    const cv = this.jog, W = cv.width, H = cv.height; if (!W || !H || this.jogVis === false) return;
+    const sig = Math.round(((pos / 1.8) % 1) * 720) + '|' + Math.round(pos / (this.duration || 1) * 400) + '|' + this.scratching + this.loop.on + !!this.track + W + 'x' + H;
+    if (sig === this._jsig) return; this._jsig = sig;
     const c = this.jctx, r = Math.min(W, H) / 2 - 2, cx = W / 2, cy = H / 2;
-    c.clearRect(0, 0, W, H);
-    const g = c.createRadialGradient(cx, cy, r * 0.1, cx, cy, r); g.addColorStop(0, '#2a2f38'); g.addColorStop(0.8, '#15181d'); g.addColorStop(1, '#0b0d10');
-    c.fillStyle = g; c.beginPath(); c.arc(cx, cy, r, 0, Math.PI * 2); c.fill();
-    c.strokeStyle = 'rgba(255,255,255,.06)'; c.lineWidth = 1; for (let k = 1; k < 6; k++) { c.beginPath(); c.arc(cx, cy, r * (0.35 + k * 0.1), 0, Math.PI * 2); c.stroke(); }
-    // Fortschrittsring
+    if (!this.jogBg) {
+      const o = document.createElement('canvas'); o.width = W; o.height = H; const g0 = o.getContext('2d');
+      const g = g0.createRadialGradient(cx, cy, r * 0.1, cx, cy, r); g.addColorStop(0, '#2a2f38'); g.addColorStop(0.8, '#15181d'); g.addColorStop(1, '#0b0d10');
+      g0.fillStyle = g; g0.beginPath(); g0.arc(cx, cy, r, 0, Math.PI * 2); g0.fill();
+      g0.strokeStyle = 'rgba(255,255,255,.06)'; g0.lineWidth = 1; for (let k = 1; k < 6; k++) { g0.beginPath(); g0.arc(cx, cy, r * (0.35 + k * 0.1), 0, Math.PI * 2); g0.stroke(); }
+      this.jogBg = o;
+    }
+    c.clearRect(0, 0, W, H); c.drawImage(this.jogBg, 0, 0);
     if (this.track) { c.strokeStyle = this.color; c.globalAlpha = 0.85; c.lineWidth = Math.max(3, r * 0.06); c.beginPath(); c.arc(cx, cy, r - c.lineWidth / 2, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * (pos / (this.duration || 1))); c.stroke(); c.globalAlpha = 1; }
     const a = (pos / 1.8) * Math.PI * 2 - Math.PI / 2;
     c.strokeStyle = this.scratching ? '#fff' : this.color; c.lineWidth = Math.max(2, r * 0.05); c.lineCap = 'round';
@@ -2274,10 +2298,10 @@ window.Deck = Deck; window.DeckConst = { LETTERS, DECK_COLORS, fmtT };
 /* ---- app.js ---- */
 /* 1312er Brett – App: Mixer, FX-Units, Browser, Master-Clock & Sync, Mix-Recorder, Tastatur, MIDI, Einstellungen, Layout */
 'use strict';
-const VERSION = '4.0.0';
+const VERSION = '5.0.0';
 
 const DEFAULT_SETTINGS = {
-  deckCount: 4, haptic: true, routing: 'stereo', xfCurve: 'smooth', xfReverse: false, tempoUpFaster: false, defRange: 2,
+  deckCount: 4, haptic: true, perf: 'auto', audioBuf: 'auto', routing: 'stereo', xfCurve: 'smooth', xfReverse: false, tempoUpFaster: false, defRange: 2,
   loadLock: true, autoGain: true, keylock: true, jogSens: 1, brake: 0, start: 0, cruise: false,
   minBpm: 85, waveColor: 'spectrum', keyNotation: 'camelot', recFormat: 'auto', masterSink: '', cueSink: '', fxVisible: true, browserVisible: true,
 };
@@ -2289,6 +2313,8 @@ const APP = window.APP = {
   async start() {
     try { Object.assign(this.settings, JSON.parse(localStorage.getItem('djp4.settings') || '{}')); } catch (e) {}
     this.deckCount = this.settings.deckCount;
+    const coarse = matchMedia('(pointer: coarse)').matches; this.coarse = coarse;
+    Engine.latencyHint = this.settings.audioBuf === 'auto' ? (coarse ? 'balanced' : 'interactive') : this.settings.audioBuf;
     await Engine.init();
     try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
     await Library.init();
@@ -2701,6 +2727,11 @@ const APP = window.APP = {
     sec('MIDI');
     const mb = h('div', 'sbtns'); const mbb = h('button', 'b xs'); mbb.textContent = 'MIDI-Steuerung öffnen'; mbb.onclick = () => { m.remove(); this.openMidi(); }; mb.appendChild(mbb);
     row(`Zuordnungen: ${Object.keys(MIDI.map).length}`, mb, 'Geräte, Live-Monitor, Learn, Soft-Takeover, LED-Rückmeldung');
+    sec('Leistung');
+    row('Leistungsmodus', select('perf', [['auto', 'Automatisch (empfohlen)'], ['quality', 'Hohe Qualität'], ['eco', 'Sparsam (30 fps Grafik, geringe Auflösung)']], () => { this.ecoAuto = false; this.decks.forEach(d => d.resize()); }), 'Automatisch schaltet bei Überlast die Grafik herunter, der Ton bleibt unberührt');
+    row('Audio-Puffer', select('audioBuf', [['auto', 'Automatisch (Handy: ausgewogen)'], ['interactive', 'Klein – geringste Latenz'], ['balanced', 'Mittel – ausgewogen'], ['playback', 'Groß – keine Knackser auf schwachen Geräten']]), 'Gilt nach Neustart der App');
+    const pf = h('span', 'sval'); row('Aktuell', pf);
+    const pfi = setInterval(() => { if (!pf.isConnected) return clearInterval(pfi); pf.textContent = `${Math.round(1000 / (this._fa || 16.7))} fps · ${(this._work || 0).toFixed(1)} ms/Bild${this.ecoAuto ? ' · Sparmodus aktiv' : ''} · Audio ${Math.round(Engine.latency() * 1000)} ms`; }, 500);
     sec('Touch');
     row('Vibration bei Tastendruck (Android)', check('haptic'));
     const ob = h('button', 'b xs'); ob.textContent = 'Querformat fixieren'; ob.onclick = async () => { try { await document.documentElement.requestFullscreen(); await screen.orientation.lock('landscape'); toast('Querformat fixiert'); } catch (e) { toast('Nicht unterstützt – am iPhone die Ausrichtungssperre im Kontrollzentrum nutzen'); } };
@@ -2779,7 +2810,21 @@ const APP = window.APP = {
     });
   },
   /* ---------------- Laufzeit ---------------- */
+  canvasDpr() {
+    const dpr = window.devicePixelRatio || 1, m = this.settings.perf;
+    if (m === 'eco' || this.ecoAuto) return 1;
+    if (m === 'quality') return Math.min(2, dpr);
+    return Math.min(this.coarse ? 1.5 : 2, dpr);
+  },
+  setEco(on) { if (this.ecoAuto === on) return; this.ecoAuto = on; this.decks.forEach(d => d.resize()); },
   frame(now, dt) {
+    const t0 = performance.now(), s = this.settings;
+    this._fa = (this._fa || 16.7) * 0.95 + Math.min(100, dt * 1000) * 0.05; this._fc = (this._fc || 0) + 1;
+    if (s.perf === 'auto') {   // Automatik: bei Überlast Grafik auf halbe Bildrate, Ton bleibt unberührt
+      if (!this.ecoAuto) { this._slow = this._fa > 24 ? (this._slow || 0) + dt : 0; if (this._slow > 2) this.setEco(true); }
+      else { this._fast = (this._work || 0) < 2.5 ? (this._fast || 0) + dt : 0; if (this._fast > 10) { this.setEco(false); this._fast = 0; } }
+    } else if (this.ecoAuto) this.setEco(false);
+    const draw = !(s.perf === 'eco' || this.ecoAuto) || this._fc % 2 === 0;
     for (const d of this.decks) {
       if (d.i >= this.deckCount) continue;
       d.tick(dt);
@@ -2789,11 +2834,12 @@ const APP = window.APP = {
         if (e != null) { const sec = e * d.bl(); if (Math.abs(sec) > 0.004) adj = clamp(-sec / 0.6, -0.025, 0.025); if (Math.abs(e) > 0.3 && Math.abs(sec) > 0.05) { this.syncPhase(d, true); adj = 0; } }
         if (Math.abs(adj - d.adj) > 2e-4) { d.adj = adj; d.send({ t: 'adj', v: adj }); }
       } else if (d.adj) { d.adj = 0; d.send({ t: 'adj', v: 0 }); }
-      d.draw(now);
+      if (draw) d.draw(now);
     }
-    this.mixer.drawMeters();
+    if (this._fc % 2 === 0) this.mixer.drawMeters();
     const mt = this.masterTempo(); const ct = mt ? mt.toFixed(2) : '—'; if (ct !== this._ct) this.cbpm.textContent = this._ct = ct;
     if (Rec.on) { const t = DeckConst.fmtT((performance.now() - Rec.t0) / 1000); if (t !== this._rt) this.recTime.textContent = this._rt = t; }
+    this._work = (this._work || 0) * 0.9 + (performance.now() - t0) * 0.1;
   },
   slowTick() {
     MIDI.feedback();
