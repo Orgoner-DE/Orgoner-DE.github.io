@@ -82,6 +82,8 @@ input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--li
 #loadBtn.wait{animation:pulse 1.4s ease-in-out infinite}
 #board{width:min(100%,520px);aspect-ratio:1;touch-action:manipulation;user-select:none}
 #board .seg:hover{filter:brightness(1.35)}
+#board .seg.hit{animation:hit .9s ease-out}
+@keyframes hit{0%{fill:#e0b04a;filter:drop-shadow(0 0 8px #e0b04a)}100%{filter:none}}
 .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
 .quick .btn{padding:12px 6px}
 .mult{display:flex;gap:6px;margin-top:8px}
@@ -194,6 +196,38 @@ input[type=range]{padding:0;accent-color:var(--red)}
     <div class="row" style="margin-top:10px">
       <button class="btn" id="vTest">▶ Probe</button>
       <button class="btn" id="vReset">Zurücksetzen</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Scheiben-Ansage kalibrieren</h3>
+    <div class="row">
+      <div style="flex:1"><label>Triple</label><select id="styT">
+        <option value="Triple {v}">Triple 20</option><option value="Treble {v}">Treble 20</option>
+        <option value="Dreifach {v}">Dreifach 20</option><option value="{p}">60 (Punkte)</option></select></div>
+      <div style="flex:1"><label>Doppel</label><select id="styD">
+        <option value="Doppel {v}">Doppel 16</option><option value="Double {v}">Double 16</option>
+        <option value="{p}">32 (Punkte)</option></select></div>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Single</label><select id="styS">
+        <option value="{v}">20</option><option value="Single {v}">Single 20</option><option value="Einfach {v}">Einfach 20</option></select></div>
+      <div style="flex:1"><label>Single-Bull</label><select id="sty25">
+        <option value="Single Bull">Single Bull</option><option value="25">25</option><option value="Outer Bull">Outer Bull</option></select></div>
+    </div>
+    <div class="row">
+      <div style="flex:1"><label>Bull (50)</label><input id="styB"></div>
+      <div style="flex:1"><label>Daneben</label><input id="styMiss"></div>
+    </div>
+    <label>Aussprache-Korrektur (eine Zeile pro Wort: <i>geschrieben = gesprochen</i>)</label>
+    <textarea id="lexicon" rows="4" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:#0b0b0b;color:var(--text);font:13px ui-monospace,monospace"></textarea>
+    <label>Verzögerung nach dem Einschlag: <span id="delayV"></span> ms</label>
+    <input type="range" id="delay" min="0" max="1500" step="50">
+    <label class="ck"><input type="checkbox" id="flash"> Getroffenes Feld auf der Scheibe aufleuchten lassen</label>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="probeFields">▶ Alle Feldarten</button>
+      <button class="btn" id="probeTurn">▶ Probe-Aufnahme</button>
+      <button class="btn" id="probeReset">Standard</button>
     </div>
   </div>
 
@@ -361,7 +395,9 @@ const FEMALE = /(anna|petra|katja|helena|hedda|marlene|vicki|sabine|amala|seraph
 const MALE   = /(markus|stefan|conrad|hans|yannick|killian|florian|jonas|bernd|ralf|christoph|kasper|viktor|dieter|male|mann|männlich|de-de-x-deb|de-de-x-deg|de-de-x-dei)/i;
 
 const cfg = Object.assign({liveDart:true, liveSum:true, liveRest:true, liveCo:true, liveName:true,
-  echo:400, floor:0, thr:0, gate:false}, store.get('cfg',{}));
+  echo:400, floor:0, thr:0, gate:false,
+  styT:'Triple {v}', styD:'Doppel {v}', styS:'{v}', sty25:'Single Bull', styB:'Bull', styMiss:'Daneben',
+  lexicon:'Bull = Bull\nCheckout = Tschek-aut\nGame shot = Gäim schott\nOche = Ocki', delay:0, flash:true}, store.get('cfg',{}));
 function saveCfg(){ store.set('cfg',cfg); }
 let calib = store.get('calib', {});          // persona-id -> {pitch,rate,vol}
 let aliases = store.get('aliases', {});      // cmd -> [angelernte Transkripte]
@@ -418,7 +454,7 @@ function say(text, force=false, queue=false){
   if(!('speechSynthesis' in window) || !text) return;
   if(!voiceOn && !force) return;
   const p = PERSONAS[curPersona], c = pc(p);
-  const u = new SpeechSynthesisUtterance(text);
+  const u = new SpeechSynthesisUtterance(lexify(text));
   u.lang='de-DE';
   const v = sysVoices.find(v=>v.voiceURI===voiceMap[p.id]);
   if(v){ u.voice=v; u.lang=v.lang; }
@@ -433,12 +469,25 @@ function say(text, force=false, queue=false){
   speechSynthesis.speak(u);
 }
 function sayQ(t){ say(t,false,true); }
-function dartWords(t){
-  if(t.v===0) return 'Daneben';
-  if(t.v===25) return t.m===2 ? 'Bull' : 'Single Bull';
-  return (t.m===3?'Triple ':t.m===2?'Doppel ':'')+t.v;
+const STD={styT:'Triple {v}', styD:'Doppel {v}', styS:'{v}', sty25:'Single Bull', styB:'Bull', styMiss:'Daneben'};
+function dartWords(t, forCo){
+  if(t.v===0) return cfg.styMiss||'Daneben';
+  if(t.v===25) return t.m===2 ? (cfg.styB||'Bull') : cfg.sty25;
+  let f = t.m===3 ? cfg.styT : t.m===2 ? cfg.styD : cfg.styS;
+  if(forCo && f==='{p}') f = STD[t.m===3?'styT':'styD'];   // Checkout-Weg immer eindeutig
+  return f.replace('{v}',t.v).replace('{p}',t.v*t.m);
 }
-function coWords(co){ return co.map(dartWords).join(', '); }
+function coWords(co){ return co.map(t=>dartWords(t,true)).join(', '); }
+// Aussprache-Lexikon auf jeden Ansagetext anwenden
+function lexify(text){
+  for(const line of (cfg.lexicon||'').split('\n')){
+    const m=line.split('='); if(m.length!==2) continue;
+    const a=m[0].trim(), b=m[1].trim(); if(!a||a===b) continue;
+    text=text.replace(new RegExp('(^|[^\\wäöüÄÖÜß])'+a.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'(?=$|[^\\wäöüÄÖÜß])','gi'),(x,pre)=>pre+b);
+  }
+  return text;
+}
+function later(fn){ cfg.delay ? setTimeout(fn,cfg.delay) : fn(); }
 function setVoice(on){
   voiceOn=on; store.set('voiceOn',on);
   $('voiceChip').className='chip '+(on?'on':'off');
@@ -676,14 +725,14 @@ function drawBoard(){
   ORDER.forEach((n,i)=>{
     const a1=(i-.5)*Math.PI/10, a2=(i+.5)*Math.PI/10, dark=i%2===0;
     const base=dark?'#111':'#2b2723', ring=dark?'#dc143c':'#f1f1f1';
-    h+=`<path class="seg" d="${arc(R.obull,R.tIn,a1,a2)}" fill="${base}"/>`;
-    h+=`<path class="seg" d="${arc(R.tIn,R.tOut,a1,a2)}" fill="${ring}"/>`;
-    h+=`<path class="seg" d="${arc(R.tOut,R.dIn,a1,a2)}" fill="${base}"/>`;
-    h+=`<path class="seg" d="${arc(R.dIn,R.dOut,a1,a2)}" fill="${ring}"/>`;
+    h+=`<path class="seg" data-k="${n}-1" d="${arc(R.obull,R.tIn,a1,a2)}" fill="${base}"/>`;
+    h+=`<path class="seg" data-k="${n}-3" d="${arc(R.tIn,R.tOut,a1,a2)}" fill="${ring}"/>`;
+    h+=`<path class="seg" data-k="${n}-1" d="${arc(R.tOut,R.dIn,a1,a2)}" fill="${base}"/>`;
+    h+=`<path class="seg" data-k="${n}-2" d="${arc(R.dIn,R.dOut,a1,a2)}" fill="${ring}"/>`;
     const a=i*Math.PI/10, tx=184*Math.sin(a), ty=-184*Math.cos(a);
     h+=`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="#e0b04a" font-size="15" font-weight="800" text-anchor="middle" dominant-baseline="central">${n}</text>`;
   });
-  h+=`<circle class="seg" r="${R.obull}" fill="#f1f1f1"/><circle class="seg" r="${R.bull}" fill="#dc143c"/>`;
+  h+=`<circle class="seg" data-k="25-1" r="${R.obull}" fill="#f1f1f1"/><circle class="seg" data-k="25-2" r="${R.bull}" fill="#dc143c"/>`;
   h+=`<g id="marks"></g>`;
   s.innerHTML=h;
   s.addEventListener('pointerdown', e=>{
@@ -702,6 +751,12 @@ function drawBoard(){
     addThrow(v,m);
     setMult(1);
   });
+}
+function flashSeg(v,m){
+  if(!cfg.flash || !v) return;
+  document.querySelectorAll(`#board [data-k="${v}-${m}"]`).forEach(el=>{
+    el.classList.remove('hit'); void el.getBBox(); el.classList.add('hit');
+    setTimeout(()=>el.classList.remove('hit'),900); });
 }
 function mark(x,y){ const g=$('marks'); g.insertAdjacentHTML('beforeend',`<circle cx="${x}" cy="${y}" r="5" fill="#e0b04a" stroke="#000" stroke-width="1.5"/>`); }
 function clearMarks(){ const g=$('marks'); if(g) g.innerHTML=''; }
@@ -735,19 +790,20 @@ function addThrow(v,m){
   const after=before-t.pts;
   game.turn.push(t);
   if(t.pts===0) SFX.miss(); else if(m===3) SFX.triple(); else if(m===2) SFX.ring(); else SFX.thunk();
+  flashSeg(v,m);
   // Bust?
   const bust = after<0 || (game.dbl && after===1) || (after===0 && game.dbl && m!==2);
   if(bust){ t.bust=true; game.busted=true; const p=PERSONAS[curPersona];
-    SFX.bust(); say(p.bust); if(cfg.liveName) sayQ('Darts ziehen.'); toast('Überworfen!'); render(); return; }
+    SFX.bust(); later(()=>{ say(p.bust); if(cfg.liveName) sayQ('Darts ziehen.'); }); toast('Überworfen!'); render(); return; }
   if(after===0){ win(); return; }
   render();
-  if(game.turn.length===3){ if(cfg.liveDart) say(dartWords(t)); announceTurn(true); if(cfg.liveName) sayQ('Darts ziehen.'); return; }
+  if(game.turn.length===3){ const g=game; later(()=>{ if(game!==g) return; if(cfg.liveDart) say(dartWords(t)); announceTurn(true); if(cfg.liveName) sayQ('Darts ziehen.'); }); return; }
   // Live: Dart ansagen, dazu Rest/Checkout wenn in Reichweite
   let txt = cfg.liveDart ? dartWords(t) : '';
   const left=3-game.turn.length, co = after<=170 ? checkout(after,left,game.dbl) : null;
   if(co && cfg.liveCo) txt += (txt?'. ':'') + `Noch ${after}. ${coWords(co)}`;
   else if(cfg.liveRest && after<=170 && !cfg.liveDart) txt = `Noch ${after}`;
-  say(txt);
+  later(()=>say(txt));
 }
 function announceTurn(queued){
   const p=PERSONAS[curPersona], s=game.turn.reduce((a,x)=>a+x.pts,0);
@@ -935,6 +991,21 @@ function renderCal(){
   const p=PERSONAS[curPersona]; calib[p.id]=Object.assign(pc(p),{[k]:+$(id).value}); store.set('calib',calib); renderCal(); }; });
 $('vTest').onclick=()=>{ audio(); say('Triple 20. Noch 141. Triple 20, Triple 19, Doppel 12.', true); };
 $('vReset').onclick=()=>{ delete calib[PERSONAS[curPersona].id]; store.set('calib',calib); renderCal(); };
+['styT','styD','styS','sty25','styB','styMiss','lexicon'].forEach(k=>{ $(k).value=cfg[k]; $(k).onchange=()=>{ cfg[k]=$(k).value; saveCfg(); }; });
+$('flash').checked=cfg.flash; $('flash').onchange=()=>{ cfg.flash=$('flash').checked; saveCfg(); };
+$('delay').value=cfg.delay; $('delayV').textContent=cfg.delay;
+$('delay').oninput=()=>{ cfg.delay=+$('delay').value; $('delayV').textContent=cfg.delay; saveCfg(); };
+$('probeFields').onclick=()=>{ audio();
+  const seq=[{v:20,m:3},{v:16,m:2},{v:19,m:1},{v:25,m:2},{v:25,m:1},{v:0,m:1}];
+  say(dartWords(seq[0]),true); seq.slice(1).forEach(t=>say(dartWords(t),true,true)); };
+$('probeTurn').onclick=()=>{ audio(); const p=PERSONAS[curPersona];
+  const seq=[{v:20,m:3},{v:19,m:3},{v:12,m:2}];
+  seq.forEach((t,i)=>setTimeout(()=>{ (t.m===3?SFX.triple:SFX.ring)();
+    setTimeout(()=>{ if(i===0) say(dartWords(t),true);
+      else if(i===1) say(dartWords(t)+'. Noch 24. '+coWords([{v:12,m:2}]),true);
+      else { say(dartWords(t),true); say('Game shot! '+fill(p.win,{n:'Probe'}),true,true); } }, cfg.delay); }, i*1600)); };
+$('probeReset').onclick=()=>{ Object.assign(cfg,STD,{delay:0}); saveCfg();
+  ['styT','styD','styS','sty25','styB','styMiss'].forEach(k=>$(k).value=cfg[k]); $('delay').value=0; $('delayV').textContent=0; };
 renderLearned(); showCal(); if(cfg.gate) startMeter().catch(()=>{});
 drawBoard(); setVoice(voiceOn); updMic();
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
