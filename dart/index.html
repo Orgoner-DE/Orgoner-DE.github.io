@@ -64,7 +64,22 @@ input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--li
 .btn:disabled{opacity:.4}
 
 /* ---------- Board ---------- */
-#boardWrap{display:flex;justify-content:center}
+#boardWrap{display:flex;justify-content:center;position:relative}
+#bigRest{display:flex;align-items:baseline;justify-content:center;gap:12px;margin-bottom:6px}
+#bigRest .who{font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:14px}
+#bigRest .num{font-size:clamp(54px,16vw,88px);font-weight:900;color:var(--gold);font-variant-numeric:tabular-nums;
+  line-height:1;text-shadow:0 0 24px rgba(224,176,74,.35)}
+#bigRest .num.tick{color:#fff}
+#bigRest .num.bust{color:var(--red);text-decoration:line-through}
+#pullOv{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  background:rgba(0,0,0,.72);border-radius:50%;text-align:center;padding:20px;backdrop-filter:blur(2px)}
+#pullOv .t{font-size:clamp(20px,6vw,30px);font-weight:900;letter-spacing:.06em;color:var(--white)}
+#pullOv .h{color:var(--muted);font-size:14px;max-width:240px}
+#pullOv.bust .t{color:var(--red)}
+#pullBtn{padding:16px 36px;border-radius:999px;border:2px solid var(--gold);background:#221a08;color:var(--gold);
+  font-size:20px;font-weight:900;letter-spacing:.06em;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(224,176,74,.5)}50%{box-shadow:0 0 0 14px rgba(224,176,74,0)}}
+#loadBtn.wait{animation:pulse 1.4s ease-in-out infinite}
 #board{width:min(100%,520px);aspect-ratio:1;touch-action:manipulation;user-select:none}
 #board .seg:hover{filter:brightness(1.35)}
 .quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
@@ -221,7 +236,12 @@ input[type=range]{padding:0;accent-color:var(--red)}
 <!-- ================= GAME ================= -->
 <main id="game" class="game hidden">
   <div class="card">
-    <div id="boardWrap"><svg id="board" viewBox="-200 -200 400 400"></svg></div>
+    <div id="bigRest"><span class="who" id="bigWho"></span><span class="num" id="bigNum">501</span></div>
+    <div id="boardWrap"><svg id="board" viewBox="-200 -200 400 400"></svg>
+      <div id="pullOv" class="hidden"><div class="t" id="pullT">DARTS ZIEHEN</div>
+        <div class="h" id="pullH">Sag „Laden“ oder drück Weiter</div>
+        <button id="pullBtn">WEITER ▸</button></div>
+    </div>
     <div class="mult">
       <button class="btn sel" data-m="1">Single</button>
       <button class="btn" data-m="2">Doppel</button>
@@ -230,7 +250,7 @@ input[type=range]{padding:0;accent-color:var(--red)}
     <div class="quick">
       <button class="btn" id="missBtn">Daneben</button>
       <button class="btn" id="undoBtn">Zurück</button>
-      <button class="btn gold" id="loadBtn">Laden ▸</button>
+      <button class="btn gold" id="loadBtn">Weiter / Laden ▸</button>
       <button class="btn" id="spruchBtn">Spruch</button>
     </div>
   </div>
@@ -312,7 +332,7 @@ const SFX = {
    ============================================================ */
 const PERSONAS = [
   { id:'kalle', name:'Kalle (Caller)',     g:'m', pitch:.85, rate:1.0,
-    start:'Game on! Spieler {n}, zeig was du kannst!',
+    start:'Game on! {n}, zeig was du kannst!',
     score:['{s}!','{s}, sauber.'], ton:['{s}! Ganz stark!'], low:['{s}. Na ja.'],
     max:'Einhundertundachtzig!', bust:'Überworfen! Keine Punkte!', rest:'{n}, du brauchst {r}.',
     win:'Game shot, und das Leg für {n}!', next:'{n} ist dran.' },
@@ -667,7 +687,7 @@ function drawBoard(){
   h+=`<g id="marks"></g>`;
   s.innerHTML=h;
   s.addEventListener('pointerdown', e=>{
-    if(!game) return;
+    if(!game || game.over || waiting()) return;
     const pt=s.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
     const p=pt.matrixTransform(s.getScreenCTM().inverse());
     const r=Math.hypot(p.x,p.y);
@@ -700,14 +720,14 @@ function newGame(){
   game={ start, dbl:$('out').value==='double', cur:0, turn:[], history:[], over:false,
     players:names.map(n=>({name:n, score:start, darts:0, pts:0})) };
   $('setup').classList.add('hidden'); $('game').classList.remove('hidden');
-  $('log').innerHTML=''; clearMarks(); render();
+  $('log').innerHTML=''; $('players').innerHTML=''; delete $('bigNum').dataset.v; clearMarks(); render();
   SFX.plopp();
   const p=PERSONAS[curPersona];
   setTimeout(()=>say(fill(pick(p.start),{n:game.players[0].name})), 300);
 }
 function addThrow(v,m){
   if(!game || game.over) return;
-  if(game.turn.length>=3){ toast('3 Darts geworfen, sag „Laden“'); SFX.bust(); return; }
+  if(waiting()){ toast('Erst Darts ziehen: „Laden“ oder Weiter'); SFX.bust(); return; }
   if(v===25 && m===3) m=2;
   const t={v,m,pts:v*m};
   const P=game.players[game.cur];
@@ -717,10 +737,11 @@ function addThrow(v,m){
   if(t.pts===0) SFX.miss(); else if(m===3) SFX.triple(); else if(m===2) SFX.ring(); else SFX.thunk();
   // Bust?
   const bust = after<0 || (game.dbl && after===1) || (after===0 && game.dbl && m!==2);
-  if(bust){ t.bust=true; endTurn(true); return; }
+  if(bust){ t.bust=true; game.busted=true; const p=PERSONAS[curPersona];
+    SFX.bust(); say(p.bust); if(cfg.liveName) sayQ('Darts ziehen.'); toast('Überworfen!'); render(); return; }
   if(after===0){ win(); return; }
   render();
-  if(game.turn.length===3){ if(cfg.liveDart) say(dartWords(t)); announceTurn(true); return; }
+  if(game.turn.length===3){ if(cfg.liveDart) say(dartWords(t)); announceTurn(true); if(cfg.liveName) sayQ('Darts ziehen.'); return; }
   // Live: Dart ansagen, dazu Rest/Checkout wenn in Reichweite
   let txt = cfg.liveDart ? dartWords(t) : '';
   const left=3-game.turn.length, co = after<=170 ? checkout(after,left,game.dbl) : null;
@@ -745,22 +766,24 @@ function endTurn(bust){
   const s=game.turn.reduce((a,x)=>a+x.pts,0);
   game.history.push({cur:game.cur, turn:game.turn.slice(), prev:P.score, bust:!!bust});
   P.darts+=game.turn.length;
-  if(bust){ SFX.bust(); say(p.bust); setTimeout(()=>game&&!game.over&&callNext(true),0); logLine(`${P.name}: ${game.turn.map(label).join(' ')} ÜBERWORFEN`); toast('Überworfen!'); }
+  if(bust){ logLine(`${P.name}: ${game.turn.map(label).join(' ')} ÜBERWORFEN`); }
   else { P.score-=s; P.pts+=s; logLine(`${P.name}: ${game.turn.map(label).join(' ')} = ${s} (Rest ${P.score})`); }
-  game.turn=[];
+  game.turn=[]; game.busted=false;
   game.cur=(game.cur+1)%game.players.length;
   clearMarks(); render();
 }
+function waiting(){ return game && !game.over && (game.busted || game.turn.length>=3); }
 function laden(){
   if(!game){ return; }
   if(game.over){ vormarsch(); return; }
   SFX.pull();
   if(game.turn.length===0){ toast('Darts gezogen'); return; }
+  if(game.busted){ endTurn(true); callNext(false); return; }
   const wasThree=game.turn.length===3;
   while(game.turn.length<3) game.turn.push({v:0,m:1,pts:0});
   if(!wasThree) announceTurn(false);
   endTurn(false);
-  callNext(true);
+  callNext(!wasThree);
 }
 function callNext(queued){
   const P=game.players[game.cur], p=PERSONAS[curPersona];
@@ -782,7 +805,7 @@ function win(){
 }
 function undo(){
   if(!game) return;
-  if(game.turn.length){ game.turn.pop(); const m=$('marks'); if(m&&m.lastChild) m.lastChild.remove(); }
+  if(game.turn.length){ game.turn.pop(); game.busted=false; const m=$('marks'); if(m&&m.lastChild) m.lastChild.remove(); }
   else if(game.history.length){
     const h=game.history.pop(), P=game.players[h.cur];
     P.score=h.prev; P.darts-=h.turn.length; if(!h.bust) P.pts-=h.turn.reduce((a,x)=>a+x.pts,0);
@@ -797,7 +820,7 @@ function vormarsch(){
   if(!game){ newGame(); return; }
   if(game.over){ // Revanche, gleiche Spieler, anderer Starter
     const names=game.players.map(p=>p.name); names.push(names.shift()); $('names').value=names.join(', '); newGame(); return; }
-  if(game.turn.length===3) { laden(); return; }
+  if(waiting()) { laden(); return; }
   toast('Weiter');
 }
 function spruch(){
@@ -823,21 +846,46 @@ function dfs(rest,n,finals){
   return null;
 }
 
+function liveOf(i){ const P=game.players[i]; if(i!==game.cur || game.busted) return P.score; return P.score-game.turn.reduce((a,x)=>a+x.pts,0); }
+// Zahl sichtbar herunterzählen
+function countTo(el, to, cls){
+  const from = el.dataset.v===undefined ? to : +el.dataset.v;
+  el.dataset.v = to; cancelAnimationFrame(el._raf);
+  el.classList.toggle('bust', cls==='bust');
+  if(from===to){ el.textContent=to; return; }
+  const t0=performance.now(), dur=Math.min(900, 250+Math.abs(from-to)*6);
+  el.classList.add('tick');
+  (function step(now){ const k=Math.min(1,(now-t0)/dur), e=1-Math.pow(1-k,3);
+    el.textContent=Math.round(from+(to-from)*e);
+    if(k<1) el._raf=requestAnimationFrame(step); else el.classList.remove('tick'); })(t0);
+}
 function render(){
   if(!game) return;
-  const box=$('players'); box.innerHTML='';
+  const box=$('players');
+  if(box.children.length!==game.players.length){ box.innerHTML='';
+    game.players.forEach(()=>{ const d=document.createElement('div'); d.innerHTML='<div class="n"></div><div class="s"></div>'; box.appendChild(d); }); }
   game.players.forEach((P,i)=>{
-    const cur=i===game.cur, live=cur?P.score-game.turn.filter(t=>!t.bust).reduce((a,x)=>a+x.pts,0):P.score;
+    const cur=i===game.cur, live=liveOf(i);
     const avg=P.darts?(P.pts/P.darts*3).toFixed(1):'–';
-    const d=document.createElement('div'); d.className='player'+(cur&&!game.over?' active':'');
-    d.innerHTML=`<div class="n">${cur&&!game.over?'▸ ':''}${esc(P.name)}<div class="avg">Ø ${avg} · ${P.darts} Darts</div></div><div class="s">${live}</div>`;
-    box.appendChild(d);
+    const d=box.children[i]; d.className='player'+(cur&&!game.over?' active':'');
+    d.querySelector('.n').innerHTML=`${cur&&!game.over?'▸ ':''}${esc(P.name)}<div class="avg">Ø ${avg} · ${P.darts} Darts</div>`;
+    countTo(d.querySelector('.s'), live);
   });
   for(let i=0;i<3;i++) $('d'+i).textContent=game.turn[i]?label(game.turn[i]):'–';
-  const P=game.players[game.cur], live=P.score-game.turn.reduce((a,x)=>a+x.pts,0);
+  const P=game.players[game.cur], live=liveOf(game.cur);
+  $('bigWho').textContent=game.over?'Sieger':P.name;
+  countTo($('bigNum'), game.over?0:live, game.busted?'bust':'');
   const left=3-game.turn.length;
-  const co=(!game.over && left>0 && live<=170)?checkout(live,left,game.dbl):null;
-  $('checkout').textContent=game.over?'Vormarsch = Revanche':(co?'Checkout: '+co.map(label).join(' · '):(left===0?'Laden = nächster Spieler':''));
+  const co=(!game.over && !game.busted && left>0 && live<=170)?checkout(live,left,game.dbl):null;
+  $('checkout').textContent=game.over?'Vormarsch = Revanche':(co?'Checkout: '+co.map(label).join(' · '):'');
+  // Warten auf Darts ziehen
+  const w=waiting(), ov=$('pullOv');
+  ov.classList.toggle('hidden', !w && !game.over);
+  ov.classList.toggle('bust', !!game.busted);
+  $('loadBtn').classList.toggle('wait', w);
+  if(game.over){ $('pullT').textContent='🏆 '+P.name.toUpperCase(); $('pullH').textContent='Sag „Vormarsch“ für Revanche'; $('pullBtn').textContent='REVANCHE ▸'; }
+  else if(game.busted){ $('pullT').textContent='ÜBERWORFEN'; $('pullH').textContent='Darts ziehen. Sag „Laden“ oder drück Weiter'; $('pullBtn').textContent='WEITER ▸'; }
+  else { const s=game.turn.reduce((a,x)=>a+x.pts,0); $('pullT').textContent=`${s} · DARTS ZIEHEN`; $('pullH').textContent='Sag „Laden“ oder drück Weiter'; $('pullBtn').textContent='WEITER ▸'; }
 }
 function esc(s){ return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
 
@@ -861,8 +909,9 @@ $('voiceBtn2').onclick=()=>nextPersona();
 $('missBtn').onclick=()=>addThrow(0,1);
 $('undoBtn').onclick=()=>undo();
 $('loadBtn').onclick=()=>laden();
+$('pullBtn').onclick=()=>laden();
 $('spruchBtn').onclick=()=>spruch();
-$('quitBtn').onclick=()=>{ game=null; $('game').classList.add('hidden'); $('setup').classList.remove('hidden'); };
+$('quitBtn').onclick=()=>{ game=null; $('players').innerHTML=''; $('game').classList.add('hidden'); $('setup').classList.remove('hidden'); };
 document.querySelectorAll('.mult .btn').forEach(b=>b.onclick=()=>setMult(+b.dataset.m));
 $('spruch').value=store.get('spruch','Die Zeit wird kommen, wo die Ratten das Licht verlassen und sichtbar werden. Trau keinem Promi, VIP oder TV-Star.');
 $('spruch').onchange=()=>store.set('spruch',$('spruch').value);
