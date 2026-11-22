@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#050505">
+<title>Kneipen Dart</title>
+<style>
+:root{
+  --bg:#050505; --panel:#111; --panel2:#181818; --line:#2a2a2a;
+  --text:#f2efe9; --muted:#9a948a; --red:#dc143c; --white:#f4f4f4;
+  --gold:#e0b04a; --ok:#3fbf6a;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;overflow-x:hidden}
+body{background:
+  radial-gradient(700px 380px at 50% -8%, #2a1a10 0%, transparent 65%),
+  repeating-linear-gradient(90deg,#070707 0 38px,#0a0908 38px 40px),
+  var(--bg)}
+button{font:inherit;color:inherit;cursor:pointer}
+.hidden{display:none!important}
+
+/* ---------- Intro ---------- */
+#intro{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:22px;padding:24px;text-align:center;z-index:50;
+  background:radial-gradient(circle at 50% 40%,#1a1a1a 0%,#000 70%)}
+.flag{width:min(320px,70vw);aspect-ratio:8/5;border-radius:4px;overflow:hidden;
+  box-shadow:0 0 60px rgba(220,20,60,.35),0 0 0 1px #333;display:flex;flex-direction:column;
+  animation:wave 3.2s ease-in-out infinite;transform-origin:left center}
+.flag div{flex:1}.flag .w{background:var(--white)}.flag .r{background:var(--red)}
+@keyframes wave{0%,100%{transform:perspective(600px) rotateY(0deg) skewY(0)}
+  50%{transform:perspective(600px) rotateY(-12deg) skewY(-1.5deg)}}
+#intro h1{margin:0;font-size:clamp(34px,9vw,64px);letter-spacing:.06em;text-transform:uppercase;
+  font-weight:900;text-shadow:0 0 18px rgba(224,176,74,.4);color:var(--gold)}
+#intro p{margin:0;color:var(--muted);max-width:460px;line-height:1.5}
+.neon{font-family:Georgia,serif;font-style:italic;color:#ff4d6d;
+  text-shadow:0 0 6px #ff4d6d,0 0 22px #dc143c;animation:flick 4s infinite}
+@keyframes flick{0%,92%,100%{opacity:1}93%{opacity:.3}95%{opacity:1}96%{opacity:.5}}
+.big{padding:16px 34px;border-radius:999px;border:2px solid var(--red);background:#1a0508;
+  font-size:20px;font-weight:800;letter-spacing:.05em}
+.big:active{transform:scale(.97)}
+
+/* ---------- Layout ---------- */
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--line);
+  background:rgba(0,0,0,.6);position:sticky;top:0;z-index:10;backdrop-filter:blur(6px)}
+header .mini-flag{width:28px;height:18px;display:flex;flex-direction:column;border:1px solid #333}
+header .mini-flag i{flex:1}header .mini-flag i:first-child{background:#fff}header .mini-flag i:last-child{background:var(--red)}
+header h2{margin:0;font-size:17px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold);flex:1}
+.chip{font-size:12px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:var(--panel)}
+.chip.on{border-color:var(--ok);color:var(--ok)}
+.chip.off{border-color:#663;color:#cc9}
+main{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
+@media(min-width:900px){main.game{grid-template-columns:1fr 420px}}
+.card{background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);
+  border-radius:14px;padding:14px}
+.card h3{margin:0 0 10px;font-size:13px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px}
+input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--line);background:#0b0b0b;color:var(--text);font:inherit}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.btn{padding:10px 14px;border-radius:10px;border:1px solid var(--line);background:#1b1b1b}
+.btn.red{border-color:var(--red);background:#2a070d}
+.btn.gold{border-color:var(--gold);color:var(--gold)}
+.btn:disabled{opacity:.4}
+
+/* ---------- Board ---------- */
+#boardWrap{display:flex;justify-content:center}
+#board{width:min(100%,520px);aspect-ratio:1;touch-action:manipulation;user-select:none}
+#board .seg:hover{filter:brightness(1.35)}
+.quick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.quick .btn{padding:12px 6px}
+.mult{display:flex;gap:6px;margin-top:8px}
+.mult .btn{flex:1}.mult .btn.sel{border-color:var(--gold);color:var(--gold);background:#221a08}
+
+/* ---------- Scoreboard ---------- */
+.player{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;border:1px solid transparent}
+.player.active{border-color:var(--red);background:#1a0609}
+.player .n{flex:1;font-weight:700}
+.player .s{font-size:34px;font-weight:900;font-variant-numeric:tabular-nums;color:var(--gold)}
+.player .avg{font-size:11px;color:var(--muted)}
+.darts{display:flex;gap:8px;margin:10px 0}
+.darts span{flex:1;text-align:center;padding:10px 0;border-radius:8px;background:#0b0b0b;border:1px solid var(--line);font-weight:800;font-size:18px}
+.co{color:var(--ok);font-weight:700;min-height:22px}
+#log{font-size:13px;color:var(--muted);max-height:120px;overflow:auto}
+#heard{font-family:ui-monospace,monospace;font-size:13px;min-height:20px;color:#ccc}
+.meter{height:8px;border-radius:4px;background:#0b0b0b;overflow:hidden;border:1px solid var(--line)}
+.meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--gold),var(--red));transition:width .08s}
+.cmds{font-size:13px;line-height:1.7;color:var(--muted)}
+.cmds b{color:var(--text)}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000;border:1px solid var(--gold);
+  color:var(--gold);padding:12px 20px;border-radius:12px;font-weight:800;font-size:18px;z-index:60;
+  opacity:0;transition:opacity .25s;pointer-events:none;text-align:center;max-width:90vw}
+#toast.show{opacity:1}
+.persona{display:flex;gap:8px;align-items:center;margin:6px 0}
+.persona .tag{font-size:11px;width:18px;text-align:center;color:var(--muted)}
+.persona .nm{flex:0 0 130px;font-size:13px}
+.persona select{flex:1;padding:6px}
+.persona.cur .nm{color:var(--gold);font-weight:800}
+</style>
+</head>
+<body>
+
+<!-- ================= INTRO ================= -->
+<section id="intro">
+  <div class="flag"><div class="w"></div><div class="r"></div></div>
+  <h1>Kneipen Dart</h1>
+  <div class="neon">Schwarze Kneipe · seit heute Abend geöffnet</div>
+  <p>Keine Musik, nur Kneipengeräusche. Sprachsteuerung auf Deutsch: sag <b>„Vormarsch“</b> oder tipp auf den Knopf.</p>
+  <button class="big" id="enterBtn">VORMARSCH ▸</button>
+  <p style="font-size:12px">Beim ersten Start fragt der Browser nach dem Mikrofon. Am besten in Chrome (Android/Desktop) oder Safari (iOS).</p>
+</section>
+
+<header>
+  <div class="mini-flag"><i></i><i></i></div>
+  <h2>Kneipen Dart</h2>
+  <button class="chip" id="voiceChip" title="Ansage an/aus">🔊 Ansage</button>
+  <button class="chip" id="micChip" title="Mikrofon an/aus">🎙️ Mikro</button>
+</header>
+
+<!-- ================= SETUP ================= -->
+<main id="setup">
+  <div class="card">
+    <h3>Neues Spiel</h3>
+    <label>Spieler (Komma getrennt)</label>
+    <input id="names" value="Spieler 1, Spieler 2">
+    <div class="row">
+      <div style="flex:1"><label>Modus</label>
+        <select id="mode"><option>501</option><option>301</option><option>701</option></select></div>
+      <div style="flex:1"><label>Finish</label>
+        <select id="out"><option value="double">Double-Out</option><option value="single">Single-Out</option></select></div>
+    </div>
+    <div class="row" style="margin-top:14px">
+      <button class="btn red" id="startBtn" style="flex:1">Spiel starten (Vormarsch)</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Stimmen: 2 weiblich, 3 männlich</h3>
+    <div id="personaList"></div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="testVoice">▶ Stimme testen</button>
+      <button class="btn" id="nextVoice">Nächste Stimme</button>
+    </div>
+    <p style="font-size:12px;color:var(--muted)">Die Stimmen kommen aus deinem Gerät. Je mehr deutsche Stimmen installiert sind, desto besser klingt es (Android: Einstellungen → Text-in-Sprache → Google, Sprachdaten „Deutsch“ laden; iOS: Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch → „Erweitert“ oder „Premium“).</p>
+    <label>Eigener Spruch (Befehl „Spruch“)</label>
+    <input id="spruch">
+  </div>
+
+  <div class="card">
+    <h3>Sprachbefehle</h3>
+    <div class="cmds">
+      <b>On / An</b>: Ansage an (geht auch im Stumm-Modus, das Mikro hört immer zu)<br>
+      <b>Off / Aus</b>: Ansage aus<br>
+      <b>Vormarsch</b>: bestätigen, weiter, Spiel starten<br>
+      <b>Laden</b>: Darts gezogen, nächster Spieler (fehlende Darts zählen als daneben)<br>
+      <b>Fresse weiter</b>: andere Stimme<br>
+      <b>Spruch</b>: eigenen Spruch abspielen<br>
+      Punkte: <b>„Triple 20“</b>, <b>„Doppel 16“</b>, <b>„19“</b>, <b>„Bull“</b>, <b>„Single Bull“</b>, <b>„Daneben“</b>, <b>„Zurück“</b> (rückgängig)
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Mikrofon-Test</h3>
+    <div class="meter"><i id="lvl"></i></div>
+    <div id="heard" style="margin-top:8px">Noch nichts gehört …</div>
+    <label>Empfindlichkeit bei Lärm</label>
+    <select id="strict">
+      <option value="0">Locker (ruhiger Raum)</option>
+      <option value="1" selected>Normal</option>
+      <option value="2">Streng (laute Kneipe)</option>
+    </select>
+  </div>
+</main>
+
+<!-- ================= GAME ================= -->
+<main id="game" class="game hidden">
+  <div class="card">
+    <div id="boardWrap"><svg id="board" viewBox="-200 -200 400 400"></svg></div>
+    <div class="mult">
+      <button class="btn sel" data-m="1">Single</button>
+      <button class="btn" data-m="2">Doppel</button>
+      <button class="btn" data-m="3">Triple</button>
+    </div>
+    <div class="quick">
+      <button class="btn" id="missBtn">Daneben</button>
+      <button class="btn" id="undoBtn">Zurück</button>
+      <button class="btn gold" id="loadBtn">Laden ▸</button>
+      <button class="btn" id="spruchBtn">Spruch</button>
+    </div>
+  </div>
+  <div class="card">
+    <div id="players"></div>
+    <div class="darts"><span id="d0">–</span><span id="d1">–</span><span id="d2">–</span></div>
+    <div class="co" id="checkout"></div>
+    <div id="heard2" style="font-family:ui-monospace,monospace;font-size:12px;color:#aaa;min-height:18px"></div>
+    <div class="row" style="margin:10px 0">
+      <button class="btn" id="voiceBtn2">Fresse weiter (Stimme)</button>
+      <button class="btn" id="quitBtn">Spiel beenden</button>
+    </div>
+    <h3>Verlauf</h3>
+    <div id="log"></div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============================================================
+   Speicher (optional)
+   ============================================================ */
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem('kd_'+k); return v===null ? d : JSON.parse(v); }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem('kd_'+k, JSON.stringify(v)); }catch(e){} }
+};
+const $ = id => document.getElementById(id);
+function toast(t, ms=1600){ const el=$('toast'); el.textContent=t; el.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>el.classList.remove('show'), ms); }
+
+/* ============================================================
+   Geräusche (WebAudio, keine Musik)
+   ============================================================ */
+let AC = null, master = null;
+function audio(){
+  if(!AC){
+    AC = new (window.AudioContext||window.webkitAudioContext)();
+    master = AC.createDynamicsCompressor(); master.connect(AC.destination);
+  }
+  if(AC.state==='suspended') AC.resume();
+  return AC;
+}
+function noiseBuf(sec){
+  const a=audio(), b=a.createBuffer(1, a.sampleRate*sec, a.sampleRate), d=b.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i]=Math.random()*2-1; return b;
+}
+function tone(freq, dur, type='sine', vol=.3, when=0, slide=0){
+  const a=audio(), t=a.currentTime+when, o=a.createOscillator(), g=a.createGain();
+  o.type=type; o.frequency.setValueAtTime(freq,t);
+  if(slide) o.frequency.exponentialRampToValueAtTime(Math.max(20,freq*slide), t+dur);
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g).connect(master); o.start(t); o.stop(t+dur+.02);
+}
+function noise(dur, filt=2000, q=1, vol=.4, when=0, type='bandpass'){
+  const a=audio(), t=a.currentTime+when, s=a.createBufferSource(), f=a.createBiquadFilter(), g=a.createGain();
+  s.buffer=noiseBuf(dur); f.type=type; f.frequency.value=filt; f.Q.value=q;
+  g.gain.setValueAtTime(vol,t); g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  s.connect(f).connect(g).connect(master); s.start(t);
+}
+const SFX = {
+  thunk(){ noise(.09,900,2,.7); tone(140,.12,'triangle',.5,0,.5); },          // Dart trifft
+  ring(){ SFX.thunk(); tone(1800,.25,'sine',.12,.03); tone(2700,.2,'sine',.08,.05); },
+  triple(){ SFX.thunk(); [0,.07,.14].forEach((w,i)=>tone(880*(1+i*.25),.18,'square',.07,w)); },
+  miss(){ noise(.25,300,.7,.35,0,'lowpass'); tone(90,.25,'sine',.3,0,.6); },   // dumpf in die Wand
+  bust(){ tone(160,.5,'sawtooth',.18); tone(110,.6,'sawtooth',.18,.1); },
+  bell(){ [0,.35,.7].forEach(w=>{ tone(660,1.6,'sine',.25,w); tone(1320*1.003,1.2,'sine',.08,w); tone(1980*0.997,.8,'sine',.05,w); }); },
+  clink(){ tone(3200,.35,'sine',.15); tone(4100,.3,'sine',.1,.01); tone(3600,.4,'sine',.08,.09); }, // Glas anstoßen
+  plopp(){ tone(500,.08,'sine',.4,0,.4); noise(.25,6000,.5,.12,.06,'highpass'); },             // Flasche auf
+  pull(){ noise(.12,1600,3,.3); noise(.12,1500,3,.3,.15); noise(.12,1700,3,.3,.3); },            // Darts ziehen
+  confirm(){ tone(520,.09,'square',.12); tone(780,.12,'square',.12,.08); },
+  ok(){ tone(660,.1,'sine',.18); },
+  switch(){ tone(300,.06,'square',.1); tone(450,.06,'square',.1,.07); tone(300,.06,'square',.1,.14); }
+};
+
+/* ============================================================
+   Stimmen: 5 Charaktere (2 w, 3 m)
+   ============================================================ */
+const PERSONAS = [
+  { id:'kalle', name:'Kalle (Caller)',     g:'m', pitch:.85, rate:1.0,
+    start:'Game on! Spieler {n}, zeig was du kannst!',
+    score:['{s}!','{s}, sauber.'], ton:['{s}! Ganz stark!'], low:['{s}. Na ja.'],
+    max:'Einhundertundachtzig!', bust:'Überworfen! Keine Punkte!', rest:'{n}, du brauchst {r}.',
+    win:'Game shot, und das Leg für {n}!', next:'{n} ist dran.' },
+  { id:'rita',  name:'Rita (Radio)',       g:'f', pitch:1.12, rate:1.08,
+    start:'Hallo Kneipe! Es geht los, {n} fängt an.',
+    score:['{s} Punkte.','Das sind {s}.'], ton:['Wow, {s}!'], low:['Nur {s}, schade.'],
+    max:'Einhundertachtzig! Wahnsinn!', bust:'Ups, überworfen.', rest:'{n} braucht noch {r}.',
+    win:'{n} gewinnt! Glückwunsch!', next:'Weiter mit {n}.' },
+  { id:'erna',  name:'Oma Erna (Stammtisch)', g:'f', pitch:1.3, rate:.9,
+    start:'Na dann, Kinners, {n} wirft zuerst.',
+    score:['{s}. Gut gemacht, Kind.','Ach, {s}.'], ton:['{s}! Da kriegste nen Schnaps!'], low:['{s}. Ham wa schon besser gesehn.'],
+    max:'Einhundertachtzig! Da fall ich ja vom Hocker!', bust:'Zu viel, mein Schatz. Alles weg.', rest:'Noch {r}, {n}.',
+    win:'{n} hat gewonnen. Lokalrunde!', next:'{n}, du bist.' },
+  { id:'prof',  name:'Prof. Pfeil (Kommentar)', g:'m', pitch:1.0, rate:.95,
+    start:'Meine Damen und Herren, das Spiel beginnt. Am Oche: {n}.',
+    score:['{s} Punkte.','{s}, solide Aufnahme.'], ton:['{s}, eine hervorragende Aufnahme.'], low:['{s}, deutlich unter dem Schnitt.'],
+    max:'Einhundertachtzig, die Maximalpunktzahl!', bust:'Überworfen. Die Aufnahme zählt nicht.', rest:'{n} benötigt {r}.',
+    win:'Und damit gewinnt {n} das Spiel.', next:'Als Nächstes: {n}.' },
+  { id:'otto',  name:'Opern-Otto (Drama)',  g:'m', pitch:.6, rate:.82,
+    start:'Der Vorhang hebt sich! {n} betritt die Bühne!',
+    score:['{s}! Welch ein Wurf!','{s}, bravo!'], ton:['{s}! Bravissimo!'], low:['{s}! Oh welch Tragödie!'],
+    max:'Einhundertachtzig! Das Haus tobt!', bust:'Überworfen! Der Untergang!', rest:'{n}, das Schicksal verlangt {r}!',
+    win:'{n} triumphiert! Vorhang!', next:'Die Bühne gehört {n}!' }
+];
+const FEMALE = /(anna|petra|katja|helena|hedda|marlene|vicki|sabine|amala|seraphina|elke|ingrid|gisela|katharina|louisa|maja|tanja|klarissa|female|frau|weiblich|google deutsch$|de-de-x-dea|de-de-x-nfh|deb-)/i;
+const MALE   = /(markus|stefan|conrad|hans|yannick|killian|florian|jonas|bernd|ralf|christoph|kasper|viktor|dieter|male|mann|männlich|de-de-x-deb|de-de-x-deg|de-de-x-dei)/i;
+
+let sysVoices = [];
+let voiceMap = store.get('voiceMap', {});   // persona-id -> voiceURI
+let curPersona = store.get('persona', 0);
+let voiceOn = store.get('voiceOn', true);
+let speaking = false, speakEndAt = 0;
+
+function loadVoices(){
+  if(!('speechSynthesis' in window)) return;
+  const all = speechSynthesis.getVoices();
+  let de = all.filter(v=>/^de/i.test(v.lang));
+  if(!de.length) de = all;
+  // bessere Stimmen zuerst (Online/Premium/Neural)
+  const q = v => (/(natural|neural|premium|enhanced|erweitert|online|google)/i.test(v.name)?2:0) + (v.localService?0:1);
+  sysVoices = de.sort((a,b)=>q(b)-q(a));
+  autoAssign(); renderPersonas();
+}
+function autoAssign(){
+  if(!sysVoices.length) return;
+  const f = sysVoices.filter(v=>FEMALE.test(v.name+' '+v.voiceURI) && !MALE.test(v.name));
+  const m = sysVoices.filter(v=>MALE.test(v.name+' '+v.voiceURI));
+  let fi=0, mi=0;
+  PERSONAS.forEach(p=>{
+    if(voiceMap[p.id] && sysVoices.some(v=>v.voiceURI===voiceMap[p.id])) return;
+    const pool = p.g==='f' ? f : m;
+    const v = pool.length ? pool[(p.g==='f'?fi++:mi++) % pool.length] : sysVoices[(fi+mi++) % sysVoices.length];
+    if(v) voiceMap[p.id] = v.voiceURI;
+  });
+}
+function renderPersonas(){
+  const box=$('personaList'); box.innerHTML='';
+  PERSONAS.forEach((p,i)=>{
+    const row=document.createElement('div'); row.className='persona'+(i===curPersona?' cur':'');
+    row.innerHTML=`<span class="tag">${p.g==='f'?'♀':'♂'}</span><span class="nm">${p.name}</span>`;
+    const sel=document.createElement('select');
+    if(!sysVoices.length) sel.innerHTML='<option>Systemstimme</option>';
+    sysVoices.forEach(v=>{ const o=document.createElement('option'); o.value=v.voiceURI;
+      o.textContent=v.name+(v.localService?'':' ☁'); if(voiceMap[p.id]===v.voiceURI) o.selected=true; sel.appendChild(o); });
+    sel.onchange=()=>{ voiceMap[p.id]=sel.value; store.set('voiceMap',voiceMap); curPersona=i; store.set('persona',i); renderPersonas(); say(fill(p.start,{n:'Test'}), true); };
+    row.onclick=e=>{ if(e.target===sel) return; curPersona=i; store.set('persona',i); renderPersonas(); };
+    row.appendChild(sel); box.appendChild(row);
+  });
+}
+function fill(t,o){ return t.replace(/\{(\w)\}/g,(_,k)=>o[k]??''); }
+function pick(a){ return Array.isArray(a) ? a[Math.floor(Math.random()*a.length)] : a; }
+
+function say(text, force=false){
+  if(!('speechSynthesis' in window)) return;
+  if(!voiceOn && !force) return;
+  const p = PERSONAS[curPersona];
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang='de-DE';
+  const v = sysVoices.find(v=>v.voiceURI===voiceMap[p.id]);
+  if(v){ u.voice=v; u.lang=v.lang; }
+  // Wenn mehrere Charaktere dieselbe Gerätestimme teilen, Tonhöhe stärker spreizen
+  const shared = PERSONAS.filter(q=>voiceMap[q.id]===voiceMap[p.id]).length>1;
+  u.pitch = shared ? p.pitch : 1 + (p.pitch-1)*.4;
+  u.rate = p.rate; u.volume = 1;
+  u.onstart=()=>{ speaking=true; };
+  u.onend=u.onerror=()=>{ speaking=false; speakEndAt=performance.now(); };
+  speechSynthesis.cancel();
+  speaking=true;
+  speechSynthesis.speak(u);
+}
+function setVoice(on){
+  voiceOn=on; store.set('voiceOn',on);
+  $('voiceChip').className='chip '+(on?'on':'off');
+  $('voiceChip').textContent=on?'🔊 Ansage an':'🔇 Ansage aus';
+  if(!on && 'speechSynthesis' in window) speechSynthesis.cancel();
+}
+function nextPersona(){
+  curPersona=(curPersona+1)%PERSONAS.length; store.set('persona',curPersona); renderPersonas();
+  SFX.switch(); const p=PERSONAS[curPersona];
+  toast('Stimme: '+p.name);
+  say(fill(pick(p.start), {n: game ? game.players[game.cur].name : 'Kneipe'}));
+}
+
+/* ============================================================
+   Spracherkennung, robust bei Lärm
+   ============================================================ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec=null, micWanted=store.get('mic', true), recRunning=false;
+
+const NUM = {null:0,eins:1,ein:1,eine:1,zwei:2,zwo:2,drei:3,vier:4,'fünf':5,fuenf:5,sechs:6,sieben:7,acht:8,neun:9,zehn:10,elf:11,'zwölf':12,zwoelf:12,
+  dreizehn:13,vierzehn:14,'fünfzehn':15,fuenfzehn:15,sechzehn:16,siebzehn:17,achtzehn:18,neunzehn:19,zwanzig:20,
+  one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,thirteen:13,fourteen:14,fifteen:15,sixteen:16,seventeen:17,eighteen:18,nineteen:19,twenty:20};
+
+function norm(s){
+  return s.toLowerCase().replace(/[.,!?;:„“"']/g,' ')
+    .replace(/ß/g,'ss').replace(/\s+/g,' ').trim();
+}
+function lev(a,b){
+  const m=a.length,n=b.length; if(!m) return n; if(!n) return m;
+  let p=Array.from({length:n+1},(_,i)=>i);
+  for(let i=1;i<=m;i++){ let c=[i]; for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c; }
+  return p[n];
+}
+// Ähnlichkeit eines Worts (oder Wortpaars) im Satz zu einem Zielwort
+function near(words, target, tol){
+  for(let i=0;i<words.length;i++){
+    if(lev(words[i],target)<=tol) return true;
+    if(i+1<words.length && lev(words[i]+words[i+1],target)<=tol) return true;
+  }
+  return false;
+}
+// Befehlswörter mit typischen Verhörern
+const COMMANDS = [
+  { id:'on',     keys:['on','an','ansage an','stimme an','voice on','ohn','onn'] , exact:true },
+  { id:'off',    keys:['off','aus','ansage aus','stimme aus','voice off','of','ruhe'], exact:true },
+  { id:'voice',  keys:['fresse weiter','fresse','fräse weiter','fresse weida','fress weiter','presse weiter','andere stimme','nächste stimme'] },
+  { id:'go',     keys:['vormarsch','vor marsch','vormarch','formarsch','vormasch','vormarscht','vormärsche','vorwärts','weiter','bestätigen','okay','ok','los'] },
+  { id:'load',   keys:['laden','laaden','lade','ladn','geladen','gezogen','ziehen','nachladen'] },
+  { id:'spruch', keys:['spruch','sprüche','spruch bitte','spruh'] },
+  { id:'undo',   keys:['zurück','rückgängig','korrektur','falsch'] },
+  { id:'miss',   keys:['daneben','vorbei','miss','null','nix','nichts'], nofuzzy:true },
+];
+function tolFor(word){ const s=+$('strict').value; const L=word.replace(/\s/g,'').length; if(L<=3) return 0; return s===2?1:(L>=7?2:1); }
+
+function parseCommand(txt){
+  const t=norm(txt), w=t.split(' ');
+  // Nur kurze Äußerungen gelten als Befehl, sonst ist es Kneipengespräch
+  const maxWords = [8,6,4][+$('strict').value];
+  if(w.length>maxWords) return null;
+  for(const c of COMMANDS){
+    for(const k of c.keys){
+      if(c.exact){ if(t===k || (k.includes(' ') && t.includes(k))) return {cmd:c.id}; continue; }
+      if(c.nofuzzy){ if(t.split(' ').includes(k)) return {cmd:c.id}; continue; }
+      if(t.includes(k)) return {cmd:c.id};
+      if(!k.includes(' ') && near(w,k,tolFor(k))) return {cmd:c.id};
+    }
+  }
+  // „fresse“ fast getroffen + „weiter“
+  if(near(w,'fresse',1) && near(w,'weiter',2)) return {cmd:'voice'};
+  return parseThrow(t);
+}
+function parseThrow(t){
+  t=t.replace(/bull ?s ?eye|bullseye|bulls/g,'bull');
+  if(/\b(single|einfach)\s*bull\b|\b25\b|fünfundzwanzig/.test(t)) return {throw:{v:25,m:1}};
+  if(/\b(doppel|double|doppelt)?\s*bull\b|\b50\b|fünfzig|bull/.test(t)) return {throw:{v:25,m:2}};
+  let m=1;
+  if(/\b(triple|tripel|treble|dreifach|trippel|tribble|t)\b/.test(t)) m=3;
+  else if(/\b(doppel|double|doppelt|dabbel|d)\b/.test(t)) m=2;
+  let v=null;
+  const dm=t.match(/\b(\d{1,2})\b/); if(dm) v=+dm[1];
+  if(v===null){ for(const w of t.split(' ')) if(w in NUM){ v=NUM[w]; } }
+  if(v===null) return null;
+  if(v===0) return {cmd:'miss'};
+  if(v>=1 && v<=20) return {throw:{v,m}};
+  // „60“ etc. als Triple/Doppel-Gesamtwert deuten
+  if(v<=60 && v%3===0 && v/3<=20 && m===1) return {throw:{v:v/3,m:3}};
+  if(v<=40 && v%2===0 && m===1) return {throw:{v:v/2,m:2}};
+  return null;
+}
+
+function startRec(){
+  if(!SR){ $('heard').textContent='Spracherkennung wird von diesem Browser nicht unterstützt (Chrome oder Safari nehmen).'; return; }
+  if(recRunning) return;
+  rec=new SR(); rec.lang='de-DE'; rec.continuous=true; rec.interimResults=true; rec.maxAlternatives=5;
+  rec.onstart=()=>{ recRunning=true; updMic(); };
+  rec.onresult=e=>{
+    for(let i=e.resultIndex;i<e.results.length;i++){
+      const r=e.results[i], txt=r[0].transcript;
+      showHeard(txt, r.isFinal);
+      // Eigene Ansage nicht als Befehl werten (Echo)
+      if(speaking || performance.now()-speakEndAt<350) continue;
+      if(!r.isFinal){ // kurze, eindeutige Befehle schon vorab ausführen
+        const qc=parseCommand(txt); if(qc && qc.cmd && ['on','off','go','load','voice'].includes(qc.cmd) && norm(txt).split(' ').length<=2) { handle(qc, txt, i); }
+        continue;
+      }
+      const minConf=[0,.3,.5][+$('strict').value];
+      let done=false;
+      for(let a=0;a<r.length && !done;a++){
+        const alt=r[a]; if(alt.confidence && alt.confidence<minConf && a>0) continue;
+        const c=parseCommand(alt.transcript); if(c){ handle(c, alt.transcript, i); done=true; }
+      }
+    }
+  };
+  rec.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ micWanted=false; store.set('mic',false); toast('Mikrofon blockiert'); } };
+  rec.onend=()=>{ recRunning=false; updMic(); if(micWanted) setTimeout(()=>{ try{ startRec(); }catch(e){} }, 250); };
+  try{ rec.start(); }catch(e){}
+}
+function stopRec(){ micWanted=false; store.set('mic',false); try{ rec&&rec.stop(); }catch(e){} updMic(); }
+function updMic(){ const c=$('micChip'); c.className='chip '+(recRunning?'on':'off'); c.textContent=recRunning?'🎙️ hört zu':'🎙️ aus'; }
+
+let lastHandled={key:'',idx:-1,t:0};
+function handle(c, txt, idx){
+  const key=(c.cmd||'')+JSON.stringify(c.throw||'');
+  const now=performance.now();
+  if(idx===lastHandled.idx && key===lastHandled.key) return;        // Zwischen- und Endergebnis nicht doppelt
+  if(key===lastHandled.key && now-lastHandled.t<900) return;
+  lastHandled={key,idx,t:now};
+  if(c.throw){ if(game) addThrow(c.throw.v, c.throw.m); return; }
+  switch(c.cmd){
+    case 'on': setVoice(true); SFX.ok(); toast('Ansage AN'); say('Ansage an.'); break;
+    case 'off': setVoice(false); SFX.ok(); toast('Ansage AUS'); break;
+    case 'go': vormarsch(); break;
+    case 'load': laden(); break;
+    case 'voice': nextPersona(); break;
+    case 'spruch': spruch(); break;
+    case 'undo': if(game) undo(); break;
+    case 'miss': if(game) addThrow(0,1); break;
+  }
+}
+function showHeard(t, fin){ const s=(fin?'✔ ':'… ')+t; $('heard').textContent=s; $('heard2').textContent=s; }
+
+// Pegelanzeige mit Rauschunterdrückung, damit man sieht, ob das Mikro was bekommt
+async function startMeter(){
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:true,echoCancellation:true,autoGainControl:true}});
+    const a=audio(), src=a.createMediaStreamSource(st), an=a.createAnalyser(); an.fftSize=512; src.connect(an);
+    const d=new Uint8Array(an.fftSize);
+    (function loop(){ an.getByteTimeDomainData(d); let s=0; for(const x of d){ const y=(x-128)/128; s+=y*y; }
+      $('lvl').style.width=Math.min(100,Math.sqrt(s/d.length)*400)+'%'; requestAnimationFrame(loop); })();
+  }catch(e){}
+}
+
+/* ============================================================
+   Dartscheibe (SVG, Polen-Farben auf Schwarz)
+   ============================================================ */
+const ORDER=[20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5];
+const R={bull:6.35, obull:15.9, tIn:99, tOut:107, dIn:162, dOut:170};
+const SC=1.0;
+let mult=1;
+function arc(r1,r2,a1,a2){
+  const p=(r,a)=>[(r*Math.sin(a)).toFixed(2),(-r*Math.cos(a)).toFixed(2)];
+  const [x1,y1]=p(r2,a1),[x2,y2]=p(r2,a2),[x3,y3]=p(r1,a2),[x4,y4]=p(r1,a1);
+  return `M${x1} ${y1}A${r2} ${r2} 0 0 1 ${x2} ${y2}L${x3} ${y3}A${r1} ${r1} 0 0 0 ${x4} ${y4}Z`;
+}
+function drawBoard(){
+  const s=$('board'); let h=`<circle r="198" fill="#0c0c0c" stroke="#222" stroke-width="2"/>`;
+  ORDER.forEach((n,i)=>{
+    const a1=(i-.5)*Math.PI/10, a2=(i+.5)*Math.PI/10, dark=i%2===0;
+    const base=dark?'#111':'#2b2723', ring=dark?'#dc143c':'#f1f1f1';
+    h+=`<path class="seg" d="${arc(R.obull,R.tIn,a1,a2)}" fill="${base}"/>`;
+    h+=`<path class="seg" d="${arc(R.tIn,R.tOut,a1,a2)}" fill="${ring}"/>`;
+    h+=`<path class="seg" d="${arc(R.tOut,R.dIn,a1,a2)}" fill="${base}"/>`;
+    h+=`<path class="seg" d="${arc(R.dIn,R.dOut,a1,a2)}" fill="${ring}"/>`;
+    const a=i*Math.PI/10, tx=184*Math.sin(a), ty=-184*Math.cos(a);
+    h+=`<text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" fill="#e0b04a" font-size="15" font-weight="800" text-anchor="middle" dominant-baseline="central">${n}</text>`;
+  });
+  h+=`<circle class="seg" r="${R.obull}" fill="#f1f1f1"/><circle class="seg" r="${R.bull}" fill="#dc143c"/>`;
+  h+=`<g id="marks"></g>`;
+  s.innerHTML=h;
+  s.addEventListener('pointerdown', e=>{
+    if(!game) return;
+    const pt=s.createSVGPoint(); pt.x=e.clientX; pt.y=e.clientY;
+    const p=pt.matrixTransform(s.getScreenCTM().inverse());
+    const r=Math.hypot(p.x,p.y);
+    let ang=Math.atan2(p.x,-p.y); if(ang<0) ang+=2*Math.PI;
+    const idx=Math.round(ang/(Math.PI/10))%20, n=ORDER[idx];
+    let v=n,m=1;
+    if(r<=R.bull){v=25;m=2;} else if(r<=R.obull){v=25;m=1;}
+    else if(r>R.dOut){v=0;m=1;}
+    else if(r>=R.dIn) m=2; else if(r>=R.tIn && r<=R.tOut) m=3;
+    else if(mult>1){ m=mult; }          // Tipp ins Feld + gewählter Multiplikator
+    mark(p.x,p.y);
+    addThrow(v,m);
+    setMult(1);
+  });
+}
+function mark(x,y){ const g=$('marks'); g.insertAdjacentHTML('beforeend',`<circle cx="${x}" cy="${y}" r="5" fill="#e0b04a" stroke="#000" stroke-width="1.5"/>`); }
+function clearMarks(){ const g=$('marks'); if(g) g.innerHTML=''; }
+function setMult(m){ mult=m; document.querySelectorAll('.mult .btn').forEach(b=>b.classList.toggle('sel', +b.dataset.m===m)); }
+
+/* ============================================================
+   Spiel-Logik X01
+   ============================================================ */
+let game=null;
+function label(t){ if(t.v===0) return '0'; if(t.v===25) return t.m===2?'BULL':'25'; return (t.m===3?'T':t.m===2?'D':'')+t.v; }
+function newGame(){
+  const names=$('names').value.split(',').map(s=>s.trim()).filter(Boolean);
+  if(!names.length) names.push('Spieler 1');
+  store.set('names',$('names').value);
+  const start=+$('mode').value;
+  game={ start, dbl:$('out').value==='double', cur:0, turn:[], history:[], over:false,
+    players:names.map(n=>({name:n, score:start, darts:0, pts:0})) };
+  $('setup').classList.add('hidden'); $('game').classList.remove('hidden');
+  $('log').innerHTML=''; clearMarks(); render();
+  SFX.plopp();
+  const p=PERSONAS[curPersona];
+  setTimeout(()=>say(fill(pick(p.start),{n:game.players[0].name})), 300);
+}
+function addThrow(v,m){
+  if(!game || game.over) return;
+  if(game.turn.length>=3){ toast('3 Darts geworfen, sag „Laden“'); SFX.bust(); return; }
+  if(v===25 && m===3) m=2;
+  const t={v,m,pts:v*m};
+  const P=game.players[game.cur];
+  const before=P.score - game.turn.reduce((s,x)=>s+x.pts,0);
+  const after=before-t.pts;
+  game.turn.push(t);
+  if(t.pts===0) SFX.miss(); else if(m===3) SFX.triple(); else if(m===2) SFX.ring(); else SFX.thunk();
+  // Bust?
+  const bust = after<0 || (game.dbl && after===1) || (after===0 && game.dbl && m!==2);
+  if(bust){ t.bust=true; endTurn(true); return; }
+  if(after===0){ win(); return; }
+  render();
+  if(game.turn.length===3) announceTurn();
+}
+function announceTurn(){
+  const p=PERSONAS[curPersona], s=game.turn.reduce((a,x)=>a+x.pts,0);
+  if(s===180){ SFX.bell(); toast('🎯 180! 🎯',2200); say(p.max); return; }
+  if(s>=100) { SFX.clink(); say(fill(pick(p.ton),{s})); }
+  else if(s<20) say(fill(pick(p.low),{s}));
+  else say(fill(pick(p.score),{s}));
+}
+function endTurn(bust){
+  const P=game.players[game.cur], p=PERSONAS[curPersona];
+  const s=game.turn.reduce((a,x)=>a+x.pts,0);
+  game.history.push({cur:game.cur, turn:game.turn.slice(), prev:P.score, bust:!!bust});
+  P.darts+=game.turn.length;
+  if(bust){ SFX.bust(); say(p.bust); logLine(`${P.name}: ${game.turn.map(label).join(' ')} ÜBERWORFEN`); toast('Überworfen!'); }
+  else { P.score-=s; P.pts+=s; logLine(`${P.name}: ${game.turn.map(label).join(' ')} = ${s} (Rest ${P.score})`); }
+  game.turn=[];
+  game.cur=(game.cur+1)%game.players.length;
+  clearMarks(); render();
+}
+function laden(){
+  if(!game){ return; }
+  if(game.over){ vormarsch(); return; }
+  SFX.pull();
+  if(game.turn.length===0){ toast('Darts gezogen'); return; }
+  const wasThree=game.turn.length===3;
+  while(game.turn.length<3) game.turn.push({v:0,m:1,pts:0});
+  if(!wasThree) announceTurn();
+  endTurn(false);
+  const P=game.players[game.cur], p=PERSONAS[curPersona];
+  setTimeout(()=>{ const co=checkout(P.score,3,game.dbl);
+    say(co && P.score<=170 ? fill(p.rest,{n:P.name,r:P.score}) : fill(p.next,{n:P.name})); }, voiceOn?1600:0);
+}
+function win(){
+  const P=game.players[game.cur], p=PERSONAS[curPersona];
+  const s=game.turn.reduce((a,x)=>a+x.pts,0);
+  game.history.push({cur:game.cur, turn:game.turn.slice(), prev:P.score, bust:false});
+  P.darts+=game.turn.length; P.pts+=s; P.score=0; game.over=true; game.turn=[];
+  logLine(`🏆 ${P.name} checkt ${s}`);
+  render(); SFX.bell(); setTimeout(SFX.clink,900);
+  toast('🏆 '+P.name+' gewinnt!',3500);
+  say(fill(p.win,{n:P.name}));
+}
+function undo(){
+  if(!game) return;
+  if(game.turn.length){ game.turn.pop(); const m=$('marks'); if(m&&m.lastChild) m.lastChild.remove(); }
+  else if(game.history.length){
+    const h=game.history.pop(), P=game.players[h.cur];
+    P.score=h.prev; P.darts-=h.turn.length; if(!h.bust) P.pts-=h.turn.reduce((a,x)=>a+x.pts,0);
+    game.cur=h.cur; game.turn=h.turn.slice(0,-1); game.over=false;
+    const l=$('log'); if(l.firstChild) l.firstChild.remove(); clearMarks();
+  }
+  SFX.ok(); render();
+}
+function vormarsch(){
+  SFX.confirm();
+  if(!$('intro').classList.contains('hidden')){ enter(); return; }
+  if(!game){ newGame(); return; }
+  if(game.over){ // Revanche, gleiche Spieler, anderer Starter
+    const names=game.players.map(p=>p.name); names.push(names.shift()); $('names').value=names.join(', '); newGame(); return; }
+  if(game.turn.length===3) { laden(); return; }
+  toast('Weiter');
+}
+function spruch(){
+  const t=$('spruch').value.trim(); if(!t) return;
+  SFX.clink(); toast(t,4000); say(t,true);
+}
+function logLine(t){ const d=document.createElement('div'); d.textContent=t; $('log').prepend(d); }
+
+/* Checkout-Rechner */
+const SEGS=(()=>{ const a=[]; for(let v=20;v>=1;v--){ a.push({v,m:3}); } a.push({v:25,m:1},{v:25,m:2});
+  for(let v=20;v>=1;v--){ a.push({v,m:1}); } for(let v=20;v>=1;v--){ a.push({v,m:2}); } return a; })();
+const DBL=(()=>{ const a=[]; [20,16,18,12,10,8,14,6,4,2,19,17,15,13,11,9,7,5,3,1].forEach(v=>a.push({v,m:2})); a.push({v:25,m:2}); return a; })();
+function checkout(rest, darts, dbl){
+  const finals = dbl ? DBL : SEGS;
+  for(let n=1;n<=darts;n++){
+    const r=dfs(rest,n,finals); if(r) return r;
+  }
+  return null;
+}
+function dfs(rest,n,finals){
+  if(n===1){ const f=finals.find(s=>s.v*s.m===rest); return f?[f]:null; }
+  for(const s of SEGS){ const p=s.v*s.m; if(p>=rest) continue; const r=dfs(rest-p,n-1,finals); if(r) return [s,...r]; }
+  return null;
+}
+
+function render(){
+  if(!game) return;
+  const box=$('players'); box.innerHTML='';
+  game.players.forEach((P,i)=>{
+    const cur=i===game.cur, live=cur?P.score-game.turn.filter(t=>!t.bust).reduce((a,x)=>a+x.pts,0):P.score;
+    const avg=P.darts?(P.pts/P.darts*3).toFixed(1):'–';
+    const d=document.createElement('div'); d.className='player'+(cur&&!game.over?' active':'');
+    d.innerHTML=`<div class="n">${cur&&!game.over?'▸ ':''}${esc(P.name)}<div class="avg">Ø ${avg} · ${P.darts} Darts</div></div><div class="s">${live}</div>`;
+    box.appendChild(d);
+  });
+  for(let i=0;i<3;i++) $('d'+i).textContent=game.turn[i]?label(game.turn[i]):'–';
+  const P=game.players[game.cur], live=P.score-game.turn.reduce((a,x)=>a+x.pts,0);
+  const left=3-game.turn.length;
+  const co=(!game.over && left>0 && live<=170)?checkout(live,left,game.dbl):null;
+  $('checkout').textContent=game.over?'Vormarsch = Revanche':(co?'Checkout: '+co.map(label).join(' · '):(left===0?'Laden = nächster Spieler':''));
+}
+function esc(s){ return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+/* ============================================================
+   Start / UI
+   ============================================================ */
+function enter(){
+  audio(); SFX.plopp(); setTimeout(SFX.clink,250);
+  $('intro').classList.add('hidden');
+  if(micWanted) startRec();
+  startMeter();
+  setTimeout(()=>say('Willkommen in der Kneipe. Sag Vormarsch, um zu starten.'), 500);
+}
+$('enterBtn').onclick=()=>{ micWanted=true; store.set('mic',true); vormarsch(); };
+$('startBtn').onclick=()=>vormarsch();
+$('voiceChip').onclick=()=>{ setVoice(!voiceOn); audio(); SFX.ok(); };
+$('micChip').onclick=()=>{ if(recRunning) stopRec(); else { micWanted=true; store.set('mic',true); startRec(); } };
+$('testVoice').onclick=()=>{ audio(); const p=PERSONAS[curPersona]; say(fill(pick(p.start),{n:'Kneipe'})+' '+p.max, true); };
+$('nextVoice').onclick=()=>{ audio(); nextPersona(); };
+$('voiceBtn2').onclick=()=>nextPersona();
+$('missBtn').onclick=()=>addThrow(0,1);
+$('undoBtn').onclick=()=>undo();
+$('loadBtn').onclick=()=>laden();
+$('spruchBtn').onclick=()=>spruch();
+$('quitBtn').onclick=()=>{ game=null; $('game').classList.add('hidden'); $('setup').classList.remove('hidden'); };
+document.querySelectorAll('.mult .btn').forEach(b=>b.onclick=()=>setMult(+b.dataset.m));
+$('spruch').value=store.get('spruch','Die Zeit wird kommen, wo die Ratten das Licht verlassen und sichtbar werden. Trau keinem Promi, VIP oder TV-Star.');
+$('spruch').onchange=()=>store.set('spruch',$('spruch').value);
+$('names').value=store.get('names',$('names').value);
+$('strict').value=store.get('strict','1'); $('strict').onchange=()=>store.set('strict',$('strict').value);
+
+drawBoard(); setVoice(voiceOn); updMic();
+if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
+renderPersonas();
+// Tastatur: Enter = Vormarsch, L = Laden, V = Stimme, M = Ansage an/aus
+document.addEventListener('keydown',e=>{ if(e.target.tagName==='INPUT') return;
+  const k=e.key.toLowerCase(); if(k==='enter') vormarsch(); else if(k==='l') laden(); else if(k==='v') nextPersona(); else if(k==='m') setVoice(!voiceOn); else if(k==='backspace') undo(); });
+</script>
+</body>
+</html>
