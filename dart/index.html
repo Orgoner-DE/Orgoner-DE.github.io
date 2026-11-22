@@ -12,7 +12,7 @@
   --gold:#e0b04a; --ok:#3fbf6a;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text);
   font-family:"Segoe UI",system-ui,-apple-system,sans-serif;overflow-x:hidden}
 body{background:
   radial-gradient(700px 380px at 50% -8%, #2a1a10 0%, transparent 65%),
@@ -84,6 +84,9 @@ input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--li
 #log{font-size:13px;color:var(--muted);max-height:120px;overflow:auto}
 #heard{font-family:ui-monospace,monospace;font-size:13px;min-height:20px;color:#ccc}
 .meter{height:8px;border-radius:4px;background:#0b0b0b;overflow:hidden;border:1px solid var(--line)}
+.meter{position:relative}.meter b{position:absolute;top:-2px;bottom:-2px;width:2px;background:#fff;left:0;display:none}
+.ck{display:flex;gap:8px;align-items:center;color:var(--text);font-size:14px}.ck input{width:auto}
+input[type=range]{padding:0;accent-color:var(--red)}
 .meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--ok),var(--gold),var(--red));transition:width .08s}
 .cmds{font-size:13px;line-height:1.7;color:var(--muted)}
 .cmds b{color:var(--text)}
@@ -160,15 +163,58 @@ input,select{width:100%;padding:10px;border-radius:8px;border:1px solid var(--li
   </div>
 
   <div class="card">
-    <h3>Mikrofon-Test</h3>
-    <div class="meter"><i id="lvl"></i></div>
+    <h3>Live-Ansage</h3>
+    <label class="ck"><input type="checkbox" id="liveDart"> Jeden Dart sofort ansagen („Triple 20“)</label>
+    <label class="ck"><input type="checkbox" id="liveSum"> Summe der Aufnahme nach 3 Darts</label>
+    <label class="ck"><input type="checkbox" id="liveRest"> Restpunkte ansagen</label>
+    <label class="ck"><input type="checkbox" id="liveCo"> Checkout-Weg ansagen („Triple 20, Doppel 20“)</label>
+    <label class="ck"><input type="checkbox" id="liveName"> Nächsten Spieler aufrufen</label>
+  </div>
+
+  <div class="card">
+    <h3>Stimme kalibrieren: <span id="calName"></span></h3>
+    <label>Tonhöhe <span id="vPitchV"></span></label><input type="range" id="vPitch" min="0.3" max="1.8" step="0.05">
+    <label>Tempo <span id="vRateV"></span></label><input type="range" id="vRate" min="0.6" max="1.6" step="0.05">
+    <label>Lautstärke <span id="vVolV"></span></label><input type="range" id="vVol" min="0.2" max="1" step="0.05">
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="vTest">▶ Probe</button>
+      <button class="btn" id="vReset">Zurücksetzen</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Mikro kalibrieren</h3>
+    <div class="meter"><i id="lvl"></i><b id="thrMark"></b></div>
     <div id="heard" style="margin-top:8px">Noch nichts gehört …</div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn" id="calRoom">1. Raum messen (3 s still)</button>
+      <button class="btn" id="calSpeak">2. Sprechtest („Vormarsch“)</button>
+    </div>
+    <div id="calInfo" class="cmds" style="margin-top:6px">Noch nicht kalibriert.</div>
+    <label class="ck"><input type="checkbox" id="gate"> Lärm-Sperre: nur Befehle über der Sprach-Schwelle annehmen</label>
     <label>Empfindlichkeit bei Lärm</label>
     <select id="strict">
       <option value="0">Locker (ruhiger Raum)</option>
       <option value="1" selected>Normal</option>
       <option value="2">Streng (laute Kneipe)</option>
     </select>
+    <label>Echo-Sperre nach eigener Ansage: <span id="echoV"></span> ms</label>
+    <input type="range" id="echo" min="0" max="1500" step="50">
+  </div>
+
+  <div class="card">
+    <h3>Befehle anlernen</h3>
+    <p class="cmds" style="margin-top:0">Befehl wählen, „Anlernen“ tippen und das Wort einmal sprechen. Das Spiel merkt sich, wie dein Handy dich versteht.</p>
+    <div class="row">
+      <select id="learnCmd" style="flex:1">
+        <option value="go">Vormarsch</option><option value="load">Laden</option><option value="voice">Fresse weiter</option>
+        <option value="on">On</option><option value="off">Off</option><option value="spruch">Spruch</option>
+        <option value="undo">Zurück</option><option value="miss">Daneben</option>
+      </select>
+      <button class="btn gold" id="learnBtn">Anlernen</button>
+    </div>
+    <div id="learned" class="cmds" style="margin-top:8px"></div>
+    <button class="btn" id="learnClear" style="margin-top:6px">Angelerntes löschen</button>
   </div>
 </main>
 
@@ -294,6 +340,13 @@ const PERSONAS = [
 const FEMALE = /(anna|petra|katja|helena|hedda|marlene|vicki|sabine|amala|seraphina|elke|ingrid|gisela|katharina|louisa|maja|tanja|klarissa|female|frau|weiblich|google deutsch$|de-de-x-dea|de-de-x-nfh|deb-)/i;
 const MALE   = /(markus|stefan|conrad|hans|yannick|killian|florian|jonas|bernd|ralf|christoph|kasper|viktor|dieter|male|mann|männlich|de-de-x-deb|de-de-x-deg|de-de-x-dei)/i;
 
+const cfg = Object.assign({liveDart:true, liveSum:true, liveRest:true, liveCo:true, liveName:true,
+  echo:400, floor:0, thr:0, gate:false}, store.get('cfg',{}));
+function saveCfg(){ store.set('cfg',cfg); }
+let calib = store.get('calib', {});          // persona-id -> {pitch,rate,vol}
+let aliases = store.get('aliases', {});      // cmd -> [angelernte Transkripte]
+let learning = null;
+function pc(p){ return Object.assign({pitch:p.pitch, rate:p.rate, vol:1}, calib[p.id]||{}); }
 let sysVoices = [];
 let voiceMap = store.get('voiceMap', {});   // persona-id -> voiceURI
 let curPersona = store.get('persona', 0);
@@ -335,28 +388,37 @@ function renderPersonas(){
     row.onclick=e=>{ if(e.target===sel) return; curPersona=i; store.set('persona',i); renderPersonas(); };
     row.appendChild(sel); box.appendChild(row);
   });
+  if($('calName')) renderCal();
 }
 function fill(t,o){ return t.replace(/\{(\w)\}/g,(_,k)=>o[k]??''); }
 function pick(a){ return Array.isArray(a) ? a[Math.floor(Math.random()*a.length)] : a; }
 
-function say(text, force=false){
-  if(!('speechSynthesis' in window)) return;
+let speakCount=0;
+function say(text, force=false, queue=false){
+  if(!('speechSynthesis' in window) || !text) return;
   if(!voiceOn && !force) return;
-  const p = PERSONAS[curPersona];
+  const p = PERSONAS[curPersona], c = pc(p);
   const u = new SpeechSynthesisUtterance(text);
   u.lang='de-DE';
   const v = sysVoices.find(v=>v.voiceURI===voiceMap[p.id]);
   if(v){ u.voice=v; u.lang=v.lang; }
-  // Wenn mehrere Charaktere dieselbe Gerätestimme teilen, Tonhöhe stärker spreizen
+  // Wenn mehrere Charaktere dieselbe Gerätestimme teilen, Tonhöhe voll spreizen, sonst dezenter
   const shared = PERSONAS.filter(q=>voiceMap[q.id]===voiceMap[p.id]).length>1;
-  u.pitch = shared ? p.pitch : 1 + (p.pitch-1)*.4;
-  u.rate = p.rate; u.volume = 1;
-  u.onstart=()=>{ speaking=true; };
-  u.onend=u.onerror=()=>{ speaking=false; speakEndAt=performance.now(); };
-  speechSynthesis.cancel();
-  speaking=true;
+  const custom = !!calib[p.id];
+  u.pitch = (shared||custom) ? c.pitch : 1 + (c.pitch-1)*.4;
+  u.rate = c.rate; u.volume = c.vol;
+  u.onend=u.onerror=()=>{ speakCount=Math.max(0,speakCount-1); speaking=speakCount>0; speakEndAt=performance.now(); };
+  if(!queue || speakCount>=3){ speechSynthesis.cancel(); speakCount=0; }   // neu ansagen bzw. nicht hinterherhinken
+  speakCount++; speaking=true;
   speechSynthesis.speak(u);
 }
+function sayQ(t){ say(t,false,true); }
+function dartWords(t){
+  if(t.v===0) return 'Daneben';
+  if(t.v===25) return t.m===2 ? 'Bull' : 'Single Bull';
+  return (t.m===3?'Triple ':t.m===2?'Doppel ':'')+t.v;
+}
+function coWords(co){ return co.map(dartWords).join(', '); }
 function setVoice(on){
   voiceOn=on; store.set('voiceOn',on);
   $('voiceChip').className='chip '+(on?'on':'off');
@@ -416,6 +478,9 @@ function parseCommand(txt){
   // Nur kurze Äußerungen gelten als Befehl, sonst ist es Kneipengespräch
   const maxWords = [8,6,4][+$('strict').value];
   if(w.length>maxWords) return null;
+  for(const id in aliases) for(const a of aliases[id]){
+    if(t===a || (a.length>3 && (t.includes(a) || lev(t,a)<=Math.min(2,Math.floor(a.length/4))))) return {cmd:id};
+  }
   for(const c of COMMANDS){
     for(const k of c.keys){
       if(c.exact){ if(t===k || (k.includes(' ') && t.includes(k))) return {cmd:c.id}; continue; }
@@ -457,11 +522,14 @@ function startRec(){
       const r=e.results[i], txt=r[0].transcript;
       showHeard(txt, r.isFinal);
       // Eigene Ansage nicht als Befehl werten (Echo)
-      if(speaking || performance.now()-speakEndAt<350) continue;
+      if(learning && r.isFinal){ learn(learning, txt); continue; }
+      if(learning) continue;
+      if(speaking || performance.now()-speakEndAt<cfg.echo) continue;
       if(!r.isFinal){ // kurze, eindeutige Befehle schon vorab ausführen
         const qc=parseCommand(txt); if(qc && qc.cmd && ['on','off','go','load','voice'].includes(qc.cmd) && norm(txt).split(' ').length<=2) { handle(qc, txt, i); }
         continue;
       }
+      if(cfg.gate && cfg.thr>0 && meterOn && peakSince(3000)<cfg.thr){ showHeard('(zu leise, ignoriert) '+txt, true); continue; }
       const minConf=[0,.3,.5][+$('strict').value];
       let done=false;
       for(let a=0;a<r.length && !done;a++){
@@ -470,8 +538,9 @@ function startRec(){
       }
     }
   };
-  rec.onerror=e=>{ if(e.error==='not-allowed'||e.error==='service-not-allowed'){ micWanted=false; store.set('mic',false); toast('Mikrofon blockiert'); } };
-  rec.onend=()=>{ recRunning=false; updMic(); if(micWanted) setTimeout(()=>{ try{ startRec(); }catch(e){} }, 250); };
+  rec.onerror=e=>{ if(e.error==='audio-capture' && meterOn){ stopMeter(); cfg.gate=false; saveCfg(); $('gate').checked=false; toast('Mikro belegt: Lärm-Sperre aus'); }
+    if(e.error==='not-allowed'||e.error==='service-not-allowed'){ micWanted=false; store.set('mic',false); toast('Mikrofon blockiert'); } };
+  rec.onend=()=>{ recRunning=false; updMic(); if(micWanted && !recPaused) setTimeout(()=>{ try{ startRec(); }catch(e){} }, 250); };
   try{ rec.start(); }catch(e){}
 }
 function stopRec(){ micWanted=false; store.set('mic',false); try{ rec&&rec.stop(); }catch(e){} updMic(); }
@@ -498,15 +567,76 @@ function handle(c, txt, idx){
 }
 function showHeard(t, fin){ const s=(fin?'✔ ':'… ')+t; $('heard').textContent=s; $('heard2').textContent=s; }
 
-// Pegelanzeige mit Rauschunterdrückung, damit man sieht, ob das Mikro was bekommt
+// Pegelmessung: nur während Kalibrierung oder mit Lärm-Sperre aktiv
+// (manche Android-Geräte geben das Mikro sonst nicht an die Spracherkennung)
+let meterOn=false, meterStream=null, lvlNow=0, peaks=[];
 async function startMeter(){
+  if(meterOn) return true;
   try{
-    const st=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:true,echoCancellation:true,autoGainControl:true}});
-    const a=audio(), src=a.createMediaStreamSource(st), an=a.createAnalyser(); an.fftSize=512; src.connect(an);
-    const d=new Uint8Array(an.fftSize);
-    (function loop(){ an.getByteTimeDomainData(d); let s=0; for(const x of d){ const y=(x-128)/128; s+=y*y; }
-      $('lvl').style.width=Math.min(100,Math.sqrt(s/d.length)*400)+'%'; requestAnimationFrame(loop); })();
-  }catch(e){}
+    meterStream=await navigator.mediaDevices.getUserMedia({audio:{noiseSuppression:true,echoCancellation:true,autoGainControl:false}});
+    const a=audio(), src=a.createMediaStreamSource(meterStream), an=a.createAnalyser(); an.fftSize=1024; src.connect(an);
+    const d=new Float32Array(an.fftSize); meterOn=true;
+    (function loop(){ if(!meterOn) { $('lvl').style.width='0'; return; }
+      an.getFloatTimeDomainData(d); let s=0; for(const y of d) s+=y*y;
+      lvlNow=Math.sqrt(s/d.length); const now=performance.now();
+      peaks.push([now,lvlNow]); while(peaks.length && now-peaks[0][0]>5000) peaks.shift();
+      $('lvl').style.width=Math.min(100,lvlNow*600)+'%'; requestAnimationFrame(loop); })();
+    return true;
+  }catch(e){ toast('Kein Mikrofonzugriff'); return false; }
+}
+function stopMeter(){ meterOn=false; if(meterStream) meterStream.getTracks().forEach(t=>t.stop()); meterStream=null; }
+function peakSince(ms){ const n=performance.now(); let m=0; for(const [t,v] of peaks) if(n-t<=ms && v>m) m=v; return m; }
+function collect(ms){ return new Promise(res=>{ const out=[], t0=performance.now();
+  (function tick(){ out.push(lvlNow); if(performance.now()-t0<ms) setTimeout(tick,30); else res(out); })(); }); }
+function showCal(){
+  const m=$('thrMark');
+  if(cfg.thr>0){ m.style.display='block'; m.style.left=Math.min(100,cfg.thr*600)+'%'; }
+  $('calInfo').textContent = cfg.floor>0
+    ? `Grundrauschen: ${(cfg.floor*1000).toFixed(1)} · Sprach-Schwelle: ${cfg.thr?(cfg.thr*1000).toFixed(1):'–'} (weißer Strich)`
+    : 'Noch nicht kalibriert.';
+}
+async function calRoom(){
+  audio(); const wasRec=recRunning; if(wasRec) stopRecTemp();
+  if(!await startMeter()) return;
+  toast('Bitte 3 Sekunden still …',3000);
+  const v=(await collect(3000)).sort((a,b)=>a-b);
+  cfg.floor=v[Math.floor(v.length*.9)]||0;                 // 90%-Wert = typischer Raumlärm inkl. Spitzen
+  if(cfg.thr && cfg.thr<cfg.floor*1.5) cfg.thr=0;
+  // Strenge automatisch nach Lärm wählen
+  $('strict').value = cfg.floor>0.03 ? '2' : cfg.floor>0.01 ? '1' : '0'; store.set('strict',$('strict').value);
+  saveCfg(); showCal(); SFX.ok();
+  if(!cfg.gate) stopMeter();
+  if(wasRec) resumeRec();
+}
+async function calSpeak(){
+  audio(); const wasRec=recRunning; if(wasRec) stopRecTemp();
+  if(!await startMeter()) return;
+  toast('Jetzt laut „Vormarsch“ sagen',3000);
+  const v=(await collect(3000)).sort((a,b)=>a-b);
+  const speech=v[Math.floor(v.length*.95)]||0, floor=cfg.floor||v[Math.floor(v.length*.3)];
+  if(speech<floor*1.5){ toast('Nichts Deutliches gehört, nochmal lauter'); }
+  else { cfg.thr = floor + (speech-floor)*0.35; cfg.gate=true; $('gate').checked=true; toast('Schwelle gesetzt, Lärm-Sperre an'); SFX.confirm(); }
+  if(!cfg.floor) cfg.floor=floor;
+  saveCfg(); showCal();
+  if(!cfg.gate) stopMeter();
+  if(wasRec) resumeRec();
+}
+let recPaused=false;
+function stopRecTemp(){ recPaused=true; try{ rec&&rec.abort(); }catch(e){} }
+function resumeRec(){ recPaused=false; micWanted=true; setTimeout(startRec,300); }
+
+/* Anlernen */
+function learn(cmd, txt){
+  const t=norm(txt); learning=null; $('learnBtn').textContent='Anlernen';
+  if(!t) return;
+  (aliases[cmd]=aliases[cmd]||[]); if(!aliases[cmd].includes(t)) aliases[cmd].push(t);
+  store.set('aliases',aliases); renderLearned(); SFX.confirm();
+  toast(`Gelernt: „${t}“ = ${$('learnCmd').selectedOptions[0].textContent}`,2500);
+}
+function renderLearned(){
+  const names={go:'Vormarsch',load:'Laden',voice:'Fresse weiter',on:'On',off:'Off',spruch:'Spruch',undo:'Zurück',miss:'Daneben'};
+  const rows=Object.entries(aliases).filter(([k,v])=>v.length).map(([k,v])=>`<b>${names[k]||k}</b>: ${v.map(esc).join(' · ')}`);
+  $('learned').innerHTML=rows.length?rows.join('<br>'):'Noch nichts angelernt.';
 }
 
 /* ============================================================
@@ -590,21 +720,32 @@ function addThrow(v,m){
   if(bust){ t.bust=true; endTurn(true); return; }
   if(after===0){ win(); return; }
   render();
-  if(game.turn.length===3) announceTurn();
+  if(game.turn.length===3){ if(cfg.liveDart) say(dartWords(t)); announceTurn(true); return; }
+  // Live: Dart ansagen, dazu Rest/Checkout wenn in Reichweite
+  let txt = cfg.liveDart ? dartWords(t) : '';
+  const left=3-game.turn.length, co = after<=170 ? checkout(after,left,game.dbl) : null;
+  if(co && cfg.liveCo) txt += (txt?'. ':'') + `Noch ${after}. ${coWords(co)}`;
+  else if(cfg.liveRest && after<=170 && !cfg.liveDart) txt = `Noch ${after}`;
+  say(txt);
 }
-function announceTurn(){
+function announceTurn(queued){
   const p=PERSONAS[curPersona], s=game.turn.reduce((a,x)=>a+x.pts,0);
-  if(s===180){ SFX.bell(); toast('🎯 180! 🎯',2200); say(p.max); return; }
-  if(s>=100) { SFX.clink(); say(fill(pick(p.ton),{s})); }
-  else if(s<20) say(fill(pick(p.low),{s}));
-  else say(fill(pick(p.score),{s}));
+  const P=game.players[game.cur], rest=P.score-s;
+  const sp = queued ? sayQ : say;
+  if(s===180){ SFX.bell(); toast('🎯 180! 🎯',2200); sp(p.max); }
+  else if(cfg.liveSum){
+    if(s>=100) { SFX.clink(); sp(fill(pick(p.ton),{s})); }
+    else if(s<20) sp(fill(pick(p.low),{s}));
+    else sp(fill(pick(p.score),{s}));
+  }
+  if(cfg.liveRest) sayQ(`Rest ${rest}`);
 }
 function endTurn(bust){
   const P=game.players[game.cur], p=PERSONAS[curPersona];
   const s=game.turn.reduce((a,x)=>a+x.pts,0);
   game.history.push({cur:game.cur, turn:game.turn.slice(), prev:P.score, bust:!!bust});
   P.darts+=game.turn.length;
-  if(bust){ SFX.bust(); say(p.bust); logLine(`${P.name}: ${game.turn.map(label).join(' ')} ÜBERWORFEN`); toast('Überworfen!'); }
+  if(bust){ SFX.bust(); say(p.bust); setTimeout(()=>game&&!game.over&&callNext(true),0); logLine(`${P.name}: ${game.turn.map(label).join(' ')} ÜBERWORFEN`); toast('Überworfen!'); }
   else { P.score-=s; P.pts+=s; logLine(`${P.name}: ${game.turn.map(label).join(' ')} = ${s} (Rest ${P.score})`); }
   game.turn=[];
   game.cur=(game.cur+1)%game.players.length;
@@ -617,11 +758,17 @@ function laden(){
   if(game.turn.length===0){ toast('Darts gezogen'); return; }
   const wasThree=game.turn.length===3;
   while(game.turn.length<3) game.turn.push({v:0,m:1,pts:0});
-  if(!wasThree) announceTurn();
+  if(!wasThree) announceTurn(false);
   endTurn(false);
+  callNext(true);
+}
+function callNext(queued){
   const P=game.players[game.cur], p=PERSONAS[curPersona];
-  setTimeout(()=>{ const co=checkout(P.score,3,game.dbl);
-    say(co && P.score<=170 ? fill(p.rest,{n:P.name,r:P.score}) : fill(p.next,{n:P.name})); }, voiceOn?1600:0);
+  const co = P.score<=170 ? checkout(P.score,3,game.dbl) : null;
+  const sp = queued ? sayQ : say;
+  if(cfg.liveName) sp(co ? fill(p.rest,{n:P.name,r:P.score}) : fill(p.next,{n:P.name}) + (cfg.liveRest?` Noch ${P.score}.`:''));
+  else if(cfg.liveRest) sp(`Noch ${P.score}`);
+  if(co && cfg.liveCo) sayQ(coWords(co));
 }
 function win(){
   const P=game.players[game.cur], p=PERSONAS[curPersona];
@@ -701,7 +848,7 @@ function enter(){
   audio(); SFX.plopp(); setTimeout(SFX.clink,250);
   $('intro').classList.add('hidden');
   if(micWanted) startRec();
-  startMeter();
+  if(cfg.gate) startMeter();
   setTimeout(()=>say('Willkommen in der Kneipe. Sag Vormarsch, um zu starten.'), 500);
 }
 $('enterBtn').onclick=()=>{ micWanted=true; store.set('mic',true); vormarsch(); };
@@ -722,6 +869,24 @@ $('spruch').onchange=()=>store.set('spruch',$('spruch').value);
 $('names').value=store.get('names',$('names').value);
 $('strict').value=store.get('strict','1'); $('strict').onchange=()=>store.set('strict',$('strict').value);
 
+['liveDart','liveSum','liveRest','liveCo','liveName','gate'].forEach(k=>{ const el=$(k); el.checked=!!cfg[k];
+  el.onchange=async()=>{ cfg[k]=el.checked; saveCfg();
+    if(k==='gate'){ if(el.checked){ if(!cfg.thr) toast('Erst Sprechtest machen'); await startMeter(); } else stopMeter(); } }; });
+$('echo').value=cfg.echo; $('echoV').textContent=cfg.echo;
+$('echo').oninput=()=>{ cfg.echo=+$('echo').value; $('echoV').textContent=cfg.echo; saveCfg(); };
+$('calRoom').onclick=calRoom; $('calSpeak').onclick=calSpeak;
+$('learnBtn').onclick=()=>{ if(!recRunning){ micWanted=true; startRec(); }
+  learning=$('learnCmd').value; $('learnBtn').textContent='Hört zu …'; toast('Jetzt den Befehl sagen',2500); };
+$('learnClear').onclick=()=>{ aliases={}; store.set('aliases',aliases); renderLearned(); };
+function renderCal(){
+  const p=PERSONAS[curPersona], c=pc(p); $('calName').textContent=p.name;
+  [['vPitch','pitch'],['vRate','rate'],['vVol','vol']].forEach(([id,k])=>{ $(id).value=c[k]; $(id+'V').textContent=(+c[k]).toFixed(2); });
+}
+[['vPitch','pitch'],['vRate','rate'],['vVol','vol']].forEach(([id,k])=>{ $(id).oninput=()=>{
+  const p=PERSONAS[curPersona]; calib[p.id]=Object.assign(pc(p),{[k]:+$(id).value}); store.set('calib',calib); renderCal(); }; });
+$('vTest').onclick=()=>{ audio(); say('Triple 20. Noch 141. Triple 20, Triple 19, Doppel 12.', true); };
+$('vReset').onclick=()=>{ delete calib[PERSONAS[curPersona].id]; store.set('calib',calib); renderCal(); };
+renderLearned(); showCal(); if(cfg.gate) startMeter().catch(()=>{});
 drawBoard(); setVoice(voiceOn); updMic();
 if('speechSynthesis' in window){ loadVoices(); speechSynthesis.onvoiceschanged=loadVoices; }
 renderPersonas();
